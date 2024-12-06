@@ -1,0 +1,6 @@
+app/installBuddyGPT/BuddyGPT/apk/Google_14.33.12.28.arm64_Apkpure.apk filter=lfs diff=lfs merge=lfs -text
+app/installBuddyGPT/BuddyGPT/apk/Speech_Recognition_Synthesis_20240121.02_p3.602529322.apk filter=lfs diff=lfs merge=lfs -text
+app/installBuddyGPT/installBuddyGPT.bat filter=lfs diff=lfs merge=lfs -text
+app/src/main/assets/teamchat.json filter=lfs diff=lfs merge=lfs -text
+app/BuddyGPT-1.0.rar filter=lfs diff=lfs merge=lfs -text
+app/BuddyGPT-1.1.rar filter=lfs diff=lfs merge=lfs -text

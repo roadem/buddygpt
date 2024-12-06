@@ -1,0 +1,43 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url 'https://maven.google.com' }
+
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:7.0.4'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+
+    def gradlecredentials = "credentials.gradle"
+    if (project.file(gradlecredentials).exists()){
+        apply from: gradlecredentials
+    }
+}
+plugins {
+    id 'com.chaquo.python' version '12.0.1' apply false
+    id "org.sonarqube" version "4.2.1.3168"
+}
+allprojects {
+    repositories {
+        google()
+        jcenter()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven { url 'https://maven.google.com' }
+        maven { url "https://bluefrogrobotics.jfrog.io/artifactory/bluefrogrobotics-libs-release-local/"
+            credentials{
+                username "aevaweb-boris" // NOTE: Do not commit !
+                password "7S9gS6K&#w18Im" // NOTE: Do not commit !
+            }
+        }
+
+    }
+}
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

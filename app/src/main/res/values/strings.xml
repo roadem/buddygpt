@@ -1,0 +1,313 @@
+<resources>
+    <string name="app_name">BuddyGPT</string>
+    <string name="path">/storage/emulated/0/</string>
+    <string name="pathConfig">/storage/emulated/0/BuddyGPT/</string>
+    <string name="copyright">[Ver. 1.2.0] 2024©Teamnet - info@teamnet.fr</string>
+    <!-- Menu de paramètres -->
+    <!-- Menu de paramètres french-->
+    <string name="menu_title_fr">PARAMETRES</string>
+    <string name="menu_option_listening_duration_fr">Durée d\'écoute en secondes</string>
+    <string name="menu_option_listening_duration_hint_fr">Saisissez la durée (s) …</string>
+    <string name="menu_option_listening_attempt_fr">Nombre d\'écoutes</string>
+    <string name="menu_option_listening_attempt_hint_fr">Saisissez le nombre d\'écoutes …</string>
+    <string name="menu_option_speed_fr">Vitesse de la parole</string>
+    <string name="menu_option_volume_fr">Volume de la parole</string>
+    <string name="menu_option_affichage_fr">Affichage des paroles</string>
+    <string name="menu_option_emotion_fr">Activation des émotions</string>
+    <string name="menu_option_detectionLanguage_fr">Activation de la détection de langue</string>
+    <string name="menu_option_mode_stream_fr">Mode Stream</string>
+    <string name="menu_option_commande_fr">Activation des commandes</string>
+    <string name="menu_option_langue_fr">Langue</string>
+    <string name="menu_option_stt_fr">Choix du STT</string>
+    <string name="menu_option_tts_fr">Choix du TTS</string>
+    <string name="menu_option_chatbot_fr">ChatBot et Modèle</string>
+    <string name="menu_option_chatbotmodel_fr">Modèle du ChatBot</string>
+    <string name="menu_header_fr">En-tête</string>
+    <string name="menu_api_key_fr">Clé TeamGPT</string>
+    <string name="menu_email_fr">Email</string>
+    <string name="menu_name_fr">Nom du compte</string>
+    <string name="menu_option_projectID_fr">L\'identifiant du projet de CustomGPT</string>
+    <string name="menu_option_projectID_hint_fr">Saisissez l\'ID du projet</string>
+    <string name="destination_mail_texte_fr">e-mail du destinataire</string>
+    <string name="destination_mail_Edittexte_fr">Saisissez l\'e-mail</string>
+    <string name="menu_option_BI_fr">Stimulis</string>
+    <string name="menu_option_tracking_activation_fr">Activation du suivi</string>
+    <string name="menu_option_tracking_camera_display_fr">Affichage de la caméra</string>
+    <string name="menu_option_tracking_head_fr">Activer la tête</string>
+    <string name="menu_option_tracking_body_fr">Activer le corps</string>
+    <string name="menu_option_tracking_auto_listen_fr">Activer l\'écoute automatique</string>
+    <string name="menu_option_tracking_invitation_fr">Invitation</string>
+    <string name="menu_option_tracking_invitation_chatGpt_fr">Invitation ChatGPT</string>
+    <string name="menu_dialog_supported_languages_Android_STT_fr">Langues prises en charge</string>
+
+
+    <!-- Menu de paramètres english-->
+    <string name="menu_title_en">SETTINGS</string>
+    <string name="menu_option_listening_duration_en">Listening time in seconds</string>
+    <string name="menu_option_listening_duration_hint_en">Enter the duration (s) …</string>
+    <string name="menu_option_listening_attempt_en">Number of listens</string>
+    <string name="menu_option_listening_attempt_hint_en">Enter the number of listens …</string>
+    <string name="menu_option_speed_en">Speech speed</string>
+    <string name="menu_option_volume_en">Speech volume</string>
+    <string name="menu_option_affichage_en">Show Q/A</string>
+    <string name="menu_option_emotion_en">Activation of emotions</string>
+    <string name="menu_option_detectionLanguage_en">Enable language detection</string>
+    <string name="menu_option_mode_stream_en">Stream Mode</string>
+    <string name="menu_option_commande_en">Enable commands</string>
+    <string name="menu_option_langue_en">Language</string>
+    <string name="menu_option_stt_en">Choice of STT</string>
+    <string name="menu_option_tts_en">Choice of TTS</string>
+    <string name="menu_option_chatbot_en">ChatBot and model</string>
+    <string name="menu_option_chatbotmodel_en">ChatBot </string>
+    <string name="menu_header_en">Header</string>
+    <string name="menu_api_key_en">TeamGPT key</string>
+    <string name="menu_email_en">E-mail</string>
+    <string name="menu_name_en">Account name</string>
+    <string name="menu_option_projectID_en">CustomGPT project ID</string>
+    <string name="menu_option_projectID_hint_en">Enter the project ID</string>
+    <string name="destination_mail_texte">Recipient\'s Email</string>
+    <string name="destination_mail_Edittexte">Enter the Email</string>
+    <string name="menu_option_BI_en">Stimulis</string>
+    <string name="menu_option_tracking_activation_en">Enable tracking</string>
+    <string name="menu_option_tracking_camera_display_en">Camera display</string>
+    <string name="menu_option_tracking_head_en">Enable head</string>
+    <string name="menu_option_tracking_body_en">Enable body</string>
+    <string name="menu_option_tracking_auto_listen_en">Enable automatic listening</string>
+    <string name="menu_option_tracking_invitation_en">Invitation</string>
+    <string name="menu_option_tracking_invitation_chatGpt_en">ChatGPT invitation</string>
+    <string name="menu_dialog_supported_languages_Android_STT_en">Supported Languages</string>
+
+    <!-- Menu de paramètres spanish-->
+    <string name="menu_title_es">AJUSTES</string>
+    <string name="menu_option_listening_duration_es">Tiempo de escucha en segundos</string>
+    <string name="menu_option_listening_duration_hint_es">Introduzca la duración (s) ...</string>
+    <string name="menu_option_listening_attempt_es">Número de escuchas</string>
+    <string name="menu_option_listening_attempt_hint_es">Introduzca el número de escuchas ...</string>
+    <string name="menu_option_speed_es">Velocidad del habla</string>
+    <string name="menu_option_volume_es">Volumen de voz</string>
+    <string name="menu_option_affichage_es">Mostrar P/R</string>
+    <string name="menu_option_emotion_es">Activación de las emociones</string>
+    <string name="menu_option_detectionLanguage_es">Activar la detección de idiomas</string>
+    <string name="menu_option_mode_stream_es">Modo de transmisión</string>
+    <string name="menu_option_commande_es">Habilitar comandos</string>
+    <string name="menu_option_langue_es">Idioma</string>
+    <string name="menu_option_stt_es">Elección de STT</string>
+    <string name="menu_option_tts_es">Elección de TTS</string>
+    <string name="menu_option_chatbot_es">ChatBot y modelo</string>
+    <string name="menu_option_chatbotmodel_es">modelo de ChatBot</string>
+    <string name="menu_header_es">Cabecera</string>
+    <string name="menu_api_key_es">Clave ChatBot</string>
+    <string name="menu_email_es">Correo electrónico</string>
+    <string name="menu_name_es">Nombre de cuenta</string>
+    <string name="menu_option_projectID_es">Identificador del proyecto CustomGPT</string>
+    <string name="menu_option_projectID_hint_es">Introduzca el ID del proyecto</string>
+    <string name="menu_option_tracking_activation_es">Activar el seguimiento</string>
+    <string name="menu_option_tracking_camera_display_es">Pantalla de la cámara</string>
+    <string name="menu_option_tracking_head_es">Habilitar cabezal</string>
+    <string name="menu_option_tracking_body_es">Habilitar cuerpo</string>
+    <string name="menu_option_tracking_auto_listen_es">Activar la escucha automática</string>
+    <string name="menu_option_tracking_invitation_es">Invitación</string>
+    <string name="menu_option_tracking_invitation_chatGpt_es">Invitación ChatGPT</string>
+    <string name="menu_dialog_supported_languages_Android_STT_es">Idiomas admitidos</string>
+
+
+    <!-- Menu de paramètres deutsch-->
+    <string name="menu_title_de">EINSTELLUNGEN</string>
+    <string name="menu_option_listening_duration_de">Anhörungszeit in Sekunden</string>
+    <string name="menu_option_listening_duration_hint_de">Geben Sie die Dauer (s) ein ...</string>
+    <string name="menu_option_listening_attempt_de">Anzahl der Anhörungen</string>
+    <string name="menu_option_listening_attempt_hint_de">Geben Sie die Anzahl der Anhörungen ein ...</string>
+    <string name="menu_option_speed_de">Sprachtempo</string>
+    <string name="menu_option_volume_de">Lautstärke der Sprache</string>
+    <string name="menu_option_affichage_de">F/A anzeigen</string>
+    <string name="menu_option_emotion_de">Aktivierung von Emotionen</string>
+    <string name="menu_option_detectionLanguage_de">Aktivieren Sie die Spracherkennung</string>
+    <string name="menu_option_mode_stream_de">Stream-Modus</string>
+    <string name="menu_option_commande_de">Befehle aktivieren</string>
+    <string name="menu_option_langue_de">Sprache</string>
+    <string name="menu_option_stt_de">STT-Wahl</string>
+    <string name="menu_option_tts_de">TTS-Wahl</string>
+    <string name="menu_option_chatbot_de">ChatBot und Modell</string>
+    <string name="menu_option_chatbotmodel_de">ChatBot-</string>
+    <string name="menu_header_de">Kopfzeile</string>
+    <string name="menu_api_key_de">TeamGPT-Schlüssel</string>
+    <string name="menu_email_de">E-Mail</string>
+    <string name="menu_name_de">Kontoname</string>
+    <string name="menu_option_projectID_de">Die Projekt-ID von CustomGPT</string>
+    <string name="menu_option_projectID_hint_de">Geben Sie die Projekt-ID ein</string>
+    <string name="menu_option_tracking_activation_de">Tracking aktivieren</string>
+    <string name="menu_option_tracking_camera_display_de">Anzeige der Kamera</string>
+    <string name="menu_option_tracking_head_de">Kopf Aktivieren</string>
+    <string name="menu_option_tracking_body_de">Körper Aktivieren</string>
+    <string name="menu_option_tracking_auto_listen_de">Automatisches Mithören aktivieren</string>
+    <string name="menu_option_tracking_invitation_de">Einladung</string>
+    <string name="menu_option_tracking_invitation_chatGpt_de">ChatGPT-Einladung</string>
+    <string name="menu_dialog_supported_languages_Android_STT_de">Unterstützte Sprachen</string>
+
+
+    <!-- chatbot messages french-->
+    <string name="chatBotNoFound_fr">Impossible de trouver votre chatbot</string>
+    <string name="chatBot_ERROR_fr">Une erreur est survenue</string>
+    <string name="chatBotNoResponse_fr">Je ne sais pas répondre à cette question</string>
+    <string name="ExceptionTraduction_fr">Exception lors de la récupération de la traduction</string>
+    <string name="chatBotServerNoResponce_fr">aucune réponse du serveur</string>
+    <string name="send_mail_toast_fr">Le mail est envoyé!</string>
+    <string name="error_TTS_fr">La fonction de synthèse vocale n\'est pas disponible actuellement.</string>
+    <string name="add_mail_toast_fr">Veuillez ajouter l\'adresse e-mail de destination dans le fichier BuddyGPT.properties.</string>
+    <string name="error_mail_toast_fr">Échec de l\'authentification : Données d\'authentification incorrectes.</string>
+    <string name="mlkit_model_is_downloading_fr">Le téléchargement du modèle linguistique de ML Kit est en cours. Merci de patienter.</string>
+
+
+    <!-- chatbot messages english-->
+    <string name="chatBotNoFound_en">Unable to find your chatbot</string>
+    <string name="chatBot_ERROR_en">An error has occurred</string>
+    <string name="chatBotNoResponse_en">I don\'t know how to answer this question</string>
+    <string name="ExceptionTraduction_en">Exception while retrieving translation</string>
+    <string name="chatBotServerNoResponce_en">No response from chatbot server</string>
+    <string name="send_mail_toast_en">The mail is sent!</string>
+    <string name="error_TTS_en">The text-to-speech function is not available at the moment.</string>
+    <string name="add_mail_toast_en">Please add the destination email to the BuddyGPT.properties file.</string>
+    <string name="error_mail_toast_en">Authentication failed: Incorrect authentication data.</string>
+    <string name="mlkit_model_is_downloading_en">The language model of ML Kit is currently being downloaded. Please wait.</string>
+
+    <!-- chatbot messages spanish-->
+    <string name="chatBotNoFound_es">No se puede encontrar el chatbot</string>
+    <string name="chatBot_ERROR_es">Se ha producido un error</string>
+    <string name="chatBotNoResponse_es">No sé cómo responder a esta pregunta.</string>
+    <string name="ExceptionTraduction_es">Excepción al recuperar la traducción</string>
+    <string name="chatBotServerNoResponce_es">No hay respuesta del servidor del chatbot</string>
+    <string name="send_mail_toast_es">¡El correo está enviado!</string>
+    <string name="error_TTS_es">La función de texto a voz no está disponible en este momento.</string>
+    <string name="add_mail_toast_es">Por favor, agregue el correo electrónico de destino al archivo BuddyGPT.properties.</string>
+    <string name="error_mail_toast_es">Fallo de autenticación: Datos de autenticación incorrectos.</string>
+    <string name="mlkit_model_is_downloading_es">El modelo de idioma de ML Kit se está descargando actualmente. Por favor, espere.</string>
+
+    <!-- chatbot messages deutsch-->
+    <string name="chatBotNoFound_de">Sie können Ihren Chatbot nicht finden</string>
+    <string name="chatBot_ERROR_de">Es ist ein Fehler aufgetreten</string>
+    <string name="chatBotNoResponse_de">Ich weiß nicht, wie ich diese Frage beantworten soll.</string>
+    <string name="ExceptionTraduction_de">Ausnahme beim Abrufen der Übersetzung</string>
+    <string name="chatBotServerNoResponce_de">Keine Antwort vom Chatbot-Server</string>
+    <string name="send_mail_toast_de">Die Post ist abgeschickt!</string>
+    <string name="error_TTS_de">Die Text-to-Speech-Funktion ist derzeit nicht verfügbar.</string>
+    <string name="add_mail_toast_de">Bitte fügen Sie die Ziel-E-Mail-Adresse zur Datei BuddyGPT.properties hinzu.</string>
+    <string name="error_mail_toast_de">Authentifizierung fehlgeschlagen: Falsche Authentifizierungsdaten.</string>
+    <string name="mlkit_model_is_downloading_de">Das Sprachmodell von ML Kit wird gerade heruntergeladen. Bitte warten Sie.</string>
+
+
+    <!-- Menu BlueMic -->
+
+    <string name="menu_option_bluemic">BLUE MIC</string>
+    <!--french-->
+    <string name="connected_service_bluemic_fr">BuddyGPT est connecté au BlueMic Service</string>
+    <string name="disconnected_service_bluemic_fr">BuddyGPT est déconnecté du BlueMic Service</string>
+    <!--english-->
+    <string name="connected_service_bluemic_en">BuddyGPT is connected to BlueMic Service</string>
+    <string name="disconnected_service_bluemic_en">BuddyGPT is disconnected from BlueMic Service</string>
+    <!-- spanish -->
+    <string name="connected_service_bluemic_es">BuddyGPT está conectado al servicio BlueMic</string>
+    <string name="disconnected_service_bluemic_es">BuddyGPT está desconectado del servicio BlueMic</string>
+    <!-- allemand -->
+    <string name="connected_service_bluemic_de">BuddyGPT ist mit dem BlueMic-Dienst verbunden</string>
+    <string name="disconnected_service_bluemic_de">BuddyGPT ist vom BlueMic-Dienst getrennt</string>
+
+
+    <!-- Toast config file -->
+
+    <!--french-->
+    <string name="toast_config_file_init_fr">Initialisation des propriétés</string>
+    <string name="toast_config_file_maj_fr">Mise à jour des propriétés</string>
+    <!--english-->
+    <string name="toast_config_file_init_en">Initialization of properties</string>
+    <string name="toast_config_file_maj_en">Updating properties</string>
+    <!-- spanish -->
+    <string name="toast_config_file_init_es">Inicialización de propiedades</string>
+    <string name="toast_config_file_maj_es">Actualización de propiedades</string>
+    <!-- allemand -->
+    <string name="toast_config_file_init_de">Initialisierung von Eigenschaften</string>
+    <string name="toast_config_file_maj_de">Aktualisierung von Eigenschaften</string>
+
+    <!-- Toast TTS Android indispo -->
+
+    <!--french-->
+    <string name="toast_tts_android_indispo_fr">TTS Android indisponible</string>
+    <!--english-->
+    <string name="toast_tts_android_indispo_en">TTS Android unavailable</string>
+    <!-- spanish -->
+    <string name="toast_tts_android_indispo_es">TTS Android no disponible</string>
+    <!-- allemand -->
+    <string name="toast_tts_android_indispo_de">TTS Android nicht verfügbar</string>
+
+    <!-- Toast TTS GoogleApi indispo -->
+
+    <!--french-->
+    <string name="toast_tts_googleApi_indispo_fr">TTS GoogleApi indisponible</string>
+    <!--english-->
+    <string name="toast_tts_googleApi_indispo_en">TTS GoogleApi unavailable</string>
+    <!-- spanish -->
+    <string name="toast_tts_googleApi_indispo_es">TTS GoogleApi no disponible</string>
+    <!-- allemand -->
+    <string name="toast_tts_googleApi_indispo_de">TTS GoogleApi nicht verfügbar</string>
+
+    <!-- Toast STT Android indispo -->
+
+    <!--french-->
+    <string name="toast_stt_android_indispo_fr">STT Android indisponible</string>
+    <!--english-->
+    <string name="toast_stt_android_indispo_en">STT Android unavailable</string>
+    <!-- spanish -->
+    <string name="toast_stt_android_indispo_es">STT Android no disponible</string>
+    <!-- allemand -->
+    <string name="toast_stt_android_indispo_de">STT Android nicht verfügbar</string>
+
+
+    <!-- Page openAi -->
+
+    <!--french-->
+    <string name="consommation_title_fr">Consommation OpenAI</string>
+    <string name="consommation_title_2_fr">Consommation d\'openAI en $</string>
+    <string name="model_fr">Modèle</string>
+    <string name="input_fr">Entrée ($)</string>
+    <string name="output_fr">Sortie ($)</string>
+    <string name="toast_pricing_indispo_fr">Prix OpenAi non disponible</string>
+    <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
+    <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
+    <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
+    <string name="toast_teamgpt_session_fr">La session est expirée</string>
+    <string name="toast_teamgpt_invalid_fr">Attention !</string>
+    <!--english-->
+    <string name="consommation_title_en">OpenAI Consumption</string>
+    <string name="consommation_title_2_en">OpenAI consumption in $</string>
+    <string name="model_en">Model</string>
+    <string name="input_en">Input ($)</string>
+    <string name="output_en">Ouput ($)</string>
+    <string name="toast_pricing_indispo_en">OpenAI price not available</string>
+    <string name="toast_teamgpt_key_indispo_en">TeamGPT key not inserted</string>
+    <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
+    <string name="toast_teamgpt_invalid_en">Attention !</string>
+    <string name="toast_teamgpt_key_invalid_en">The key is invalid</string>
+    <string name="toast_teamgpt_session_en">The session has expired</string>
+    <!-- spanish -->
+    <string name="consommation_title_es">Consumo OpenAI</string>
+    <string name="consommation_title_2_es">Consumo openAI en $</string>
+    <string name="model_es">Modelo</string>
+    <string name="input_es">Entrada ($)</string>
+    <string name="output_es">Salida ($)</string>
+    <string name="toast_pricing_indispo_es">Precio de OpenAI no disponible</string>
+    <string name="toast_teamgpt_key_indispo_es">la clave teamgpt no insertada</string>
+    <string name="toast_teamgpt_key_invalid_es">La clave no es válida</string>
+    <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
+    <string name="toast_teamgpt_invalid_es">Atención !</string>
+    <!-- allemand -->
+    <string name="consommation_title_de">OpenAI Konsum</string>
+    <string name="consommation_title_2_de">OpenAI-Verbrauch in $</string>
+    <string name="model_de">Modell</string>
+    <string name="input_de">Eingabe ($)</string>
+    <string name="output_de">Ausgabe ($)</string>
+    <string name="toast_pricing_indispo_de">OpenAI-Preis nicht verfügbar</string>
+    <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
+    <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
+    <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>
+    <string name="toast_teamgpt_invalid_de">Aufmerksamkeit !</string>
+
+</resources>
