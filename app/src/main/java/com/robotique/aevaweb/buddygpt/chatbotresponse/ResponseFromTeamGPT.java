@@ -42,6 +42,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -105,6 +106,7 @@ public class ResponseFromTeamGPT{
     }
     public void getParameters() {
         String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
+        String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
         String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
         String imeiDevice = buddyGPTApplication.getImeiRobot();
 
@@ -113,15 +115,18 @@ public class ResponseFromTeamGPT{
         ApiEndpointInterface apiService = retrofit.create(ApiEndpointInterface.class);
 
         // Lancer la requête
-        Call<ParametersResponse> call = apiService.getParametersGPT(gptKey, imeiDevice);
-
-        call.enqueue(new Callback<ParametersResponse>() {
+        Call<JsonObject> call = apiService.getParametersGPT(endpoint, gptKey, imeiDevice);
+        call.enqueue(new Callback<JsonObject>() {
             @Override
-            public void onResponse(Call<ParametersResponse> call, Response<ParametersResponse> response) {
+            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
                 if (response.isSuccessful() && response.body() != null) {
-                    Parameters parameters = response.body().getParameters();
+                    JsonObject jsonObject = response.body();
+                    JsonObject parametersObject = jsonObject.getAsJsonObject("parameters");
 
-                    if (parameters != null) {
+                    if (parametersObject != null) {
+                        Gson gson = new Gson();
+                        Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
+
                         // Sauvegarde des paramètres dans l'application
                         buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
                         buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
@@ -143,7 +148,6 @@ public class ResponseFromTeamGPT{
                         buddyGPTApplication.setparam("Modele_gemini", parameters.getModeleGemini());
                     }
                 } else if (response.code() == 400) {
-                    // Gestion d'une clé TeamGPT invalide
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                 } else {
@@ -152,9 +156,7 @@ public class ResponseFromTeamGPT{
             }
 
             @Override
-            public void onFailure(Call<ParametersResponse> call, Throwable t) {
-                // Gestion des erreurs de réseau ou autres exceptions
-                Log.e("Retrofit", "Erreur lors de la requête : ", t);
+            public void onFailure(Call<JsonObject> call, Throwable t) {
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
                     buddyGPTApplication.showToast(buddyGPTApplication.getString(R.string.toast_teamgpt_cnx_failed_en));
                 }
@@ -180,7 +182,6 @@ public class ResponseFromTeamGPT{
             }
         });
     }
-
 
 
 
@@ -522,6 +523,8 @@ public class ResponseFromTeamGPT{
     }
     private void updateMessageHistory(String question) {
         try {
+            if(buddyGPTApplication.getparam("messages").equalsIgnoreCase(""))
+                buddyGPTApplication.setparam("messages","[]");
             String jsonArrayString = buddyGPTApplication.getparam("messages");
              existingHistoryArray = new JSONArray(jsonArrayString);
             JSONObject newQuestionObject = new JSONObject();
@@ -713,7 +716,10 @@ public class ResponseFromTeamGPT{
             String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
             existingHistoryArray = new JSONArray(jsonArrayString);
             JSONObject newRespObject = new JSONObject();
-            newRespObject.put("Response", answer);
+            long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
+            DecimalFormat df = new DecimalFormat("#,###");
+            String formattedTime= df.format(responseTime);
+            newRespObject.put("Response", answer +";SPLIT;"+formattedTime+" ms");
             existingHistoryArray.put(newRespObject);
             buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
             // Save formattedContent in ChatGPT-recv-stream.txt

@@ -160,8 +160,10 @@ public interface ApiEndpointInterface {
             @Header("TeamGPT-Key") String gptKey,     // Clé d'authentification.
             @Body Request payload             // Corps de la requête.
     );
-    @GET("TeamGPT_ApiEndpoint_Params") // Endpoint défini dans Retrofit
-    Call<ParametersResponse> getParametersGPT(
+
+    @GET("{endpoint}")
+    Call<JsonObject> getParametersGPT(
+            @Path("endpoint") String endpoint,
             @Header("TeamGPT-Key") String gptKey,
             @Header("IMEI-ID-Device") String imeiDevice
     );

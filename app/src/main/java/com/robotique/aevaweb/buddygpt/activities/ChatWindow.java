@@ -354,7 +354,8 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 }
                 if (messageObject.has("Response") ) {
                     replica.setType("Response");
-                    replica.setValue(messageObject.getString("Response"));
+                    replica.setValue(messageObject.getString("Response").split(";SPLIT;")[0]);
+                    replica.setDuration(messageObject.getString("Response").split(";SPLIT;")[1]);
                 }
                 if (messageObject.has("Session") ){
                     replica.setType("Session");
@@ -589,7 +590,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             if(replica.getType().equalsIgnoreCase("Session"))
                 question.append("<br> _____________________ New Session _____________________");
             else
-                question.append("<br>").append(replica.getType()).append(" : ").append(replica.getValue());
+                if(replica.getType().equalsIgnoreCase("Response"))
+                    question.append("<br>").append(replica.getType()).append(" : ").append(replica.getValue().split(";SPLIT;")[0]);
+                else
+                    question.append("<br>").append(replica.getType()).append(" : ").append(replica.getValue());
         }
 
         // Return the email content as a string
