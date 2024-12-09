@@ -11,16 +11,9 @@ public class RetrofitClient {
 
     public static Retrofit getClient(String baseUrl) {
         if (retrofit == null) {
-            OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS) // Timeout de connexion
-                    .readTimeout(30, TimeUnit.SECONDS)   // Timeout de lecture
-                    .writeTimeout(30, TimeUnit.SECONDS)  // Timeout d'écriture
-                    .retryOnConnectionFailure(true)      // Réessayer automatiquement en cas de défaillance
-                    .build();
 
             retrofit = new Retrofit.Builder()
                     .baseUrl(baseUrl)
-                    .client(okHttpClient) // Associer le client personnalisé
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }

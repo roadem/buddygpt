@@ -105,85 +105,87 @@ public class ResponseFromTeamGPT{
 
     }
     public void getParameters() {
-        String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
-        String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
-        String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
-        String imeiDevice = buddyGPTApplication.getImeiRobot();
+        final CountDownLatch latch = new CountDownLatch(1); // Initialize the latch with count 1
 
-        // Initialiser Retrofit
-        Retrofit retrofit = RetrofitClient.getClient(baseUrl);
-        ApiEndpointInterface apiService = retrofit.create(ApiEndpointInterface.class);
-
-        // Lancer la requête
-        Call<JsonObject> call = apiService.getParametersGPT(endpoint, gptKey, imeiDevice);
-        call.enqueue(new Callback<JsonObject>() {
+        new Thread(new Runnable() {
             @Override
-            public void onResponse(Call<JsonObject> call, Response<JsonObject> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    JsonObject jsonObject = response.body();
-                    JsonObject parametersObject = jsonObject.getAsJsonObject("parameters");
+            public void run() {
+                try {
+                    String url = buddyGPTApplication.getparam("TeamGPT_url");
+                    String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
+                    String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
+                    String imeiDevice = buddyGPTApplication.getImeiRobot();
 
-                    if (parametersObject != null) {
-                        Gson gson = new Gson();
-                        Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
+                    URL obj = new URL(url + endpoint);
+                    HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+                    con.setRequestMethod("GET");
+                    con.setRequestProperty("TeamGPT-Key", gptKey);
+                    con.setRequestProperty("IMEI-ID-Device", imeiDevice);
 
-                        // Sauvegarde des paramètres dans l'application
-                        buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
-                        buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
-                        buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
-                        buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
-                        buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
-                        buddyGPTApplication.setparam("Header", parameters.getHeader());
-                        buddyGPTApplication.setparam("Entete", parameters.getEntete());
-                        buddyGPTApplication.setparam("Email", parameters.getEmail());
-                        buddyGPTApplication.setparam("Stream_mode", parameters.getStreamMode());
-                        buddyGPTApplication.setparam("Mail_sender", parameters.getMailSender());
-                        buddyGPTApplication.setparam("Smtp_host", parameters.getSmtpHost());
-                        buddyGPTApplication.setparam("Password_mail_sender", parameters.getPasswordMailSender());
-                        buddyGPTApplication.setparam("Smtp_port", parameters.getSmtpPort());
-                        buddyGPTApplication.setparam("show_price", parameters.getShowPrice());
-                        buddyGPTApplication.setparam("CustomGPT_model", parameters.getCustomGptModel());
-                        buddyGPTApplication.setparam("Modele_Mistral", parameters.getModeleMistral());
-                        buddyGPTApplication.setparam("Modele_Openai", parameters.getModeleOpenai());
-                        buddyGPTApplication.setparam("Modele_gemini", parameters.getModeleGemini());
+                    int responseCode = con.getResponseCode();
+                    if (responseCode == HttpURLConnection.HTTP_OK) {
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","FALSE");
+                        BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+                        String inputLine;
+                        StringBuilder response = new StringBuilder();
+                        while ((inputLine = in.readLine()) != null) {
+                            response.append(inputLine);
+                        }
+                        in.close();
+
+                        String contentType = con.getHeaderField("Content-Type");
+
+                        if (contentType != null && contentType.contains("application/json")) {
+                            JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
+                            JsonObject parametersObject = jsonObject.getAsJsonObject("parameters");
+
+                            Gson gson = new Gson();
+                            Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
+
+                            if (parameters != null) {
+                                buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
+                                buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
+                                buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
+                                buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
+                                buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
+                                buddyGPTApplication.setparam("Header", parameters.getHeader());
+                                buddyGPTApplication.setparam("Entete", parameters.getEntete());
+                                buddyGPTApplication.setparam("Email", parameters.getEmail());
+                                buddyGPTApplication.setparam("Stream_mode",parameters.getStreamMode());
+                                buddyGPTApplication.setparam("Mail_sender",parameters.getMailSender());
+                                buddyGPTApplication.setparam("Smtp_host",parameters.getSmtpHost());
+                                buddyGPTApplication.setparam("Password_mail_sender",parameters.getPasswordMailSender());
+                                buddyGPTApplication.setparam("Smtp_port",parameters.getSmtpPort());
+                                buddyGPTApplication.setparam("show_price",parameters.getShowPrice());
+                                buddyGPTApplication.setparam("CustomGPT_model",parameters.getCustomGptModel());
+                                buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
+                                buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
+                                buddyGPTApplication.setparam("Modele_gemini",parameters.getModeleGemini());
+                            }
+                        }
+
                     }
-                } else if (response.code() == 400) {
-                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
-                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
-                } else {
-                    Log.e("Retrofit", "Erreur : " + response.code());
+                    else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+                        Log.i(TAG_NSTREAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
+                        buddyGPTApplication.setparam("TeamGPT_Key",gptKey);
+                        buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                    }
+                    con.disconnect();
+                } catch (Exception e) {
+                    Log.e("HOU", "Exception in getParameters: ", e);
+                } finally {
+                    latch.countDown(); // Ensure latch is counted down regardless of success or failure
                 }
             }
+        }).start();
 
-            @Override
-            public void onFailure(Call<JsonObject> call, Throwable t) {
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
-                    buddyGPTApplication.showToast(buddyGPTApplication.getString(R.string.toast_teamgpt_cnx_failed_en));
-                }
-                else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    buddyGPTApplication.showToast(buddyGPTApplication.getString(R.string.toast_teamgpt_cnx_failed_fr));
-                }
-                else{
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_cnx_failed_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    buddyGPTApplication.showToast(translatedText);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    buddyGPTApplication.showToast(buddyGPTApplication.getString(R.string.toast_teamgpt_cnx_failed_en));
-                                }
-                            });
-                }
-            }
-        });
+        try {
+            latch.await(); // Wait for the thread to finish
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
     }
-
-
 
 //    public void sendPutRequestNStream(String question , int numberOfQuestion) throws IOException {
 //        new Thread(new Runnable() {
