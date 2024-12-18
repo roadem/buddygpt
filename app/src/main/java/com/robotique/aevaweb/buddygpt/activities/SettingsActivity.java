@@ -1040,6 +1040,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         Log.i("TAG", "run: getParameters 32");
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null " );
+                            //// TODO: 18/12/2024  
                             buddyGPTApplication.getResponseFromTeamGPT().getParameters();
                         }
                         refresh(1);

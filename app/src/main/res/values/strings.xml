@@ -273,6 +273,7 @@
     <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
     <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
+    <string name="toast_teamgpt_params_invalid_fr">Les paramètres reçus du serveur TeamGPT sont invalides.</string>
     <string name="toast_teamgpt_session_fr">La session est expirée</string>
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
     <!--english-->
@@ -286,6 +287,7 @@
     <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
     <string name="toast_teamgpt_invalid_en">Attention !</string>
     <string name="toast_teamgpt_key_invalid_en">The key is invalid</string>
+    <string name="toast_teamgpt_params_invalid_en">The parameters received from the TeamGPT server are invalid.</string>
     <string name="toast_teamgpt_session_en">The session has expired</string>
     <!-- spanish -->
     <string name="consommation_title_es">Consumo OpenAI</string>

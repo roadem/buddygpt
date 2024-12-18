@@ -195,7 +195,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private boolean isCMDLangue = false;
     private boolean isSpeaking = false;
     private Boolean gptSend=false;
-    private boolean isFirstLaunch = true;
+    private boolean isFirstLaunch = true; // Used to init TeamGPT params only once
     private boolean regarde_camera=false;
     private boolean direction=false;
     private boolean deFace=false;
@@ -356,7 +356,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             buddyGPTApplication.startListeningHotwor(MainActivity.this);
                         }
                         isReTrack = false;
-                        initTracking();
+                        //initTracking();
                     }
                 }
             }
@@ -625,7 +625,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             Log.e(TAG,"BuddySDK Exception  "+e);
         }
         if(cameraProvider != null) cameraProvider.unbindAll();
-        isFirstLaunch= false;
+       // isFirstLaunch= false;
     }
 
     @Override
@@ -646,20 +646,21 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         handlerCheckPersonDetection.removeCallbacksAndMessages(null);
         if(poseTracking != null) poseTracking.stopMovingAndCancelRunnables();
         if(backgroundExecutor != null) backgroundExecutor.shutdownNow();
-        try{
-            if(!BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || !BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
-                BuddySDK.USB.enableWheels(false, iUsbCommadRspTracking);
-            }
-            if(!BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
-                BuddySDK.USB.enableYesMove(false, iUsbCommadRspTracking);
-            }
-            if(!BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
-                BuddySDK.USB.enableNoMove(false, iUsbCommadRspTracking);
-            }
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }super.onDestroy();
+//        try{
+//            if(!BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || !BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
+//                BuddySDK.USB.enableWheels(false, iUsbCommadRspTracking);
+//            }
+//            if(!BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
+//                BuddySDK.USB.enableYesMove(false, iUsbCommadRspTracking);
+//            }
+//            if(!BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
+//                BuddySDK.USB.enableNoMove(false, iUsbCommadRspTracking);
+//            }
+//        }
+//        catch (Exception e){
+//            e.printStackTrace();
+//        }
+        super.onDestroy();
     }
 
     /**
@@ -716,30 +717,30 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         Log.w(TAG, "onEvent : "+iEvent.toString());
     }
 
-    private final IUsbCommadRsp iUsbCommadRspBI = new IUsbCommadRsp.Stub(){
-        @Override
-        public void onSuccess(String s) throws RemoteException {
-            Log.e("DEBUG_BI","detectBI onSuccess");
-            runnableForSensor= new Runnable() {
-                public void run() {
-                    detectBI();
-                    handlerForSensor.postDelayed(this, 100);
-                }
-            };
-            handlerForSensor.post(runnableForSensor);
-        }
-        @Override
-        public void onFailed(String s) throws RemoteException {
-            Log.e("DEBUG_BI","detectBI onFailed");
-        }
-    };
+//    private final IUsbCommadRsp iUsbCommadRspBI = new IUsbCommadRsp.Stub(){
+//        @Override
+//        public void onSuccess(String s) throws RemoteException {
+//            Log.e("DEBUG_BI","detectBI onSuccess");
+//            runnableForSensor= new Runnable() {
+//                public void run() {
+//                   // detectBI();
+//                    handlerForSensor.postDelayed(this, 100);
+//                }
+//            };
+//            handlerForSensor.post(runnableForSensor);
+//        }
+//        @Override
+//        public void onFailed(String s) throws RemoteException {
+//            Log.e("DEBUG_BI","detectBI onFailed");
+//        }
+//    };
 
-    private final IUsbCommadRsp iUsbCommadRspTracking = new IUsbCommadRsp.Stub(){
-        @Override
-        public void onSuccess(String s) throws RemoteException {}
-        @Override
-        public void onFailed(String s) throws RemoteException {}
-    };
+//    private final IUsbCommadRsp iUsbCommadRspTracking = new IUsbCommadRsp.Stub(){
+//        @Override
+//        public void onSuccess(String s) throws RemoteException {}
+//        @Override
+//        public void onFailed(String s) throws RemoteException {}
+//    };
 
     private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
         @Override
@@ -884,7 +885,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
                         }
                         else if (buddyGPTApplication.getSpeaking() && !mlKitIsDownloading) {
-                            Log.d(TAG, "Mouth touched3"); if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android") || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence") || !buddyGPTApplication.getAppIsListeningToTheQuestion() || buddyGPTApplication.getParamFromFile("Processing_the_audio_sequence","BuddyGPT.properties").trim().equalsIgnoreCase("No")) {
+                            Log.d(TAG, "Mouth touched3 STT  "+buddyGPTApplication.getparam("STT")+" AUTRE "+buddyGPTApplication.getAppIsListeningToTheQuestion());
+                            if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android")
+                                    || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")
+                                    || !buddyGPTApplication.getAppIsListeningToTheQuestion())
+                            {
                                 BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                                 buddyGPTApplication.setStartRecording(false);
                                 buddyGPTApplication.setSpeaking(false);
@@ -1492,6 +1497,31 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
 
             }
+            if (message.contains("Session_ID_ERROR")){
+
+                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                    buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                    buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                } else {
+                         buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                                 .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
+                                 .addOnSuccessListener(new OnSuccessListener<String>() {
+                                     @Override
+                                     public void onSuccess(String translatedText) {
+                                         buddyGPTApplication.showInputDialog2(MainActivity.this, translatedText,"Attention !");
+                                     }
+                                 })
+                                 .addOnFailureListener(new OnFailureListener() {
+                                     @Override
+                                     public void onFailure(@NonNull Exception e) {
+                                         buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                                     }
+                                 });
+                     }
+
+
+            }
             else if (message.contains("getResponseF")) {
                 if (message.split(";SPLIT;")[1].equalsIgnoreCase("gpt")) {
                     gptResponse = message.split(";SPLIT;")[2];
@@ -1655,7 +1685,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     public void run() {
                         if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
                             isReTrack = true;
-                            initTracking();
+                            //initTracking();
                         }
                     }
                 });
@@ -1691,8 +1721,9 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 //        commande = new Commande( this );
 
         //init config file
-        buddyGPTApplication.pushFiles("teamchat.json","storage/emulated/0/Configs/Users/Default/Companion/Domains");
+       // buddyGPTApplication.pushFiles("teamchat.json","storage/emulated/0/Configs/Users/Default/Companion/Domains");
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
+        Log.i(TAG, "init: isFirstLaunch "+isFirstLaunch);
         if(isFirstLaunch)
           buddyGPTApplication.initTeamGPTSettings();
 
@@ -2613,61 +2644,61 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     };
 
-    private void initTracking(){
-        Log.d(TAG_TRACKING, "initTracking(isReTrack="+isReTrack+")");
-
-        if(!isFirstLaunch && !isReTrack){
-            try{
-                if(BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
-                    BuddySDK.USB.enableWheels(true, iUsbCommadRspTracking);
-                }
-                if(BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
-                    BuddySDK.USB.enableYesMove(true, iUsbCommadRspTracking);
-                }
-                if(BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
-                    BuddySDK.USB.enableNoMove(true, iUsbCommadRspTracking);
-                }
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
-        }
-
-        if(!isReTrack){
-            //récupération des paramètres TRACKING du fichier de config:
-            TRACKING_WATCH = buddyGPTApplication.getParamFromFile("TRACKING_watch", "BuddyGPT.properties");
-            TRACKING_DELAY_NO_WATCH = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_nowatch", "BuddyGPT.properties"));
-            TRACKING_DELAY_NO_TRACK = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_notrack", "BuddyGPT.properties"));
-            TRACKING_DELAY_START_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_startlisten", "BuddyGPT.properties"));
-            TRACKING_DELAY_STOP_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_stoplisten", "BuddyGPT.properties"));
-            TRACKING_REGARD_CENTER = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_regard_center", "BuddyGPT.properties"));
-            TRACKING_DELAY_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_welcome", "BuddyGPT.properties"));
-            TRACKING_DURATION_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_duration_welcome", "BuddyGPT.properties"));
-            TRACKING_WELCOME_FR = buddyGPTApplication.getParamFromFile("TRACKING_welcome_FR", "BuddyGPT.properties");
-            TRACKING_WELCOME_EN = buddyGPTApplication.getParamFromFile("TRACKING_welcome_EN", "BuddyGPT.properties");
-//            TRACKING_WELCOME_MODEL = buddyGPTApplication.getParamFromFile("TRACKING_welcome_model", "BuddyGPT.properties");
-//            TRACKING_WELCOME_TEMPERATURE = Double.parseDouble(buddyGPTApplication.getParamFromFile("TRACKING_welcome_temperature", "BuddyGPT.properties"));
-//            TRACKING_WELCOME_PROMPT_FR = buddyGPTApplication.getParamFromFile("TRACKING_welcome_prompt_FR", "BuddyGPT.properties");
-//            TRACKING_WELCOME_PROMPT_EN = buddyGPTApplication.getParamFromFile("TRACKING_welcome_prompt_EN", "BuddyGPT.properties");
-//            TRACKING_WELCOME_MAX_TOKEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_welcome_maxtoken", "BuddyGPT.properties"));
-            try {
-                TRACKING_TIMEOUT=Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_timeout","BuddyGPT.properties"));
-            }
-            catch (Exception e){
-                TRACKING_TIMEOUT=0;
-            }
-
-        }
-
-        if(isFirstLaunch && !isReTrack && Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
-            sendInvitationPending = true;
-            isFirstInvitaion = true;
-            startTracking();
-        }
-        else {
-            startTracking();
-        }
-    }
+//    private void initTracking(){
+//        Log.d(TAG_TRACKING, "initTracking(isReTrack="+isReTrack+")");
+//
+//        if(!isFirstLaunch && !isReTrack){
+//            try{
+//                if(BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
+//                    BuddySDK.USB.enableWheels(true, iUsbCommadRspTracking);
+//                }
+//                if(BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
+//                    BuddySDK.USB.enableYesMove(true, iUsbCommadRspTracking);
+//                }
+//                if(BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
+//                    BuddySDK.USB.enableNoMove(true, iUsbCommadRspTracking);
+//                }
+//            }
+//            catch (Exception e){
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        if(!isReTrack){
+//            //récupération des paramètres TRACKING du fichier de config:
+//            TRACKING_WATCH = buddyGPTApplication.getParamFromFile("TRACKING_watch", "BuddyGPT.properties");
+//            TRACKING_DELAY_NO_WATCH = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_nowatch", "BuddyGPT.properties"));
+//            TRACKING_DELAY_NO_TRACK = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_notrack", "BuddyGPT.properties"));
+//            TRACKING_DELAY_START_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_startlisten", "BuddyGPT.properties"));
+//            TRACKING_DELAY_STOP_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_stoplisten", "BuddyGPT.properties"));
+//            TRACKING_REGARD_CENTER = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_regard_center", "BuddyGPT.properties"));
+//            TRACKING_DELAY_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_welcome", "BuddyGPT.properties"));
+//            TRACKING_DURATION_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_duration_welcome", "BuddyGPT.properties"));
+//            TRACKING_WELCOME_FR = buddyGPTApplication.getParamFromFile("TRACKING_welcome_FR", "BuddyGPT.properties");
+//            TRACKING_WELCOME_EN = buddyGPTApplication.getParamFromFile("TRACKING_welcome_EN", "BuddyGPT.properties");
+////            TRACKING_WELCOME_MODEL = buddyGPTApplication.getParamFromFile("TRACKING_welcome_model", "BuddyGPT.properties");
+////            TRACKING_WELCOME_TEMPERATURE = Double.parseDouble(buddyGPTApplication.getParamFromFile("TRACKING_welcome_temperature", "BuddyGPT.properties"));
+////            TRACKING_WELCOME_PROMPT_FR = buddyGPTApplication.getParamFromFile("TRACKING_welcome_prompt_FR", "BuddyGPT.properties");
+////            TRACKING_WELCOME_PROMPT_EN = buddyGPTApplication.getParamFromFile("TRACKING_welcome_prompt_EN", "BuddyGPT.properties");
+////            TRACKING_WELCOME_MAX_TOKEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_welcome_maxtoken", "BuddyGPT.properties"));
+//            try {
+//                TRACKING_TIMEOUT=Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_timeout","BuddyGPT.properties"));
+//            }
+//            catch (Exception e){
+//                TRACKING_TIMEOUT=0;
+//            }
+//
+//        }
+//
+//        if(isFirstLaunch && !isReTrack && Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
+//            sendInvitationPending = true;
+//            isFirstInvitaion = true;
+//            startTracking();
+//        }
+//        else {
+//            startTracking();
+//        }
+//    }
 
     private void startTracking(){
         Log.d(TAG_TRACKING, "startTracking(isReTrack="+isReTrack+")");
@@ -2872,7 +2903,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 poseTracking.lookAtCenter();
                 poseTracking.centerHead();
                 isReTrack = true;
-                initTracking();
+             //   initTracking();
             }
         });
     }
@@ -2943,7 +2974,9 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                         handlerTTSError.removeCallbacksAndMessages(null);
                     }
                     if (buddyGPTApplication.getSpeaking() && !mlKitIsDownloading) {
-                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android") || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence") || !buddyGPTApplication.getAppIsListeningToTheQuestion() || buddyGPTApplication.getParamFromFile("Processing_the_audio_sequence","BuddyGPT.properties").trim().equalsIgnoreCase("No")) {
+                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android")
+                                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")
+                                || !buddyGPTApplication.getAppIsListeningToTheQuestion()) {
                             BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                             buddyGPTApplication.setStartRecording(false);
                             buddyGPTApplication.setSpeaking(false);

@@ -3851,6 +3851,63 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
         });
     }
+    public void showInputDialog2(Activity activity, String message, String attention) {
+
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(() -> {
+            if (dialog != null && dialog.isShowing()) dialog.dismiss();
+
+            Log.w("BuddyGPT", "Dialog shown: ");
+            // Create a new Dialog and remove default title for a more modern look
+            dialog = new Dialog(activity);
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+            // Create a LinearLayout with improved styling
+            LinearLayout layout = new LinearLayout(activity);
+            layout.setOrientation(LinearLayout.VERTICAL);
+            layout.setPadding(60, 50, 60, 50);  // Updated padding for better spacing
+            layout.setBackgroundColor(Color.parseColor("#000000")); // Background color
+            layout.setGravity(Gravity.START);  // Left-align the main layout content
+
+            // Set rounded corners for the dialog layout
+            GradientDrawable layoutDrawable = new GradientDrawable();
+            layoutDrawable.setColor(Color.WHITE);
+            layoutDrawable.setCornerRadius(30);  // Rounded corners for the dialog
+            layout.setBackground(layoutDrawable);
+
+            // Create and style the TextView for the message
+            TextView textView = new TextView(activity);
+            textView.setText(attention + "\n" + message);
+            textView.setTextColor(Color.BLACK);
+            textView.setTextSize(18);  // Adjusted text size
+            textView.setPadding(0, 0, 0, 20);  // Bottom padding for spacing
+            textView.setGravity(Gravity.START);  // Align text to the left
+
+            // Add the TextView to the layout
+            layout.addView(textView);
+
+            // Set the layout as the content view for the dialog
+            dialog.setContentView(layout);
+
+            // Adjust dialog width to 60% of the screen width
+            WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+            params.width = (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.6);
+            dialog.getWindow().setAttributes(params);
+            dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+
+            // Display the dialog
+            try {
+                dialog.show();
+            } catch (WindowManager.BadTokenException e) {
+                Log.w("BuddyGPT", "Dialog could not be shown: " + e.getMessage());
+            }
+
+            // Auto-dismiss the dialog after 30 seconds
+            handler.postDelayed(() -> {
+                if (dialog != null && dialog.isShowing()) dialog.dismiss();
+            }, 30000);  // 30000 milliseconds = 30 seconds
+        });
+    }
 
 
     public boolean isAppInstalled(Context context, String packageName) {

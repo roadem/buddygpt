@@ -34,6 +34,7 @@ import com.bfr.buddy.utils.events.EventItem;
 import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
 import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddysdk.BuddySDK;
+import com.google.android.exoplayer2.C;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
@@ -436,7 +437,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             Log.e("MEHDII","buddyGPTApplication.getAppIsListeningToTheQuestion()----------------------"+ buddyGPTApplication.getAppIsListeningToTheQuestion());
             if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android")
                     || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")
-                    || !buddyGPTApplication.getAppIsListeningToTheQuestion() || buddyGPTApplication.getParamFromFile("Processing_the_audio_sequence","BuddyGPT.properties").trim().equalsIgnoreCase("No")) {
+                    || !buddyGPTApplication.getAppIsListeningToTheQuestion() ) {
                 click = 1;
                 isListeningFreeSpeech = false;
                 isWaitingForResponse = false;
@@ -989,6 +990,31 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 Replica[] mDataset = listRepGlobale.toArray(new Replica[0]);
                 adapter.setData(mDataset);
                 scroll();
+            }
+            if (message.contains("Session_ID_ERROR")){
+
+                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                    buddyGPTApplication.showInputDialog2(ChatWindow.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                    buddyGPTApplication.showInputDialog2(ChatWindow.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                } else {
+                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
+                            .addOnSuccessListener(new OnSuccessListener<String>() {
+                                @Override
+                                public void onSuccess(String translatedText) {
+                                    buddyGPTApplication.showInputDialog2(ChatWindow.this, translatedText,"Attention !");
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    buddyGPTApplication.showInputDialog2(ChatWindow.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                                }
+                            });
+                }
+
+
             }
             else if (message.contains("ErrorSending")){
                 runOnUiThread(new Runnable() {

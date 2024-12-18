@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -161,6 +162,12 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
                                 buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
                                 buddyGPTApplication.setparam("Modele_gemini",parameters.getModeleGemini());
+                                if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
+                                    && buddyGPTApplication.getparam("STT").equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("STT", "Android");
+                                if(buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local")
+                                        && buddyGPTApplication.getparam("TTS").equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("TTS", "ReadSpeaker");
                             }
                         }
 
@@ -663,21 +670,27 @@ public class ResponseFromTeamGPT{
                         if (jsonObject.has("session_id")) {
                             String sessionId = jsonObject.getString("session_id");
                             Log.i(TAG_STREAM, "handleStreamingResponse: session "+jsonObject.getString("session_id"));
-
-                            if (buddyGPTApplication.getparam("session_id").isEmpty()) {
-                                buddyGPTApplication.setparam("session_id", sessionId);
-                            } else if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
-
+                            if(sessionId.equalsIgnoreCase("NAN")){
                                 mainHandler.post(() -> {
-                                    buddyGPTApplication.notifyObservers("Session_ID_Changed");
+                                    buddyGPTApplication.notifyObservers("Session_ID_ERROR");
                                 });
-                                buddyGPTApplication.setparam("session_id", sessionId);
-                                String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
-                                existingHistoryArray = new JSONArray(jsonArrayString);
-                                JSONObject newSessionObject = new JSONObject();
-                                newSessionObject.put("Session", "New");
-                                existingHistoryArray.put(newSessionObject);
-                                buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
+                                buddyGPTApplication.setparam("session_id","");
+                            }else{
+                                if (buddyGPTApplication.getparam("session_id").isEmpty()) {
+                                    buddyGPTApplication.setparam("session_id", sessionId);
+                                } else if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
+
+                                    mainHandler.post(() -> {
+                                        buddyGPTApplication.notifyObservers("Session_ID_Changed");
+                                    });
+                                    buddyGPTApplication.setparam("session_id", sessionId);
+                                    String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
+                                    existingHistoryArray = new JSONArray(jsonArrayString);
+                                    JSONObject newSessionObject = new JSONObject();
+                                    newSessionObject.put("Session", "New");
+                                    existingHistoryArray.put(newSessionObject);
+                                    buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
+                                }
                             }
 
                         }
@@ -783,7 +796,9 @@ public class ResponseFromTeamGPT{
                                                     String languageCode = language.getLanguageTag();
                                                     float confidence = language.getConfidence();
                                                     Log.i("MRA_idetifyLanguage", "Language of : [ " + phraseToPronounce + " ] is : " + languageCode + ", Confidence: " + confidence);
-                                                    if (buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties")!=null && !buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties").trim().equals("")&& !buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties").trim().equals("0")) {
+                                                    if (buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties")!=null &&
+                                                            !buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties").trim().equals("")&&
+                                                            !buddyGPTApplication.getParamFromFile("Detection_confidence_rate","BuddyGPT.properties").trim().equals("0")) {
                                                         if (Integer.parseInt(buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties")) <= (confidence * 100)) {
                                                             buddyGPTApplication.setLanguageDetected(languageCode.trim());
                                                             pronouncePhrase(phraseToPronounce);
@@ -918,7 +933,9 @@ public class ResponseFromTeamGPT{
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
-                        String errorTXT= new Date().toString()+", OpenAIERROR,ERROR CODE= "+response.code()+", ERROR Body{ message= "+message+", type= "+type+", param= "+param+", code= "+code+"}"+System.getProperty("line.separator");
+                        String errorTXT= new Date().toString()+", OpenAIERROR,ERROR CODE= "+response.code()
+                                +", ERROR Body{ message= "+message+", type= "+type+", param= "+param+", code= "+code+"}"
+                                +System.getProperty("line.separator");
                         File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
                         try {
                             FileWriter fileWriter = new FileWriter(file2,true);
