@@ -3893,7 +3893,6 @@ public class BuddyGPTApplication extends BuddyApplication {
             WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
             params.width = (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.6);
             dialog.getWindow().setAttributes(params);
-            dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
 
             // Display the dialog
             try {
@@ -3901,7 +3900,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             } catch (WindowManager.BadTokenException e) {
                 Log.w("BuddyGPT", "Dialog could not be shown: " + e.getMessage());
             }
-
+            dialog.setCanceledOnTouchOutside(true);
             // Auto-dismiss the dialog after 30 seconds
             handler.postDelayed(() -> {
                 if (dialog != null && dialog.isShowing()) dialog.dismiss();

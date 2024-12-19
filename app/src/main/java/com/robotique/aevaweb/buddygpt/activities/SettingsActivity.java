@@ -160,6 +160,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private String visibilityString = "switch_visibility";
     private String emotionString = "switch_emotion";
     private String detectionLanguageString = "Detection_de_langue";
+    private ResponseFromTeamGPT responseFromTeamGPT;
 //    private String modeStreamString = "Stream_mode";
 //    private String commandeString = "Commands";
     private String langueFR ="Français";
@@ -443,11 +444,13 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 //            buddyGPTApplication.setparam(modeStreamString,String.valueOf(b));
 //            set.setSwitchModeStream(String.valueOf(b));
 //        });
+        if(responseFromTeamGPT != null){
+            responseFromTeamGPT.reset();
+        }
+        responseFromTeamGPT=new ResponseFromTeamGPT(buddyGPTApplication);
         if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
             buddyGPTApplication.getResponseFromTeamGPT().reset();
-
-        if(buddyGPTApplication.getResponseFromTeamGPT()==null)
-            buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
+        buddyGPTApplication.setResponseFromTeamGPT(responseFromTeamGPT);
         /**
          *  Gestion du switch commande
          */
@@ -1040,7 +1043,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         Log.i("TAG", "run: getParameters 32");
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null " );
-                            //// TODO: 18/12/2024  
+                           // buddyGPTApplication.getResponseFromTeamGPT().reset();
+
                             buddyGPTApplication.getResponseFromTeamGPT().getParameters();
                         }
                         refresh(1);
