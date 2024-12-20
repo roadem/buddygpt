@@ -190,9 +190,9 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             buddyGPTApplication.notifyObservers("ChatDestroy");
 
         }
-        if(!isClickedBtnCloseChat){
+
             if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
-        }
+
         Log.d(TAG," --- onDestroy() ---");
         super.onDestroy();
     }

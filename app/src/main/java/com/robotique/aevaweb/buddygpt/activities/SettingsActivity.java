@@ -1429,9 +1429,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             buddyGPTApplication.setparam("firstLaunch","true");
             buddyGPTApplication.notifyObservers("ChatDestroy");
         }
-        if(!isClickedBtnCloseSettings){
-            if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
-        }
+
+        if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
+
 
         try {
             unregisterReceiver(wifiBroadCastReceiver);
