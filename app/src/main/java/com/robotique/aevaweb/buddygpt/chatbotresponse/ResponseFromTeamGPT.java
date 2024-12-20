@@ -498,6 +498,10 @@ public class ResponseFromTeamGPT{
         saveRequestToFile(payload);
         updateMessageHistory(question);
         // Envoyez la requête avec endpoint et clé.
+        Log.i("HOU_DEBUG", "sendPutRequestStream: baseUrl "+baseUrl);
+        Log.i("HOU_DEBUG", "sendPutRequestStream: endpoint "+endpoint);
+        Log.i("HOU_DEBUG", "sendPutRequestStream: gpt key "+gptKey);
+        Log.i("HOU_DEBUG", "sendPutRequestStream: payload session id "+payload.getSessionId());
         Call<ResponseBody> call = apiService.sendRequestTeamGPT(baseUrl+""+endpoint, gptKey, payload);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
@@ -514,6 +518,10 @@ public class ResponseFromTeamGPT{
                 } else if (response.code() == 400) {
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                }
+                else if (response.code() == 500) {
+                    buddyGPTApplication.notifyObservers("Session_ID_ERROR");
+                    buddyGPTApplication.setparam("session_id","");
                 }
             }
 
@@ -643,6 +651,8 @@ public class ResponseFromTeamGPT{
             while ((line = reader.readLine()) != null && reader.readLine().equalsIgnoreCase("") && !isReset && !isError) {
                 try {
 
+                    Log.w("HOU_DEBUG", "Received line: " + line);
+
                     if (line.trim().isEmpty()) {}
                     else if (line.contains("\"is_finished\": true,")) formattedContent.append(line);
                     else{
@@ -670,12 +680,7 @@ public class ResponseFromTeamGPT{
                         if (jsonObject.has("session_id")) {
                             String sessionId = jsonObject.getString("session_id");
                             Log.i(TAG_STREAM, "handleStreamingResponse: session "+jsonObject.getString("session_id"));
-                            if(sessionId.equalsIgnoreCase("NAN")){
-                                mainHandler.post(() -> {
-                                    buddyGPTApplication.notifyObservers("Session_ID_ERROR");
-                                });
-                                buddyGPTApplication.setparam("session_id","");
-                            }else{
+
                                 if (buddyGPTApplication.getparam("session_id").isEmpty()) {
                                     buddyGPTApplication.setparam("session_id", sessionId);
                                 } else if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
@@ -691,7 +696,7 @@ public class ResponseFromTeamGPT{
                                     existingHistoryArray.put(newSessionObject);
                                     buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
                                 }
-                            }
+
 
                         }
                         isSessionIdProcessed = true;
