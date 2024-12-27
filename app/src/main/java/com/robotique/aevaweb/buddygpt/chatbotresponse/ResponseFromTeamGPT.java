@@ -681,9 +681,7 @@ public class ResponseFromTeamGPT{
                             String sessionId = jsonObject.getString("session_id");
                             Log.i(TAG_STREAM, "handleStreamingResponse: session "+jsonObject.getString("session_id"));
 
-                                if (buddyGPTApplication.getparam("session_id").isEmpty()) {
-                                    buddyGPTApplication.setparam("session_id", sessionId);
-                                } else if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
+                                 if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
 
                                     mainHandler.post(() -> {
                                         buddyGPTApplication.notifyObservers("Session_ID_Changed");

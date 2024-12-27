@@ -1699,11 +1699,10 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
        // buddyGPTApplication.pushFiles("teamchat.json","storage/emulated/0/Configs/Users/Default/Companion/Domains");
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
         Log.i(TAG, "init: isFirstLaunch "+isFirstLaunch);
-        if(isFirstLaunch)
-          buddyGPTApplication.initTeamGPTSettings();
-
-
-
+        if(isFirstLaunch) {
+            buddyGPTApplication.initTeamGPTSettings();
+            buddyGPTApplication.setparam("session_id","");
+        }
     }
 
     private void getData(){
