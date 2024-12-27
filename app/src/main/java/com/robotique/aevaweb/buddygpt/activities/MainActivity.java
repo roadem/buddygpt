@@ -1542,31 +1542,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     });
                 }
             }
-            else if(message.contains("Session_ID_Changed")){
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                    buddyGPTApplication.showToast( buddyGPTApplication.getString(R.string.toast_teamgpt_session_en));
-                }
-                else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    buddyGPTApplication.showToast( buddyGPTApplication.getString(R.string.toast_teamgpt_session_fr));
-                }
-                else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_session_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    buddyGPTApplication.showToast( translatedText);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    buddyGPTApplication.showToast( buddyGPTApplication.getString(R.string.toast_teamgpt_session_en));
-                                }
-                            });
-                }
-            }
-
             else if (message.contains("playStoredResponse")){
                 if (!buddyGPTApplication.getStoredResponse().equals("")){
                     runOnUiThread(new Runnable() {
