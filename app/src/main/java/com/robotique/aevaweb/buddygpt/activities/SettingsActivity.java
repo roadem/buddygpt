@@ -1040,7 +1040,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         buddyGPTApplication.setparam("Modele_gemini","");
                         refresh(0);
                     }else{
-                        Log.i("TAG", "run: getParameters 32");
+                        Log.i("TAG", "run: getParameters else");
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null " );
                            // buddyGPTApplication.getResponseFromTeamGPT().reset();
@@ -1099,6 +1099,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             @Override
             public void run() {
                 if (state==1){// refresh with new values
+                    buddyGPTApplication.setparam("session_id","");
                     if(buddyGPTApplication.getLangue().getNom().equals("Anglais")){
                         menu_header_editText.setText(buddyGPTApplication.getparam(header));
                     }
@@ -1123,7 +1124,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     String model ="";
                     if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("openai"))
                         model=buddyGPTApplication.getparam("Modele_Openai");
-                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("CustomGPT"))
+                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("customgpt"))
                         model=buddyGPTApplication.getparam("CustomGPT_model");
                     if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("mistral"))
                         model=buddyGPTApplication.getparam("Modele_Mistral");
