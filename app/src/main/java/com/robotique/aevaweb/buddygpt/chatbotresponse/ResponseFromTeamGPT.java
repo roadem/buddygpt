@@ -167,11 +167,11 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
                                 buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
                                 buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());
-                                buddyGPTApplication.setparam("IMEI_ID_Device","123456789");//parameters.getImeiDevice());
+                                buddyGPTApplication.setparam("IMEI_ID_Device",parameters.getImeiDevice());
                                 if(parameters.getIdCompte()!=null && !parameters.getIdCompte().equalsIgnoreCase(""))
-                                    buddyGPTApplication.setparam("IdCompte","123456789");//parameters.getIdCompte());
+                                    buddyGPTApplication.setparam("IdCompte",parameters.getIdCompte());
                                 else
-                                    buddyGPTApplication.setparam("IdCompte"," 123456789 ");
+                                    buddyGPTApplication.setparam("IdCompte"," _ ");
                                 buddyGPTApplication.setparam("Modele_gemini",parameters.getModeleGemini());
                                 if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
                                     && buddyGPTApplication.getparam("STT").equalsIgnoreCase(""))
