@@ -624,8 +624,14 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     }
     public String writeMail(){
+        String firstLine;
         // Build the email content
-        StringBuilder question = new StringBuilder("Serveur: TeamGPT<br>");
+        if(!buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("")||!buddyGPTApplication.getparam("NomCompte").equalsIgnoreCase("") )
+            firstLine=buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel();
+        else
+            firstLine="_";
+
+        StringBuilder question = new StringBuilder(firstLine);
         for (Replica replica : listRepGlobale) {
             if(replica.getType().equalsIgnoreCase("Session"))
                 question.append("<br> _____________________ New Session _____________________");

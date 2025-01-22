@@ -101,7 +101,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private TextView menu_option_mode_stream_textView;
     private TextView menu_header_textView;
     private TextView menu_apiKey_textView;
-    private TextView menu_email_textView;
     private TextView menu_name_textView;
 
 
@@ -125,8 +124,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private EditText menu_option_listening_attempt_editText;
     private TextView menu_header_editText;
     private EditText menu_apiKey_editText;
-    private TextView menu_emailText;
+
     private TextView menu_nameText;
+    private TextView copyRight;
+    private TextView identifiers;
 
 
 
@@ -235,7 +236,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         menu_option_detectLanguage_textView = findViewById(R.id.menu_option_language_detection_textView);
        // menu_option_mode_stream_textView = findViewById(R.id.menu_option_mode_stream_textView);
         menu_apiKey_textView = findViewById(R.id.api_key_txt);
-        menu_email_textView = findViewById(R.id.email_txt);
         menu_name_textView = findViewById(R.id.name_txt);
         menu_header_textView = findViewById(R.id.header_txt);
         menu_option_langue_spinner = findViewById(R.id.menu_option_langue_spinner);
@@ -247,8 +247,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 //        menu_option_listening_duration_editText = findViewById(R.id.menu_option_listening_duration_editText);
 //        menu_option_listening_attempt_editText = findViewById(R.id.menu_option_listening_attempt_editText);
         menu_apiKey_editText = findViewById(R.id.api_key_editText);
-        menu_emailText = findViewById(R.id.user_email);
+
         menu_nameText = findViewById(R.id.user_name);
+        copyRight = findViewById(R.id.copyright_texte);
+        identifiers = findViewById(R.id.identifiers_texte);
         menu_header_editText = findViewById(R.id.header_editText);
 
         volume_seekbar=findViewById(R.id.volume_seekbar);
@@ -332,13 +334,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         //menu_option_chatbotmodel_lyt.setVisibility(View.VISIBLE);
 
         handlerChatbot();
-
-
-        /**
-         *  Gestion du projectID
-         */
-        handlerProjectID();
-
 
         /**
          *  Gestion du seekbar de volume de parole
@@ -482,19 +477,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
         handlerSTT();
         handlerTTS();
-        handlerName();
-        handlerEmail();
-        /**
-         *  Gestion de l'affichage du bouton permettant d'accéder à l'interface de consommation d'openai
-         */
-//        String show_openAI_prices = buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties");
-//        if(show_openAI_prices != null && show_openAI_prices.trim().equalsIgnoreCase("yes")){
-//            dollar_icon.setVisibility(View.VISIBLE);
-//        }
-//        else{
-//            dollar_icon.setVisibility(View.INVISIBLE);
-//        }
-
+        handlerSupport();
+        handlerNameAndEmail();
         /**
          * Gestion Tracking
          */
@@ -712,8 +696,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
 
         Log.i(TAG, "handlerChatbot: HOU"+ buddyGPTApplication.getparam("SelectedChatbot"));
-        menu_option_chatbot_spinner.setText(buddyGPTApplication.getparam("SelectedChatbot")+" "+buddyGPTApplication.getparam("Modele_Openai"));
-//    if (buddyGPTApplication.getparam("SelectedChatbot").equals("openai"))
+
+        menu_option_chatbot_spinner.setText(buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel());//    if (buddyGPTApplication.getparam("SelectedChatbot").equals("openai"))
 //        menu_option_chatbotmodel_spinner.setText(buddyGPTApplication.getparam("Modele_Openai"));
  }
     private void handlerSTT() {
@@ -811,19 +795,19 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             }
         });
     }
-    private void handlerName(){
+    private void handlerNameAndEmail(){
 
         Log.i(TAG, "handlerName: HOU"+ buddyGPTApplication.getparam("NomCompte"));
-        menu_nameText.setText(buddyGPTApplication.getparam("NomCompte"));
+        menu_nameText.setText(buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("Email"));
 
     }
-    private void handlerEmail(){
+    private void handlerSupport(){
 
-        Log.i(TAG, "handlerEmail: HOU"+ buddyGPTApplication.getparam("Email"));
-        menu_emailText.setText(buddyGPTApplication.getparam("Email"));
+            Log.i(TAG, "handlerSupport: HOU"+ buddyGPTApplication.getparam("email_support"));
+            copyRight.setText(getString(R.string.copyright)+" "+buddyGPTApplication.getparam("email_support"));
+            identifiers.setText(buddyGPTApplication.getparam("IdCompte")+" / "+buddyGPTApplication.getparam("IMEI_ID_Device"));
+        }
 
-
-    }
     private void handlerSpeakVolume() {
         volume_seekbar_value.setText(buddyGPTApplication.getparam(speakVolume)+"%");
         volume_seekbar.setProgress(Integer.parseInt(buddyGPTApplication.getparam(speakVolume)));
@@ -902,11 +886,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 //        });
     }
 
-    private void handlerProjectID() {
-
-
-    }
-
     private void handlerListeningDuration() {
         if(buddyGPTApplication.getparam(listeningDuration).equals("")){
             buddyGPTApplication.setparam(listeningDuration,"30");
@@ -956,6 +935,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
 
     }
+
     private void handlerHeader() {
         menu_header_editText.setFocusable(false);
         menu_header_editText.setClickable(false);
@@ -963,21 +943,18 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
 
                 menu_header_editText.setText(buddyGPTApplication.getparam(header));
-                set.setHeader(buddyGPTApplication.getparam(header));
-                setting.setHeader(buddyGPTApplication.getparam(header));
+
             }
             else if(buddyGPTApplication.getLangue().getNom().equals("Français")){
                 Log.i(TAG, "handlerHeader: HOU 2"+ buddyGPTApplication.getparam(entete));
                 menu_header_editText.setText(buddyGPTApplication.getparam(entete));
-                set.setHeader(buddyGPTApplication.getparam(entete));
-                setting.setHeader(buddyGPTApplication.getparam(entete));
+
             }
 
             else{
                 Log.i(TAG, "handlerHeader: HOU 3"+ buddyGPTApplication.getparam(header));
                 translateAndSetTextView(0,menu_header_editText,buddyGPTApplication.getparam(header));
-                set.setHeader(menu_header_editText.getText().toString());
-                setting.setHeader(menu_header_editText.getText().toString());
+
             }
     }
     private void handlerApiKey() {
@@ -1020,7 +997,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     Log.i("TAG", "run: menu_apiKey_editText"+menu_apiKey_editText.getText().toString());
 
                     if(menu_apiKey_editText.getText().toString().equals("")){
-                        Log.i("TAG", "run: getParameters 31");
+                        Log.i("TAG", "run: getParameters");
+                        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
+                            buddyGPTApplication.setparam("Mail_Destination","");
+                        }
                         buddyGPTApplication.setparam("NomCompte",  "");
                         buddyGPTApplication.setparam("SelectedChatbot", "");
                         buddyGPTApplication.setparam("STT-TeamGPT", "");
@@ -1038,6 +1018,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         buddyGPTApplication.setparam("Modele_Mistral","");
                         buddyGPTApplication.setparam("Modele_Openai","");
                         buddyGPTApplication.setparam("Modele_gemini","");
+                        buddyGPTApplication.setparam("IMEI_ID_Device","_");
+                        buddyGPTApplication.setparam("IdCompte","_");
+                        buddyGPTApplication.setparam("email_support","_");
                         refresh(0);
                     }else{
                         Log.i("TAG", "run: getParameters else");
@@ -1063,6 +1046,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
                     if(textView.getText().toString().equals("")){
                         Log.i("TAG", "run: getParameters 31");
+                        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
+                            buddyGPTApplication.setparam("Mail_Destination","");
+                        }
                         buddyGPTApplication.setparam("NomCompte",  "");
                         buddyGPTApplication.setparam("SelectedChatbot", "");
                         buddyGPTApplication.setparam("STT-TeamGPT", "");
@@ -1080,6 +1066,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         buddyGPTApplication.setparam("Modele_Mistral","");
                         buddyGPTApplication.setparam("Modele_Openai","");
                         buddyGPTApplication.setparam("Modele_gemini","");
+                        buddyGPTApplication.setparam("IMEI_ID_Device","_");
+                        buddyGPTApplication.setparam("IdCompte","_");
+                        buddyGPTApplication.setparam("email_support","_");
                         refresh(0);
                     }else{
                         Log.i("TAG", "run: getParameters 32");
@@ -1121,19 +1110,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     else if(buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase(""))
                         menu_option_tts_lyt.setVisibility(View.GONE);
 
-                    String model ="";
-                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("openai"))
-                        model=buddyGPTApplication.getparam("Modele_Openai");
-                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("customgpt"))
-                        model=buddyGPTApplication.getparam("CustomGPT_model");
-                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("mistral"))
-                        model=buddyGPTApplication.getparam("Modele_Mistral");
-                    if(buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("gemini"))
-                        model=buddyGPTApplication.getparam("Modele_gemini");
-                    menu_option_chatbot_spinner.setText(buddyGPTApplication.getparam("SelectedChatbot") +" "+ model);
+                    menu_option_chatbot_spinner.setText(buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel());
                     // menu_option_chatbotmodel_spinner.setText(buddyGPTApplication.getparam("Modele_Openai"));
-                    menu_nameText.setText(buddyGPTApplication.getparam("NomCompte"));
-                    menu_emailText.setText(buddyGPTApplication.getparam("Email"));
+                    menu_nameText.setText(buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("Email"));
+                    copyRight.setText(getString(R.string.copyright)+" "+buddyGPTApplication.getparam("email_support"));
+                    identifiers.setText(buddyGPTApplication.getparam("IdCompte")+" "+buddyGPTApplication.getparam("IMEI_ID_Device"));
                     // switchModeStream.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(modeStreamString)));
                 }else{// refresh with null
                         menu_header_editText.setText("");
@@ -1141,7 +1122,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         menu_option_tts_lyt.setVisibility(View.GONE);
                         menu_option_chatbot_spinner.setText("");
                         menu_nameText.setText("");
-                        menu_emailText.setText("");
+                        copyRight.setText(getString(R.string.copyright));
+                        identifiers.setText("");
+
                 }
 
             }
@@ -1162,7 +1145,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             menu_option_detectLanguage_textView.setText(R.string.menu_option_detectionLanguage_en);
             //menu_option_mode_stream_textView.setText(R.string.menu_option_mode_stream_en);
             menu_apiKey_textView.setText(R.string.menu_api_key_en);
-            menu_email_textView.setText(R.string.menu_email_en);
             menu_name_textView.setText(R.string.menu_name_en);
             menu_header_textView.setText(R.string.menu_header_en);
 //            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_en);
@@ -1190,7 +1172,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             menu_option_detectLanguage_textView.setText(R.string.menu_option_detectionLanguage_fr);
 //            menu_option_mode_stream_textView.setText(R.string.menu_option_mode_stream_fr);
             menu_apiKey_textView.setText(R.string.menu_api_key_fr);
-            menu_email_textView.setText(R.string.menu_email_fr);
             menu_name_textView.setText(R.string.menu_name_fr);
             menu_header_textView.setText(R.string.menu_header_fr);
 
@@ -1203,76 +1184,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             //menu_option_tracking_invitation_chatGpt_textView.setText(R.string.menu_option_tracking_invitation_chatGpt_fr);
 
                 menu_header_editText.setText(buddyGPTApplication.getparam(entete));
-
-
-        }
-        else if(buddyGPTApplication.getLangue().getNom().equals("Espagnol")){
-            menu_title.setText(R.string.menu_title_es);
-           // menu_option_listening_duration_textView.setText(R.string.menu_option_listening_duration_es);
-            //menu_option_commande_textView.setText(R.string.menu_option_commande_es);
-           // menu_option_listening_attempt_textView.setText(R.string.menu_option_listening_attempt_es);
-            menu_option_langue_textView.setText(R.string.menu_option_langue_es);
-            menu_option_stt_textView.setText(R.string.menu_option_stt_es);
-            menu_option_tts_textView.setText(R.string.menu_option_tts_es);
-            menu_option_chatbot_textView.setText(R.string.menu_option_chatbot_es);
-            //menu_option_chatbotmodel_textView.setText(R.string.menu_option_chatbotmodel_es);
-            menu_option_volume_textView.setText(R.string.menu_option_volume_es);
-            menu_option_affichage_textView.setText(R.string.menu_option_affichage_es);
-            menu_option_emotion_textView.setText(R.string.menu_option_emotion_es);
-            menu_option_detectLanguage_textView.setText(R.string.menu_option_detectionLanguage_es);
-            //menu_option_mode_stream_textView.setText(R.string.menu_option_mode_stream_es);
-            menu_apiKey_textView.setText(R.string.menu_api_key_es);
-            menu_email_textView.setText(R.string.menu_email_es);
-            menu_name_textView.setText(R.string.menu_name_es);
-            menu_header_textView.setText(R.string.menu_header_es);
-            translateAndSetTextView(0,menu_header_editText,buddyGPTApplication.getparam(header));
-//            menu_option_listening_duration_editText.setHint(R.string.menu_option_listening_duration_hint_es);
-//            menu_option_listening_attempt_editText.setHint(R.string.menu_option_listening_attempt_hint_es);
-//            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_es);
-//            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_es);
-//            menu_option_tracking_head_textView.setText(R.string.menu_option_tracking_head_es);
-//            menu_option_tracking_body_textView.setText(R.string.menu_option_tracking_body_es);
-//            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_es);
-//            menu_option_tracking_invitation_textView.setText(R.string.menu_option_tracking_invitation_es);
-           // menu_option_tracking_invitation_chatGpt_textView.setText(R.string.menu_option_tracking_invitation_chatGpt_es);
-
-
-                menu_header_editText.setText(buddyGPTApplication.getparam(cabecera));
-
-
-        }
-        else if(buddyGPTApplication.getLangue().getNom().equals("Allemand")){
-            menu_title.setText(R.string.menu_title_de);
-           // menu_option_listening_duration_textView.setText(R.string.menu_option_listening_duration_de);
-            //menu_option_commande_textView.setText(R.string.menu_option_commande_de);
-            //menu_option_listening_attempt_textView.setText(R.string.menu_option_listening_attempt_de);
-            menu_option_langue_textView.setText(R.string.menu_option_langue_de);
-            menu_option_stt_textView.setText(R.string.menu_option_stt_de);
-            menu_option_tts_textView.setText(R.string.menu_option_tts_de);
-            menu_option_chatbot_textView.setText(R.string.menu_option_chatbot_de);
-            //menu_option_chatbotmodel_textView.setText(R.string.menu_option_chatbotmodel_de);
-            menu_option_volume_textView.setText(R.string.menu_option_volume_de);
-            menu_option_affichage_textView.setText(R.string.menu_option_affichage_de);
-            menu_option_emotion_textView.setText(R.string.menu_option_emotion_de);
-            menu_option_detectLanguage_textView.setText(R.string.menu_option_detectionLanguage_de);
-            //menu_option_mode_stream_textView.setText(R.string.menu_option_mode_stream_de);
-            menu_apiKey_textView.setText(R.string.menu_api_key_de);
-            menu_email_textView.setText(R.string.menu_email_de);
-            menu_name_textView.setText(R.string.menu_name_de);
-            menu_header_textView.setText(R.string.menu_header_de);
-            translateAndSetTextView(0,menu_header_editText,buddyGPTApplication.getparam(header));
-//            menu_option_listening_duration_editText.setHint(R.string.menu_option_listening_duration_hint_de);
-//            menu_option_listening_attempt_editText.setHint(R.string.menu_option_listening_attempt_hint_de);
-//            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_de);
-//            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_de);
-//            menu_option_tracking_head_textView.setText(R.string.menu_option_tracking_head_de);
-//            menu_option_tracking_body_textView.setText(R.string.menu_option_tracking_body_de);
-//            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_de);
-//            menu_option_tracking_invitation_textView.setText(R.string.menu_option_tracking_invitation_de);
-           // menu_option_tracking_invitation_chatGpt_textView.setText(R.string.menu_option_tracking_invitation_chatGpt_de);
-
-
-                menu_header_editText.setText(buddyGPTApplication.getparam(kopfzeile));
 
 
         }
@@ -1293,7 +1204,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 translateAndSetTextView(R.string.menu_option_detectionLanguage_en,menu_option_detectLanguage_textView,"");
                // translateAndSetTextView(R.string.menu_option_mode_stream_en,menu_option_mode_stream_textView,"");
                 translateAndSetTextView(R.string.menu_api_key_en,menu_apiKey_textView,"");
-                translateAndSetTextView(R.string.menu_email_en,menu_email_textView,"");
                 translateAndSetTextView(R.string.menu_name_en,menu_name_textView,"");
                 translateAndSetTextView(R.string.menu_header_en,menu_header_textView,"");
                 translateAndSetTextView(0,menu_header_editText,buddyGPTApplication.getparam(header));
@@ -1487,6 +1397,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 volume_seekbar.setProgress(defaultVolume);
             }
                 if (message.contains("INVALID_TEAMGPT_KEY")){
+                    if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
+                        buddyGPTApplication.setparam("Mail_Destination","");
+                    }
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","TRUE");
                     buddyGPTApplication.setparam("NomCompte",  "");
                     buddyGPTApplication.setparam("SelectedChatbot", "");
@@ -1505,6 +1418,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     buddyGPTApplication.setparam("Modele_Mistral","");
                     buddyGPTApplication.setparam("Modele_Openai","");
                     buddyGPTApplication.setparam("Modele_gemini","");
+                    buddyGPTApplication.setparam("IMEI_ID_Device","_");
+                    buddyGPTApplication.setparam("IdCompte","_");
+                    buddyGPTApplication.setparam("email_support","_");
                     refresh(0);
                     Log.i(TAG, "afterTextChanged: invalid");
                     if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {

@@ -85,24 +85,42 @@
                         android:textStyle="bold"
                         android:layout_centerInParent="true"/>
 
-                    <TextView
-                        android:id="@+id/copyright_texte"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_alignParentEnd="true"
                         android:layout_centerInParent="true"
-                        android:layout_gravity="center_vertical|end"
-                        android:layout_marginStart="400dp"
-                        android:layout_marginEnd="0dp"
-                        android:text="@string/copyright"
-                        android:textColor="#000000"
-                        android:textSize="8sp" />
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/copyright_texte"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerInParent="true"
+                            android:layout_gravity="center_vertical|end"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginEnd="0dp"
+                            android:textColor="#000000"
+                            android:textSize="8sp" />
+                        <TextView
+                            android:id="@+id/identifiers_texte"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerInParent="true"
+                            android:layout_gravity="center_vertical|end"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginEnd="0dp"
+                            android:textColor="#000000"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+
 
                 </RelativeLayout>
                 <ScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_margin="20dp"
+                    android:layout_margin="10dp"
                     android:fillViewport="true"
                     android:orientation="vertical">
                     <LinearLayout
@@ -185,46 +203,53 @@
 <!--                                    android:textColorHint="#FFFFFF"/>-->
 <!--                            </LinearLayout>-->
 <!--                        </LinearLayout>-->
-                        <!-- option_langue-->
+
+                        <!-- Name/E-mail Section -->
                         <LinearLayout
-                            android:id="@+id/menu_option_langue_lyt"
+                            android:id="@+id/name"
                             android:layout_width="match_parent"
-                            android:layout_height="30dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal">
+
                             <TextView
-                                android:id="@+id/menu_option_langue_textView"
+                                android:id="@+id/name_txt"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
                                 android:layout_weight="2"
-                                android:text="@string/menu_option_langue_fr"
+                                android:gravity="center_vertical|top"
+                                android:text="@string/menu_name_fr"
                                 android:textColor="#000000" />
+
                             <LinearLayout
-                                android:id="@+id/menu_option_langue_spinner_lyt"
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:layout_gravity="end|center_vertical"
-                                android:gravity="center_vertical">
-                                <Spinner
-                                    android:id="@+id/menu_option_langue_spinner"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:gravity="center_vertical|top"
+                                android:background="@drawable/rounded_bg">
+
+                                <TextView
+                                    android:id="@+id/user_name"
                                     android:layout_width="match_parent"
                                     android:layout_height="match_parent"
-                                    android:layout_gravity="center_horizontal|center_vertical"
-                                    android:background="@drawable/custom_spinner"
-                                    android:dropDownVerticalOffset="8dp"
-                                    android:overlapAnchor="false"
-                                    android:popupBackground="@drawable/spinner_popup_custom"
-                                    android:spinnerMode="dropdown"
-                                    android:gravity="center_horizontal"/>
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_marginEnd="5dp"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:longClickable="true"
+                                    android:textIsSelectable="true"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF" />
                             </LinearLayout>
                         </LinearLayout>
                         <!-- option_Chatbot-->
                         <LinearLayout
                             android:id="@+id/menu_option_chatbot_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="30dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:visibility="gone"
@@ -234,16 +259,16 @@
                                 android:id="@+id/menu_option_chatbot_textView"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
+                                android:layout_gravity="center_vertical|top"
                                 android:layout_weight="2"
                                 android:text="@string/menu_option_chatbot_fr"
                                 android:textColor="#000000" />
 
                             <LinearLayout
                                 android:id="@+id/menu_option_chatbot_spinner_lyt"
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:background="@drawable/button_black_bg"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/rounded_bg"
                                 android:gravity="center_vertical"
                                 android:layout_gravity="end|center_vertical">
 
@@ -260,8 +285,87 @@
                                     android:textColorHint="#FFFFFF" />
                             </LinearLayout>
                         </LinearLayout>
+                        <!-- Entete -->
+                        <LinearLayout
+                            android:id="@+id/header"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/header_txt"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_header_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:layout_width="400dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/rounded_bg">
+                                <TextView
+                                    android:id="@+id/header_editText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:textAlignment="center"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_marginEnd="5dp"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:inputType="textMultiLine"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF"/>
+                            </LinearLayout>
+                        </LinearLayout>
 
-
+                        <!-- Ligne de séparation -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="5dp"
+                            android:background="@drawable/rounded_bg" />
+                        <!-- option_langue-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_langue_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="30dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_langue_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_langue_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:id="@+id/menu_option_langue_spinner_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical">
+                                <Spinner
+                                    android:id="@+id/menu_option_langue_spinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:background="@drawable/custom_spinner"
+                                    android:dropDownVerticalOffset="8dp"
+                                    android:overlapAnchor="false"
+                                    android:popupBackground="@drawable/spinner_popup_custom"
+                                    android:spinnerMode="dropdown"
+                                    android:gravity="center_horizontal"/>
+                            </LinearLayout>
+                        </LinearLayout>
                         <!-- option_STT-->
                         <LinearLayout
                             android:id="@+id/menu_option_stt_lyt"
@@ -275,15 +379,15 @@
                                 android:id="@+id/menu_option_stt_textView"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
+                                android:layout_gravity="center_vertical|top"
                                 android:layout_weight="2"
                                 android:text="@string/menu_option_stt_fr"
                                 android:textColor="#000000" />
                             <LinearLayout
                                 android:id="@+id/menu_option_stt_spinner_lyt"
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:background="@drawable/button_black_bg"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/rounded_bg"
                                 android:layout_gravity="end|center_vertical"
                                 android:gravity="center_vertical">
                                 <Spinner
@@ -303,7 +407,7 @@
                         <LinearLayout
                             android:id="@+id/menu_option_tts_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="30dp"
+                            android:layout_height="40dp"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal"
@@ -312,16 +416,16 @@
                                 android:id="@+id/menu_option_tts_textView"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
+                                android:layout_gravity="center_vertical|top"
                                 android:layout_weight="2"
                                 android:text="@string/menu_option_tts_fr"
                                 android:textColor="#000000" />
                             <LinearLayout
                                 android:id="@+id/menu_option_tts_spinner_lyt"
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
                                 android:layout_gravity="end|center_vertical"
-                                android:background="@drawable/button_black_bg"
+                                android:background="@drawable/rounded_bg"
                                 android:gravity="center_vertical">
                                 <Spinner
                                     android:id="@+id/menu_option_tts_spinner"
@@ -336,170 +440,12 @@
                                     android:gravity="center_horizontal"/>
                             </LinearLayout>
                         </LinearLayout>
-                        <!-- Entete -->
-                        <LinearLayout
-                            android:id="@+id/header"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="5dp"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:id="@+id/header_txt"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
-                                android:layout_weight="2"
-                                android:text="@string/menu_header_fr"
-                                android:textColor="#000000" />
-                            <LinearLayout
-                                android:layout_width="350dp"
-                                android:layout_height="50dp"
-                                android:layout_gravity="end|center_vertical"
-                                android:gravity="center_vertical"
-                                android:background="@drawable/button_black_bg">
-                                <TextView
-                                    android:id="@+id/header_editText"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_gravity="center_horizontal|center_vertical"
-                                    android:textAlignment="center"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_marginEnd="5dp"
-                                    android:textSize="13sp"
-                                    android:background="@null"
-                                    android:importantForAutofill="noExcludeDescendants"
-                                    android:maxLines="3"
-                                    android:inputType="textMultiLine"
-                                    android:textColor="#FFFFFF"
-                                    android:textColorHint="#FFFFFF"/>
-                            </LinearLayout>
-                        </LinearLayout>
-                        <!-- Api_Key -->
-                        <LinearLayout
-                            android:id="@+id/api_key"
-                            android:layout_width="match_parent"
-                            android:layout_height="30dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="horizontal">
-                            <TextView
-                                android:id="@+id/api_key_txt"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
-                                android:layout_weight="2"
-                                android:text="@string/menu_api_key_fr"
-                                android:textColor="#000000" />
-                            <LinearLayout
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:layout_gravity="end|center_vertical"
-                                android:gravity="center_vertical"
-                                android:background="@drawable/button_black_bg">
-                                <EditText
-                                    android:id="@+id/api_key_editText"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:layout_gravity="center_horizontal|center_vertical"
-                                    android:textAlignment="center"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_marginEnd="5dp"
-                                    android:textSize="12sp"
-                                    android:textColor="#FFFFFF"
-                                    android:background="@null"
-                                    android:inputType="text"/>
-                            </LinearLayout>
-                        </LinearLayout>
-                        <!-- Name Section -->
-                        <LinearLayout
-                            android:id="@+id/name"
-                            android:layout_width="match_parent"
-                            android:layout_height="30dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/name_txt"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="2"
-                                android:gravity="center_vertical"
-                                android:text="@string/menu_name_fr"
-                                android:textColor="#000000" />
-
-                            <LinearLayout
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:gravity="center_vertical"
-                                android:background="@drawable/button_black_bg">
-
-                                <TextView
-                                    android:id="@+id/user_name"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:textAlignment="center"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_marginEnd="5dp"
-                                    android:textSize="13sp"
-                                    android:background="@null"
-                                    android:longClickable="true"
-                                    android:textIsSelectable="true"
-                                    android:importantForAutofill="noExcludeDescendants"
-                                    android:textColor="#FFFFFF"
-                                    android:textColorHint="#FFFFFF" />
-                            </LinearLayout>
-                        </LinearLayout>
-
-                        <!-- Email Section -->
-                        <LinearLayout
-                            android:id="@+id/email"
-                            android:layout_width="match_parent"
-                            android:layout_height="30dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_gravity="center_vertical"
-                            android:orientation="horizontal">
-
-                            <TextView
-                                android:id="@+id/email_txt"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="2"
-                                android:gravity="center_vertical"
-                                android:text="@string/menu_email_fr"
-                                android:textColor="#000000" />
-
-                            <LinearLayout
-                                android:layout_width="350dp"
-                                android:layout_height="30dp"
-                                android:gravity="center_vertical"
-                                android:background="@drawable/button_black_bg">
-
-                                <TextView
-                                    android:id="@+id/user_email"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="match_parent"
-                                    android:gravity="center"
-                                    android:textAlignment="center"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_marginEnd="5dp"
-                                    android:textSize="13sp"
-                                    android:background="@null"
-                                    android:longClickable="true"
-                                    android:textIsSelectable="true"
-                                    android:importantForAutofill="noExcludeDescendants"
-                                    android:textColor="#FFFFFF"
-                                    android:textColorHint="#FFFFFF" />
-                            </LinearLayout>
-                        </LinearLayout>
-
                         <!-- option_volum -->
                         <LinearLayout
                             android:id="@+id/menu_option_volume_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="50dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -507,14 +453,14 @@
                                 android:id="@+id/menu_option_volume_textView"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="center_vertical"
+                                android:layout_gravity="center_vertical|top"
                                 android:layout_weight="2"
                                 android:text="@string/menu_option_volume_fr"
                                 android:textColor="#000000" />
 
                             <RelativeLayout
                                 android:id="@+id/menu_option_volume_seekbar_lyt"
-                                android:layout_width="350dp"
+                                android:layout_width="400dp"
                                 android:layout_height="30dp"
                                 android:layout_gravity="end|center_vertical"
                                 android:gravity="center_vertical">
@@ -527,11 +473,10 @@
                                     android:gravity="center_horizontal"
                                     android:max="100"
                                     android:maxHeight="40dp"
-
-                                    android:minHeight="40dp"
+                                    android:minHeight="39dp"
                                     android:progressDrawable="@drawable/custom_seekbar"
                                     android:rotation="360"
-                                    android:scaleX="1.11"
+                                    android:scaleX="1.08"
                                     android:thumb="@android:color/transparent"
                                     android:thumbOffset="0dp" />
 
@@ -552,7 +497,6 @@
                             android:layout_height="50dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal">
-
                             <TextView
                                 android:id="@+id/menu_option_affichage_textView"
                                 android:layout_width="0dp"
@@ -569,12 +513,13 @@
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
-                                android:layout_marginRight="30dp"
+                                android:layout_marginRight="123dp"
                                 android:layout_marginTop="10dp"
                                 android:background="@drawable/switch_track_selector"
                                 android:thumb="@android:color/transparent"
                                 android:track="@android:color/transparent" />
-                            <TextView
+
+                        <TextView
                                 android:id="@+id/menu_option_emotion_textView"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
@@ -590,7 +535,6 @@
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
-                                android:layout_marginRight="30dp"
                                 android:layout_marginTop="10dp"
                                 android:background="@drawable/switch_track_selector"
                                 android:thumb="@android:color/transparent"
@@ -621,12 +565,52 @@
                                 android:layout_height="wrap_content"
                                 android:layout_alignParentEnd="true"
                                 android:layout_centerVertical="true"
-                                android:layout_marginRight="30dp"
                                 android:layout_marginTop="10dp"
                                 android:background="@drawable/switch_track_selector"
                                 android:thumb="@android:color/transparent"
                                 android:track="@android:color/transparent" />
                         </LinearLayout>
+                        <!-- Api_Key -->
+                        <LinearLayout
+                            android:id="@+id/api_key"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/api_key_txt"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_api_key_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/rounded_bg">
+                                <EditText
+                                    android:id="@+id/api_key_editText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:textAlignment="center"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_marginEnd="5dp"
+                                    android:textSize="12sp"
+                                    android:textColor="#FFFFFF"
+                                    android:background="@null"
+                                    android:inputType="text"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+
+
+
+
 
                         <!-- Mode Commande -->
 <!--                        <LinearLayout-->

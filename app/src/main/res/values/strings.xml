@@ -2,7 +2,7 @@
     <string name="app_name">BuddyGPT</string>
     <string name="path">/storage/emulated/0/</string>
     <string name="pathConfig">/storage/emulated/0/BuddyGPT/</string>
-    <string name="copyright">[Ver. 1.3.0] 2024©Teamnet - info@teamnet.fr</string>
+    <string name="copyright">[Ver. 1.4.0] 2025©Teamnet</string>
     <!-- Menu de paramètres -->
     <!-- Menu de paramètres french-->
     <string name="menu_title_fr">PARAMETRES</string>
@@ -25,7 +25,7 @@
     <string name="menu_header_fr">En-tête</string>
     <string name="menu_api_key_fr">Clé TeamGPT</string>
     <string name="menu_email_fr">Email</string>
-    <string name="menu_name_fr">Nom du compte</string>
+    <string name="menu_name_fr">Nom du compte et Email</string>
     <string name="menu_option_projectID_fr">L\'identifiant du projet de CustomGPT</string>
     <string name="menu_option_projectID_hint_fr">Saisissez l\'ID du projet</string>
     <string name="destination_mail_texte_fr">e-mail du destinataire</string>
@@ -62,7 +62,7 @@
     <string name="menu_header_en">Header</string>
     <string name="menu_api_key_en">TeamGPT key</string>
     <string name="menu_email_en">E-mail</string>
-    <string name="menu_name_en">Account name</string>
+    <string name="menu_name_en">Account name and E-mail</string>
     <string name="menu_option_projectID_en">CustomGPT project ID</string>
     <string name="menu_option_projectID_hint_en">Enter the project ID</string>
     <string name="destination_mail_texte">Recipient\'s Email</string>

@@ -18,6 +18,12 @@ public class Parameters {
     @SerializedName("Header")
     private String header;
 
+    @SerializedName("IMEI_ID_Device")
+    private String imeiDevice;
+
+    @SerializedName("IdCompte")
+    private String idCompte;
+
     @SerializedName("Password_mail_sender")
     private String passwordMailSender;
 
@@ -57,6 +63,9 @@ public class Parameters {
     @SerializedName("Modele_gemini")
     private String modeleGemini;
 
+    @SerializedName("email_support")
+    private String emailSupport;
+
     public String getMailSender() {
         return mailSender;
     }
@@ -80,6 +89,23 @@ public class Parameters {
     public void setStreamMode(String streamMode) {
         this.streamMode = streamMode;
     }
+
+    public String getImeiDevice() {
+        return imeiDevice;
+    }
+
+    public void setImeiDevice(String imeiDevice) {
+        this.imeiDevice = imeiDevice;
+    }
+
+    public String getIdCompte() {
+        return idCompte;
+    }
+
+    public void setIdCompte(String idCompte) {
+        this.idCompte = idCompte;
+    }
+
 
     public String getTeamGptKey() {
         return teamGptKey;
@@ -196,7 +222,13 @@ public class Parameters {
     public String getModeleGemini() {
         return modeleGemini;
     }
+    public String getEmailSupport() {
+        return emailSupport;
+    }
 
+    public void setEmailSupport(String emailSupport) {
+        this.emailSupport = emailSupport;
+    }
     public void setModeleGemini(String modeleGemini) {
         this.modeleGemini = modeleGemini;
     }

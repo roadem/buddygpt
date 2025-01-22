@@ -338,6 +338,30 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
 
+    public String getModel(){
+        String model = "";
+        String selectedChatbot = getparam("SelectedChatbot").toLowerCase();
+
+        switch (selectedChatbot) {
+            case "openai":
+                model = getparam("Modele_Openai");
+                break;
+            case "customgpt":
+                model = getparam("CustomGPT_model");
+                break;
+            case "mistral":
+                model = getparam("Modele_Mistral");
+                break;
+            case "gemini":
+                model = getparam("Modele_gemini");
+                break;
+            default:
+                // Handle the case where the chatbot is unknown
+                model = "";
+                break;
+        }
+        return model;
+    }
     public Boolean getAppIsListeningToTheQuestion() {
         return appIsListeningToTheQuestion;
     }
@@ -670,14 +694,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setStartRecording(Boolean startRecording) {
         this.startRecording = startRecording;
-    }
-
-    public Boolean getUsingEmotions() {
-        return usingEmotions;
-    }
-
-    public void setUsingEmotions(Boolean usingEmotions) {
-        this.usingEmotions = usingEmotions;
     }
 
     public ConnectivityManager getCm() {

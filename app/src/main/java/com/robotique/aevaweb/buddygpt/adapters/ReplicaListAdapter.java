@@ -47,7 +47,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             receivemessage =itemView.findViewById(R.id.txt_receive_message);
             messageDuration = itemView.findViewById(R.id.txt_response_time);
             receivemessage.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
-            messageDuration.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
+            messageDuration.setTextSize(10);
 //            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
 //                messageConsommation = itemView.findViewById(R.id.openai_price);
 //                messageConsommation.setTextSize(TypedValue.COMPLEX_UNIT_PX,buddyGPTApplication.getTextSizeBullesPX());
@@ -114,7 +114,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
         else if (holder.getClass()==ReceiveViewHolder.class){
             ((ReceiveViewHolder) holder).receivemessage.setText(mDataset[position].getValue());
-            ((ReceiveViewHolder) holder).messageDuration.setText(mDataset[position].getDuration());
+            ((ReceiveViewHolder) holder).messageDuration.setText("("+mDataset[position].getDuration()+")");
 //            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
 //                ((ReceiveViewHolder) holder).messageConsommation.setText(mDataset[position].getPrix());
 //            }
