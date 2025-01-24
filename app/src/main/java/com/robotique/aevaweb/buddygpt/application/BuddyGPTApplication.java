@@ -3868,7 +3868,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         });
     }
     public void showInputDialog2(Activity activity, String message, String attention) {
-
+        notifyObservers("CANCEL_RESPONSE_TIMEOUT");
+        setAnimation("BuddyFace_Neutral");
+        stopTTS();
         Handler handler = new Handler(Looper.getMainLooper());
         handler.post(() -> {
             if (dialog != null && dialog.isShowing()) dialog.dismiss();

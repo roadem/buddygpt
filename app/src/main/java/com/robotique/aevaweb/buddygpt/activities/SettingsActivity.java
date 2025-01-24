@@ -998,32 +998,13 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
                     if(menu_apiKey_editText.getText().toString().equals("")){
                         Log.i("TAG", "run: getParameters");
-                        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
-                            buddyGPTApplication.setparam("Mail_Destination","");
-                        }
-                        buddyGPTApplication.setparam("NomCompte",  "");
-                        buddyGPTApplication.setparam("SelectedChatbot", "");
-                        buddyGPTApplication.setparam("STT-TeamGPT", "");
-                        buddyGPTApplication.setparam("TTS-TeamGPT", "");
-                        buddyGPTApplication.setparam("Header", "");
-                        buddyGPTApplication.setparam("Entete","");
-                        buddyGPTApplication.setparam("Email", "");
-                        buddyGPTApplication.setparam("Stream_mode","");
-                        buddyGPTApplication.setparam("Mail_sender","");
-                        buddyGPTApplication.setparam("Smtp_host","");
-                        buddyGPTApplication.setparam("Password_mail_sender","");
-                        buddyGPTApplication.setparam("Smtp_port","");
-                        buddyGPTApplication.setparam("show_price","");
-                        buddyGPTApplication.setparam("CustomGPT_model","");
-                        buddyGPTApplication.setparam("Modele_Mistral","");
-                        buddyGPTApplication.setparam("Modele_Openai","");
-                        buddyGPTApplication.setparam("Modele_gemini","");
-                        buddyGPTApplication.setparam("IMEI_ID_Device","_");
-                        buddyGPTApplication.setparam("IdCompte","_");
-                        buddyGPTApplication.setparam("email_support","_");
+                        resetSharedPreferences();
                         refresh(0);
                     }else{
                         Log.i("TAG", "run: getParameters else");
+                        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
+                            buddyGPTApplication.setparam("Mail_Destination","");
+                        }
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null " );
                            // buddyGPTApplication.getResponseFromTeamGPT().reset();
@@ -1046,31 +1027,12 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
                     if(textView.getText().toString().equals("")){
                         Log.i("TAG", "run: getParameters 31");
+                        resetSharedPreferences();
+                        refresh(0);
+                    }else{
                         if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
                             buddyGPTApplication.setparam("Mail_Destination","");
                         }
-                        buddyGPTApplication.setparam("NomCompte",  "");
-                        buddyGPTApplication.setparam("SelectedChatbot", "");
-                        buddyGPTApplication.setparam("STT-TeamGPT", "");
-                        buddyGPTApplication.setparam("TTS-TeamGPT", "");
-                        buddyGPTApplication.setparam("Header", "");
-                        buddyGPTApplication.setparam("Entete","");
-                        buddyGPTApplication.setparam("Email", "");
-                        buddyGPTApplication.setparam("Stream_mode","");
-                        buddyGPTApplication.setparam("Mail_sender","");
-                        buddyGPTApplication.setparam("Smtp_host","");
-                        buddyGPTApplication.setparam("Password_mail_sender","");
-                        buddyGPTApplication.setparam("Smtp_port","");
-                        buddyGPTApplication.setparam("show_price","");
-                        buddyGPTApplication.setparam("CustomGPT_model","");
-                        buddyGPTApplication.setparam("Modele_Mistral","");
-                        buddyGPTApplication.setparam("Modele_Openai","");
-                        buddyGPTApplication.setparam("Modele_gemini","");
-                        buddyGPTApplication.setparam("IMEI_ID_Device","_");
-                        buddyGPTApplication.setparam("IdCompte","_");
-                        buddyGPTApplication.setparam("email_support","_");
-                        refresh(0);
-                    }else{
                         Log.i("TAG", "run: getParameters 32");
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
                             buddyGPTApplication.getResponseFromTeamGPT().getParameters();
@@ -1082,6 +1044,32 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             }
         });
     }
+    private void resetSharedPreferences(){
+        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
+            buddyGPTApplication.setparam("Mail_Destination","");
+        }
+        buddyGPTApplication.setparam("NomCompte",  "");
+        buddyGPTApplication.setparam("SelectedChatbot", "");
+        buddyGPTApplication.setparam("STT-TeamGPT", "");
+        buddyGPTApplication.setparam("TTS-TeamGPT", "");
+        buddyGPTApplication.setparam("Header", "");
+        buddyGPTApplication.setparam("Entete","");
+        buddyGPTApplication.setparam("Email", "");
+        buddyGPTApplication.setparam("Stream_mode","");
+        buddyGPTApplication.setparam("Mail_sender","");
+        buddyGPTApplication.setparam("Smtp_host","");
+        buddyGPTApplication.setparam("Password_mail_sender","");
+        buddyGPTApplication.setparam("Smtp_port","");
+        buddyGPTApplication.setparam("show_price","");
+        buddyGPTApplication.setparam("CustomGPT_model","");
+        buddyGPTApplication.setparam("Modele_Mistral","");
+        buddyGPTApplication.setparam("Modele_Openai","");
+        buddyGPTApplication.setparam("Modele_gemini","");
+        buddyGPTApplication.setparam("IMEI_ID_Device","_");
+        buddyGPTApplication.setparam("IdCompte","_");
+        buddyGPTApplication.setparam("email_support","_");
+    }
+
     private void refresh(int state){
 
         runOnUiThread(new Runnable() {
@@ -1400,30 +1388,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 volume_seekbar.setProgress(defaultVolume);
             }
                 if (message.contains("INVALID_TEAMGPT_KEY")){
-                    if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
-                        buddyGPTApplication.setparam("Mail_Destination","");
-                    }
-                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","TRUE");
-                    buddyGPTApplication.setparam("NomCompte",  "");
-                    buddyGPTApplication.setparam("SelectedChatbot", "");
-                    buddyGPTApplication.setparam("STT-TeamGPT", "");
-                    buddyGPTApplication.setparam("TTS-TeamGPT", "");
-                    buddyGPTApplication.setparam("Header", "");
-                    buddyGPTApplication.setparam("Entete","");
-                    buddyGPTApplication.setparam("Email", "");
-                    buddyGPTApplication.setparam("Stream_mode","");
-                    buddyGPTApplication.setparam("Mail_sender","");
-                    buddyGPTApplication.setparam("Smtp_host","");
-                    buddyGPTApplication.setparam("Password_mail_sender","");
-                    buddyGPTApplication.setparam("Smtp_port","");
-                    buddyGPTApplication.setparam("show_price","");
-                    buddyGPTApplication.setparam("CustomGPT_model","");
-                    buddyGPTApplication.setparam("Modele_Mistral","");
-                    buddyGPTApplication.setparam("Modele_Openai","");
-                    buddyGPTApplication.setparam("Modele_gemini","");
-                    buddyGPTApplication.setparam("IMEI_ID_Device","_");
-                    buddyGPTApplication.setparam("IdCompte","_");
-                    buddyGPTApplication.setparam("email_support","_");
+                    resetSharedPreferences();
                     refresh(0);
                     Log.i(TAG, "afterTextChanged: invalid");
                     if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
