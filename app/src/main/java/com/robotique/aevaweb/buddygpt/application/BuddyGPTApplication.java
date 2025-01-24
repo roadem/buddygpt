@@ -3917,13 +3917,62 @@ public class BuddyGPTApplication extends BuddyApplication {
                 Log.w("BuddyGPT", "Dialog could not be shown: " + e.getMessage());
             }
             dialog.setCanceledOnTouchOutside(true);
+            // Listener for dismissing the dialog when clicked outside
+            dialog.setOnCancelListener(dialogInterface ->
+                 setAnimation("BuddyFace_Neutral"));
+            notifyObservers("QST_LAYOUT_DISMISSED");
             // Auto-dismiss the dialog after 30 seconds
             handler.postDelayed(() -> {
-                if (dialog != null && dialog.isShowing()) dialog.dismiss();
+                if (dialog != null && dialog.isShowing()) {
+                    dialog.dismiss();
+                    setAnimation("BuddyFace_Neutral");
+                    notifyObservers("QST_LAYOUT_DISMISSED");
+                }
             }, 30000);  // 30000 milliseconds = 30 seconds
         });
     }
 
+    public void setAnimation(String emotion){
+        Log.i("TAG_NSTREAM", "setAnimation: test "+emotion);
+        if (emotion.equalsIgnoreCase("BuddyFace_Happy")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.HAPPY,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Thinking")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.THINKING,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Sick")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.SICK,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Love")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.LOVE,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Tired")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.TIRED,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Listening")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.LISTENING,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Surprised")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.SURPRISED,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Grumpy")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.GRUMPY,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Scared")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.SCARED,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Angry")){
+            BuddySDK.UI.setFacialExpression(FacialExpression.ANGRY,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Sad")){
+            Log.i("TAG_NSTREAM", "setAnimation: sad");
+            BuddySDK.UI.setFacialExpression(FacialExpression.SAD,1);
+        }
+        else if (emotion.equalsIgnoreCase("BuddyFace_Neutral")){
+            Log.i("TAG_NSTREAM", "setAnimation: neutral");
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
+        }
+    }
 
     public boolean isAppInstalled(Context context, String packageName) {
         try {

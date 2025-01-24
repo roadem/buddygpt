@@ -1213,7 +1213,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             }
 
             else if (message.contains("Emotion_Change")) {
-                setAnimation(message.split(";SPLIT;")[1]);
+                buddyGPTApplication.setAnimation(message.split(";SPLIT;")[1]);
             }
 
             else if (message.contains("TTS_error") || message.contains("TTS_exception")) {
@@ -1526,6 +1526,13 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
             }
 
+            else if (message.contains("QST_LAYOUT_DISMISSED")){
+                buddy_texte_qst_lyt.setVisibility(View.INVISIBLE);
+                buddy_texte_qst.setMovementMethod(null);
+                lyt_open_menu_settings.setVisibility(View.VISIBLE);
+                lyt_open_menu_chat.setVisibility(View.VISIBLE);
+            }
+
             else if (message.contains("playStoredResponse")){
                 if (!buddyGPTApplication.getStoredResponse().equals("")){
                     runOnUiThread(new Runnable() {
@@ -1541,14 +1548,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
             }
 
-            else if (message.contains("playEmotion")){
-                if (!buddyGPTApplication.getCurrentEmotion().equals("")){
-                    if (!buddyGPTApplication.getAnswerHasExceededTimeOut()){
-                        setAnimation(buddyGPTApplication.getCurrentEmotion());
-                    }
-                    buddyGPTApplication.setOpenaialreadySwitchEmotion(true);
-                }
-            }
+
 
             else if (message.contains("ChatDestroy")){
                 buddyGPTApplication.setparam("firstLaunch","false");
@@ -3059,47 +3059,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-    private void setAnimation(String emotion){
-        Log.i("TAG_NSTREAM", "setAnimation: test "+emotion);
-        if (emotion.equalsIgnoreCase("BuddyFace_Happy")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.HAPPY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Thinking")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.THINKING,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Sick")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SICK,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Love")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LOVE,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Tired")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.TIRED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Listening")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LISTENING,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Surprised")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SURPRISED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Grumpy")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.GRUMPY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Scared")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SCARED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Angry")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.ANGRY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Sad")){
-            Log.i("TAG_NSTREAM", "setAnimation: sad");
-            BuddySDK.UI.setFacialExpression(FacialExpression.SAD,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Neutral")){
-            Log.i("TAG_NSTREAM", "setAnimation: neutral");
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
-        }
-    }
 
     /**
      *   -------------------------------  Gestion d'affichage des barres du systemUI  ----------------------------------------------

@@ -1,5 +1,7 @@
 package com.robotique.aevaweb.buddygpt.adapters;
 
+import android.graphics.text.LineBreaker;
+import android.text.Layout;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -48,6 +50,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
             messageDuration = itemView.findViewById(R.id.txt_response_time);
             receivemessage.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
             messageDuration.setTextSize(10);
+            receivemessage.setJustificationMode(LineBreaker.JUSTIFICATION_MODE_INTER_WORD);
 //            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
 //                messageConsommation = itemView.findViewById(R.id.openai_price);
 //                messageConsommation.setTextSize(TypedValue.COMPLEX_UNIT_PX,buddyGPTApplication.getTextSizeBullesPX());
@@ -113,7 +116,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         }
         else if (holder.getClass()==ReceiveViewHolder.class){
-            ((ReceiveViewHolder) holder).receivemessage.setText(mDataset[position].getValue());
+            ((ReceiveViewHolder) holder).receivemessage.setText(mDataset[position].getValue().trim());
             ((ReceiveViewHolder) holder).messageDuration.setText("("+mDataset[position].getDuration()+")");
 //            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
 //                ((ReceiveViewHolder) holder).messageConsommation.setText(mDataset[position].getPrix());

@@ -300,6 +300,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 // color black + opacity 50%
             } else {
                 buddyGPTApplication.hideSystemUI(ChatWindow.this);
+                if(editTextEmail.getText().toString().trim().isEmpty()){
+                    buddyGPTApplication.setparam("Mail_Destination",buddyGPTApplication.getparam("Email"));
+                    editTextEmail.setText(buddyGPTApplication.getparam("Mail_Destination"));
+                }
             }
         });
 
@@ -627,9 +631,9 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         String firstLine;
         // Build the email content
         if(!buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("")||!buddyGPTApplication.getparam("NomCompte").equalsIgnoreCase("") )
-            firstLine=buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel();
+            firstLine=buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel()+"<br>";
         else
-            firstLine="_";
+            firstLine="_<br>";
 
         StringBuilder question = new StringBuilder(firstLine);
         for (Replica replica : listRepGlobale) {

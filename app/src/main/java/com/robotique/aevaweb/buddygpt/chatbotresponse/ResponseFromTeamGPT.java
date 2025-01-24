@@ -127,6 +127,7 @@ public class ResponseFromTeamGPT{
 
                     int responseCode = con.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
+                        buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                         buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","FALSE");
                         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                         String inputLine;
@@ -167,7 +168,15 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
                                 buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
                                 buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());
-                                buddyGPTApplication.setparam("IMEI_ID_Device",parameters.getImeiDevice());
+                                if(parameters.getEmailSupport()!=null && !parameters.getEmailSupport().equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());
+                                else
+                                    buddyGPTApplication.setparam("email_support"," _ ");
+
+                                if(parameters.getImeiDevice()!=null && !parameters.getImeiDevice().equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("IMEI_ID_Device",parameters.getImeiDevice());
+                                else
+                                    buddyGPTApplication.setparam("IMEI_ID_Device"," _ ");
                                 if(parameters.getIdCompte()!=null && !parameters.getIdCompte().equalsIgnoreCase(""))
                                     buddyGPTApplication.setparam("IdCompte",parameters.getIdCompte());
                                 else
@@ -518,6 +527,7 @@ public class ResponseFromTeamGPT{
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
+                    buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     try {
                         buddyGPTApplication.setResponseTime(System.currentTimeMillis());
                         // Traitez la réponse en flux.
@@ -531,6 +541,7 @@ public class ResponseFromTeamGPT{
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                 }
                 else if (response.code() == 500) {
+                    buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("Session_ID_ERROR");
                     buddyGPTApplication.setparam("session_id","");
                 }

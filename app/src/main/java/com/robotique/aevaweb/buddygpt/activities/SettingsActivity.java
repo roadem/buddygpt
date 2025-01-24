@@ -804,7 +804,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private void handlerSupport(){
 
             Log.i(TAG, "handlerSupport: HOU"+ buddyGPTApplication.getparam("email_support"));
-            copyRight.setText(getString(R.string.copyright)+" "+buddyGPTApplication.getparam("email_support"));
+            copyRight.setText(getString(R.string.copyright)+" / "+buddyGPTApplication.getparam("email_support"));
             identifiers.setText(buddyGPTApplication.getparam("IdCompte")+" / "+buddyGPTApplication.getparam("IMEI_ID_Device"));
         }
 
@@ -1113,8 +1113,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     menu_option_chatbot_spinner.setText(buddyGPTApplication.getparam("SelectedChatbot") +" "+ buddyGPTApplication.getModel());
                     // menu_option_chatbotmodel_spinner.setText(buddyGPTApplication.getparam("Modele_Openai"));
                     menu_nameText.setText(buddyGPTApplication.getparam("NomCompte")+" "+buddyGPTApplication.getparam("Email"));
-                    copyRight.setText(getString(R.string.copyright)+" "+buddyGPTApplication.getparam("email_support"));
-                    identifiers.setText(buddyGPTApplication.getparam("IdCompte")+" "+buddyGPTApplication.getparam("IMEI_ID_Device"));
+                    if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
+                        buddyGPTApplication.setparam("Mail_Destination",buddyGPTApplication.getparam("Email"));
+
+                    copyRight.setText(getString(R.string.copyright)+" / "+buddyGPTApplication.getparam("email_support"));
+                    identifiers.setText(buddyGPTApplication.getparam("IdCompte")+" / "+buddyGPTApplication.getparam("IMEI_ID_Device"));
                     // switchModeStream.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(modeStreamString)));
                 }else{// refresh with null
                         menu_header_editText.setText("");
@@ -1122,8 +1125,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         menu_option_tts_lyt.setVisibility(View.GONE);
                         menu_option_chatbot_spinner.setText("");
                         menu_nameText.setText("");
-                        copyRight.setText(getString(R.string.copyright));
-                        identifiers.setText("");
+                        copyRight.setText(getString(R.string.copyright)+" / _");
+                        identifiers.setText("_ / _");
 
                 }
 

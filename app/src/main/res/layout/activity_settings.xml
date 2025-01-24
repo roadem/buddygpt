@@ -304,7 +304,7 @@
                             <LinearLayout
                                 android:layout_width="400dp"
                                 android:layout_height="wrap_content"
-                                android:layout_gravity="end|center_vertical"
+                                android:layout_gravity="center_vertical"
                                 android:gravity="center_vertical"
                                 android:background="@drawable/rounded_bg">
                                 <TextView
@@ -313,8 +313,9 @@
                                     android:layout_height="wrap_content"
                                     android:layout_gravity="center_horizontal|center_vertical"
                                     android:textAlignment="center"
-                                    android:layout_marginStart="5dp"
-                                    android:layout_marginEnd="5dp"
+                                    android:layout_margin="5dp"
+                                    android:paddingLeft="4dp"
+                                    android:paddingRight="4dp"
                                     android:textSize="13sp"
                                     android:background="@null"
                                     android:importantForAutofill="noExcludeDescendants"
@@ -335,7 +336,7 @@
                         <LinearLayout
                             android:id="@+id/menu_option_langue_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="30dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal">
@@ -351,7 +352,8 @@
                                 android:id="@+id/menu_option_langue_spinner_lyt"
                                 android:layout_width="400dp"
                                 android:layout_height="40dp"
-                                android:layout_gravity="end|center_vertical"
+                                android:layout_gravity="center_vertical"
+                                android:background="@drawable/rounded_bg"
                                 android:gravity="center_vertical">
                                 <Spinner
                                     android:id="@+id/menu_option_langue_spinner"
@@ -370,7 +372,7 @@
                         <LinearLayout
                             android:id="@+id/menu_option_stt_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="30dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal"
@@ -398,6 +400,7 @@
                                     android:background="@drawable/custom_spinner"
                                     android:dropDownVerticalOffset="8dp"
                                     android:overlapAnchor="false"
+                                    android:dropDownWidth="match_parent"
                                     android:popupBackground="@drawable/spinner_popup_custom"
                                     android:spinnerMode="dropdown"
                                     android:gravity="center_horizontal"/>
@@ -407,7 +410,7 @@
                         <LinearLayout
                             android:id="@+id/menu_option_tts_lyt"
                             android:layout_width="match_parent"
-                            android:layout_height="40dp"
+                            android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
                             android:orientation="horizontal"
