@@ -217,7 +217,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
     private ArrayList<Replica> listRep=new ArrayList();
     private AudioManager amanager;
-    private Dialog dialog;
 
     private Setting settingClass;
     //private Commande commande;
@@ -1007,6 +1006,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             buddyGPTApplication.setSpeaking(true);
                             isListeningFreeSpeech = true;
                             buddyGPTApplication.setActivityClosed(false);
+                            if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
                             buddyGPTApplication.setStartRecording(true);
                             startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
                         }
@@ -1686,6 +1686,15 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         if(isFirstLaunch) {
             buddyGPTApplication.initTeamGPTSettings();
             buddyGPTApplication.setparam("session_id","");
+            if(buddyGPTApplication.getparam("IMEI_ID_Device").equals("")){
+                buddyGPTApplication.setparam("IMEI_ID_Device"," _ ");
+            }
+            if(buddyGPTApplication.getparam("email_support").equals("")){
+                buddyGPTApplication.setparam("email_support"," _ ");
+            }
+            if(buddyGPTApplication.getparam("IdCompte").equals("")){
+                buddyGPTApplication.setparam("IdCompte"," _ ");
+            }
         }
     }
 
@@ -1781,32 +1790,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-    private void afficherPopupAvecBitmap(String imagePath) {
-        if(dialog != null && dialog.isShowing()) dialog.dismiss();
-        dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_layout);
-        ImageView imageView = dialog.findViewById(R.id.imageView);
-        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-        imageView.setImageBitmap(bitmap);
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getDecorView().setPadding(0, 0, 0, 0);
-        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-        layoutParams.copyFrom(dialog.getWindow().getAttributes());
-        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-        layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-        layoutParams.gravity = Gravity.CENTER;
-        layoutParams.horizontalMargin = 0;
-        layoutParams.verticalMargin = 0;
-        dialog.getWindow().setAttributes(layoutParams);
-        dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-        dialog.show();
-    }
 
 
 
