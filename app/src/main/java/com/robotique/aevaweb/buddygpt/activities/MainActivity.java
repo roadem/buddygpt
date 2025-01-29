@@ -217,7 +217,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
     private ArrayList<Replica> listRep=new ArrayList();
     private AudioManager amanager;
-    private Dialog dialog;
 
     private Setting settingClass;
     //private Commande commande;
@@ -495,7 +494,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             buddyGPTApplication.setNotYet(true);
            buddyGPTApplication.setActivityClosed(false);
             buddyGPTApplication.setStartRecording(false);
-            buddyGPTApplication.setUsingEmotions(false);
             buddyGPTApplication.setQuestionNumber(0);
             buddyGPTApplication.setCurrentQuestionNubmer(0);
             buddyGPTApplication.setAlreadyGetAnswer(false);
@@ -1008,6 +1006,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             buddyGPTApplication.setSpeaking(true);
                             isListeningFreeSpeech = true;
                             buddyGPTApplication.setActivityClosed(false);
+                            if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
                             buddyGPTApplication.setStartRecording(true);
                             startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
                         }
@@ -1211,6 +1210,10 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     }
                 };
                 handler.postDelayed(runnable,500);
+            }
+
+            else if (message.contains("Emotion_Change")) {
+                buddyGPTApplication.setAnimation(message.split(";SPLIT;")[1]);
             }
 
             else if (message.contains("TTS_error") || message.contains("TTS_exception")) {
@@ -1522,26 +1525,14 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
 
             }
-            else if (message.contains("getResponseF")) {
-                if (message.split(";SPLIT;")[1].equalsIgnoreCase("gpt")) {
-                    gptResponse = message.split(";SPLIT;")[2];
-                    gptSend = true;
-                }
-                if (gptSend ) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (Integer.parseInt(message.split(";SPLIT;")[3])== buddyGPTApplication.getQuestionNumber()) {
-                                if (!buddyGPTApplication.getAnswerHasExceededTimeOut()){
-                                    setAnimation(gptResponse);
-                                }
-                                buddyGPTApplication.setOpenaialreadySwitchEmotion(true);
-                            }
-                            gptSend = false;
-                        }
-                    });
-                }
+
+            else if (message.contains("QST_LAYOUT_DISMISSED")){
+                buddy_texte_qst_lyt.setVisibility(View.INVISIBLE);
+                buddy_texte_qst.setMovementMethod(null);
+                lyt_open_menu_settings.setVisibility(View.VISIBLE);
+                lyt_open_menu_chat.setVisibility(View.VISIBLE);
             }
+
             else if (message.contains("playStoredResponse")){
                 if (!buddyGPTApplication.getStoredResponse().equals("")){
                     runOnUiThread(new Runnable() {
@@ -1557,14 +1548,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
             }
 
-            else if (message.contains("playEmotion")){
-                if (!buddyGPTApplication.getCurrentEmotion().equals("")){
-                    if (!buddyGPTApplication.getAnswerHasExceededTimeOut()){
-                        setAnimation(buddyGPTApplication.getCurrentEmotion());
-                    }
-                    buddyGPTApplication.setOpenaialreadySwitchEmotion(true);
-                }
-            }
+
 
             else if (message.contains("ChatDestroy")){
                 buddyGPTApplication.setparam("firstLaunch","false");
@@ -1598,40 +1582,40 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 buddyGPTApplication.setparam("speak_volume", String.valueOf(defaultVolume));
             }
 
-            else if (message.contains( "commandResponse" )){
-                if(message.split( ";SPLIT;" )[1].equals("CANCEL")){
-                    if(!isSpeaking){
-                        if (responseTimeout!=null) responseTimeout.cancel();
-                        if (!buddyGPTApplication.getUsingEmotions()){
-                            Log.d(TAG,"FacialExpression NEUTRAL");
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
-                        }
-                        buddyGPTApplication.notifyObservers("TTS_success");
-                    }
-                }
-                else if(message.split( ";SPLIT;" )[1].equals("CHANGE_LANGUE")){
-                    isCMDLangue = true;
-                    settingClass.setLangue(buddyGPTApplication.getLangue().getNom());
-                    mlKitIsDownloading = true;
-                    buddyGPTApplication.downloadModel(imlKitDownloadCallback, buddyGPTApplication.getLangue().getLanguageCode().split("-")[0].trim());
-                    handlerProgressBar.postDelayed(runnableProgressBar,500);
-                }
-                else{
-                    if(!isSpeaking)
-                    {
-                        stopListeningFreeSpeech();
-                        try {
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                            BuddySDK.UI.stopListenAnimation();
-                        } catch (Exception e) {
-                            Log.e(TAG, "BuddySDK Exception  " + e);
-                        }
-                        speak(message.split( ";SPLIT;" )[1], "commande");
-                    }
-                    else
-                        buddyGPTApplication.setStoredResponse( message.split( ";SPLIT;" )[1] );
-                }
-            }
+//            else if (message.contains( "commandResponse" )){
+//                if(message.split( ";SPLIT;" )[1].equals("CANCEL")){
+//                    if(!isSpeaking){
+//                        if (responseTimeout!=null) responseTimeout.cancel();
+//                        if (!buddyGPTApplication.getUsingEmotions()){
+//                            Log.d(TAG,"FacialExpression NEUTRAL");
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
+//                        }
+//                        buddyGPTApplication.notifyObservers("TTS_success");
+//                    }
+//                }
+//                else if(message.split( ";SPLIT;" )[1].equals("CHANGE_LANGUE")){
+//                    isCMDLangue = true;
+//                    settingClass.setLangue(buddyGPTApplication.getLangue().getNom());
+//                    mlKitIsDownloading = true;
+//                    buddyGPTApplication.downloadModel(imlKitDownloadCallback, buddyGPTApplication.getLangue().getLanguageCode().split("-")[0].trim());
+//                    handlerProgressBar.postDelayed(runnableProgressBar,500);
+//                }
+//                else{
+//                    if(!isSpeaking)
+//                    {
+//                        stopListeningFreeSpeech();
+//                        try {
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                            BuddySDK.UI.stopListenAnimation();
+//                        } catch (Exception e) {
+//                            Log.e(TAG, "BuddySDK Exception  " + e);
+//                        }
+//                        speak(message.split( ";SPLIT;" )[1], "commande");
+//                    }
+//                    else
+//                        buddyGPTApplication.setStoredResponse( message.split( ";SPLIT;" )[1] );
+//                }
+//            }
 
 
 //            else if (message.contains("takePicture")){
@@ -1676,7 +1660,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private void init() throws IOException {
         Log.e(TAG,"init() ");
         String imei= getIMEI();
-
+        Log.i(TAG, "init: imei device "+imei);
         buddyGPTApplication.setImeiRobot(imei);
         BuddySDK.UI.addFaceTouchListener(iuiFaceTouchCallback);
 //        if (buddyGPTApplication.getparam("Stimulis").equals("true")){
@@ -1702,6 +1686,15 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         if(isFirstLaunch) {
             buddyGPTApplication.initTeamGPTSettings();
             buddyGPTApplication.setparam("session_id","");
+            if(buddyGPTApplication.getparam("IMEI_ID_Device").equals("")){
+                buddyGPTApplication.setparam("IMEI_ID_Device"," _ ");
+            }
+            if(buddyGPTApplication.getparam("email_support").equals("")){
+                buddyGPTApplication.setparam("email_support"," _ ");
+            }
+            if(buddyGPTApplication.getparam("IdCompte").equals("")){
+                buddyGPTApplication.setparam("IdCompte"," _ ");
+            }
         }
     }
 
@@ -1797,32 +1790,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-    private void afficherPopupAvecBitmap(String imagePath) {
-        if(dialog != null && dialog.isShowing()) dialog.dismiss();
-        dialog = new Dialog(this);
-        dialog.setContentView(R.layout.dialog_layout);
-        ImageView imageView = dialog.findViewById(R.id.imageView);
-        Bitmap bitmap = BitmapFactory.decodeFile(imagePath);
-        imageView.setImageBitmap(bitmap);
-        imageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
-            }
-        });
-        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        dialog.getWindow().getDecorView().setPadding(0, 0, 0, 0);
-        WindowManager.LayoutParams layoutParams = new WindowManager.LayoutParams();
-        layoutParams.copyFrom(dialog.getWindow().getAttributes());
-        layoutParams.width = WindowManager.LayoutParams.MATCH_PARENT;
-        layoutParams.height = WindowManager.LayoutParams.MATCH_PARENT;
-        layoutParams.gravity = Gravity.CENTER;
-        layoutParams.horizontalMargin = 0;
-        layoutParams.verticalMargin = 0;
-        dialog.getWindow().setAttributes(layoutParams);
-        dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
-        dialog.show();
-    }
 
 
 
@@ -1961,45 +1928,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(),this);
     }
 
-    private void setAnimation(String emotion){
-        buddyGPTApplication.setCurrentEmotion("");
-        if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Happy", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.HAPPY,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Thinking", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.THINKING,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Sick", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SICK,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Love", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LOVE,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Tired", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.TIRED,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Listening", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LISTENING,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Surprised", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SURPRISED,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Grumpy", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.GRUMPY,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Scared", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SCARED,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Angry", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.ANGRY,1);
-        }
-        else if (buddyGPTApplication.separator(buddyGPTApplication.getParamFromFile("BuddyFace_Sad", "BuddyGPT.properties").trim().toLowerCase()).contains(emotion)){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SAD,1);
-        }
-        else{
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
-        }
-    }
+
 
     public void btnOpenSettings(View view) {
         if ( !mlKitIsDownloading){
@@ -2205,10 +2134,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
                 buddy_texte_resp_lyt.setTranslationY(0);
                 if (responseTimeout!=null) responseTimeout.cancel();
-                if (!buddyGPTApplication.getUsingEmotions()){
-                    Log.d(TAG,"FacialExpression NEUTRAL");
-                    BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
-                }
+
                 if (!buddyGPTApplication.isActivityClosed()) {
                     if (type.equals("nothealysa") || type.equals("storedResponse")) {
                         buddyGPTApplication.setAlreadyGetAnswer(true);

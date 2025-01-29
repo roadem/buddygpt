@@ -43,7 +43,7 @@
                 android:layout_height="wrap_content"
                 android:text="Response Time"
                 android:textColor="@android:color/black"
-                android:textSize="18px" />
+                android:textSize="10px" />
         </LinearLayout>
 
     </LinearLayout>

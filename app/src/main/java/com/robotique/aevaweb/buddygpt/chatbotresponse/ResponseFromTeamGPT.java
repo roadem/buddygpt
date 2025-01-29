@@ -77,7 +77,7 @@ public class ResponseFromTeamGPT{
     private String langueEn = "Anglais";
     private String langueEs = "Espagnol";
     private String langueDe = "Allemand";
-    String emotion="";
+
     private String answer = "";
     private String phrase = "";
     private String errorMsg = "";
@@ -94,7 +94,9 @@ public class ResponseFromTeamGPT{
     private boolean isPaused = false;
     private JSONArray existingHistoryArray;
     boolean isSessionIdProcessed = false;
+    boolean isEmotionNeutral = false;
     private int requestTotalTokens = 0;
+    private String currentEmotion = "";
     private String result = "";
     BuddyGPTApplication buddyGPTApplication;
     public ResponseFromTeamGPT(BuddyGPTApplication context) {
@@ -125,6 +127,7 @@ public class ResponseFromTeamGPT{
 
                     int responseCode = con.getResponseCode();
                     if (responseCode == HttpURLConnection.HTTP_OK) {
+                        buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                         buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","FALSE");
                         BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                         String inputLine;
@@ -138,6 +141,7 @@ public class ResponseFromTeamGPT{
 
                         if (contentType != null && contentType.contains("application/json")) {
                             JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
+                            Log.i(TAG_STREAM, "run: PARAMS : "+jsonObject.toString());
                             JsonObject parametersObject = jsonObject.getAsJsonObject("parameters");
 
                             Gson gson = new Gson();
@@ -152,6 +156,8 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("Header", parameters.getHeader());
                                 buddyGPTApplication.setparam("Entete", parameters.getEntete());
                                 buddyGPTApplication.setparam("Email", parameters.getEmail());
+                                if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("Mail_Destination",parameters.getEmail());
                                 buddyGPTApplication.setparam("Stream_mode",parameters.getStreamMode());
                                 buddyGPTApplication.setparam("Mail_sender",parameters.getMailSender());
                                 buddyGPTApplication.setparam("Smtp_host",parameters.getSmtpHost());
@@ -161,6 +167,20 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("CustomGPT_model",parameters.getCustomGptModel());
                                 buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
                                 buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
+
+                                if(parameters.getEmailSupport()!=null && !parameters.getEmailSupport().equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());
+                                else
+                                    buddyGPTApplication.setparam("email_support"," _ ");
+
+                                if(parameters.getImeiDevice()!=null && !parameters.getImeiDevice().equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("IMEI_ID_Device",parameters.getImeiDevice());
+                                else
+                                    buddyGPTApplication.setparam("IMEI_ID_Device"," _ ");
+                                if(parameters.getIdCompte()!=null && !parameters.getIdCompte().equalsIgnoreCase(""))
+                                    buddyGPTApplication.setparam("IdCompte",parameters.getIdCompte());
+                                else
+                                    buddyGPTApplication.setparam("IdCompte"," _ ");
                                 buddyGPTApplication.setparam("Modele_gemini",parameters.getModeleGemini());
                                 if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
                                     && buddyGPTApplication.getparam("STT").equalsIgnoreCase(""))
@@ -170,7 +190,6 @@ public class ResponseFromTeamGPT{
                                     buddyGPTApplication.setparam("TTS", "ReadSpeaker");
                             }
                         }
-
                     }
                     else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
                         Log.i(TAG_NSTREAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
@@ -477,6 +496,7 @@ public class ResponseFromTeamGPT{
 //    }
 
     public void sendPutRequestStream(String question, int numberOfQuestion) {
+        isEmotionNeutral=false;
         String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
         String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response"); // Endpoint dynamique.
         String gptKey = buddyGPTApplication.getparam("TeamGPT_Key"); // Clé API.
@@ -507,6 +527,7 @@ public class ResponseFromTeamGPT{
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
+                    buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     try {
                         buddyGPTApplication.setResponseTime(System.currentTimeMillis());
                         // Traitez la réponse en flux.
@@ -520,6 +541,7 @@ public class ResponseFromTeamGPT{
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                 }
                 else if (response.code() == 500) {
+                    buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("Session_ID_ERROR");
                     buddyGPTApplication.setparam("session_id","");
                 }
@@ -668,14 +690,31 @@ public class ResponseFromTeamGPT{
                     JSONObject jsonObject = new JSONObject(jsonData);
 
                     // Handle "emotion"
-                    if (jsonObject.has("Emotion") && buddyGPTApplication.getparam("switch_emotion").equals("true") && !jsonObject.getString("Emotion").equalsIgnoreCase("")) {
-                        emotion = jsonObject.getString("Emotion");
-                        Log.i(TAG_STREAM, "handleStreamingResponse: emo "+jsonObject.getString("Emotion"));
-                        setAnimation(emotion);
-                    }
 
-                    Handler mainHandler = new Handler(Looper.getMainLooper());
+                        if (buddyGPTApplication.getparam("switch_emotion").equals("true")) {
+
+                            if ( jsonObject.has("Emotion") && !jsonObject.getString("Emotion").equalsIgnoreCase("")) {
+                                // Si l'émotion n'a pas encore été traitée, définir l'animation
+
+                                String emotion = jsonObject.getString("Emotion");
+                                Log.i(TAG_STREAM, "handleStreamingResponse: emo " + emotion);
+                                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;" + emotion);
+
+                            } else {
+                                Log.i(TAG_STREAM, "handleStreamingResponse: emo null");
+                            }
+
+                        }else{
+                            if(!isEmotionNeutral) {
+                                isEmotionNeutral = true;
+                                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;BuddyFace_Neutral");
+                            }
+
+                        }
+
+
                     // Handle "session_id"
+                    Handler mainHandler2 = new Handler(Looper.getMainLooper());
                     if(!isSessionIdProcessed){
                         if (jsonObject.has("session_id")) {
                             String sessionId = jsonObject.getString("session_id");
@@ -683,7 +722,7 @@ public class ResponseFromTeamGPT{
 
                                  if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
 
-                                    mainHandler.post(() -> {
+                                    mainHandler2.post(() -> {
                                         buddyGPTApplication.notifyObservers("Session_ID_Changed");
                                     });
                                     buddyGPTApplication.setparam("session_id", sessionId);
@@ -1070,47 +1109,6 @@ public class ResponseFromTeamGPT{
         if(wordsRunnable != null) wordsHandler.removeCallbacks(wordsRunnable);
         wordsHandler.removeCallbacksAndMessages(null);
         buddyGPTApplication.setResponseFromTeamGPT(null);
-    }
-
-    private void setAnimation(String emotion){
-        Log.i("TAG_NSTREAM", "setAnimation: test "+emotion);
-        if (emotion.equalsIgnoreCase("BuddyFace_Happy")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.HAPPY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Thinking")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.THINKING,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Sick")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SICK,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Love")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LOVE,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Tired")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.TIRED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Listening")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.LISTENING,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Surprised")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SURPRISED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Grumpy")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.GRUMPY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Scared")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.SCARED,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Angry")){
-            BuddySDK.UI.setFacialExpression(FacialExpression.ANGRY,1);
-        }
-        else if (emotion.equalsIgnoreCase("BuddyFace_Sad")){
-            Log.i("TAG_NSTREAM", "setAnimation: ");
-            BuddySDK.UI.setFacialExpression(FacialExpression.SAD,1);
-        }
-        else{
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
-        }
     }
 
 
