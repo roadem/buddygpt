@@ -754,7 +754,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             if (curr<0){
                                 curr=0;
                             }
-                            buddyGPTApplication.setVolume(curr);
+                            buddyGPTApplication.setVolume(curr,AudioManager.FLAG_SHOW_UI);
                             buddyGPTApplication.setparam("speak_volume", String.valueOf(curr));
                             buddyGPTApplication.setSpeakVolume(curr);
                             settingClass.setVolume(String.valueOf(curr));
@@ -777,7 +777,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             if (curr>100){
                                 curr=100;
                             }
-                            buddyGPTApplication.setVolume(curr);
+                            buddyGPTApplication.setVolume(curr, AudioManager.FLAG_SHOW_UI);
                             buddyGPTApplication.setparam("speak_volume", String.valueOf(curr));
                             buddyGPTApplication.setSpeakVolume(curr);
                             settingClass.setVolume(String.valueOf(curr));
@@ -1744,7 +1744,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         refreshSTTLangue();
 
         //set volume
-        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam("speak_volume")));
+        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam("speak_volume")),AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
 
         //create Log file
         if (buddyGPTApplication.getFileCreate()) {

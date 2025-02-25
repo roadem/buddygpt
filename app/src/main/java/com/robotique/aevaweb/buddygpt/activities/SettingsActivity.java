@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Rect;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -819,7 +820,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
 
-                buddyGPTApplication.setVolume(progress);
+                buddyGPTApplication.setVolume(progress, AudioManager.FLAG_SHOW_UI);
                 volume_seekbar_value.setText(progress + " %");
                 buddyGPTApplication.setparam(speakVolume, Integer.toString(progress));
                 set.setVolume(Integer.toString(progress));
@@ -1322,7 +1323,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         Log.d(TAG," --- onResume() ---");
 
         buddyGPTApplication.hideSystemUI(this);
-        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam("speak_volume")));
+        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam("speak_volume")), AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
     }
 
     @Override
@@ -1382,7 +1383,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 int defaultVolume = buddyGPTApplication.getClosestInt((double) (speakVolume * 100) / max);
                 Log.e("FCH","volumeMedia  "+String.valueOf(defaultVolume));
                 buddyGPTApplication.setparam("speak_volume", String.valueOf(defaultVolume));
-                buddyGPTApplication.setVolume(defaultVolume);
+                buddyGPTApplication.setVolume(defaultVolume, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
                 volume_seekbar_value.setText(defaultVolume + " %");
                 set.setVolume(Integer.toString(defaultVolume));
                 volume_seekbar.setProgress(defaultVolume);
