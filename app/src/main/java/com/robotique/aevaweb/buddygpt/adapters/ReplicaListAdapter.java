@@ -1,7 +1,13 @@
 package com.robotique.aevaweb.buddygpt.adapters;
 
+import android.graphics.Color;
 import android.graphics.text.LineBreaker;
+import android.text.Html;
 import android.text.Layout;
+import android.text.Spannable;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -41,20 +47,12 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public static class ReceiveViewHolder extends RecyclerView.ViewHolder {
 
         private TextView receivemessage;
-        private TextView messageDuration;
-        private TextView messageConsommation;
 
         public ReceiveViewHolder(View itemView, BuddyGPTApplication buddyGPTApplication){
             super(itemView);
             receivemessage =itemView.findViewById(R.id.txt_receive_message);
-            messageDuration = itemView.findViewById(R.id.txt_response_time);
             receivemessage.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
-            messageDuration.setTextSize(10);
             receivemessage.setJustificationMode(LineBreaker.JUSTIFICATION_MODE_INTER_WORD);
-//            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
-//                messageConsommation = itemView.findViewById(R.id.openai_price);
-//                messageConsommation.setTextSize(TypedValue.COMPLEX_UNIT_PX,buddyGPTApplication.getTextSizeBullesPX());
-//            }
         }
 
         public TextView getTextView() {
@@ -116,11 +114,15 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
         }
         else if (holder.getClass()==ReceiveViewHolder.class){
-            ((ReceiveViewHolder) holder).receivemessage.setText(mDataset[position].getValue().trim());
-            ((ReceiveViewHolder) holder).messageDuration.setText("("+mDataset[position].getDuration()+")");
-//            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
-//                ((ReceiveViewHolder) holder).messageConsommation.setText(mDataset[position].getPrix());
-//            }
+
+            String message = mDataset[position].getValue().trim();
+            String duration = "(" + mDataset[position].getDuration() + ")";
+
+            // Fusionner les deux textes avec un format HTML
+            SpannableString spannable = new SpannableString(message + " " + duration);
+            spannable.setSpan(new ForegroundColorSpan(Color.BLACK), message.length() + 1, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannable.setSpan(new RelativeSizeSpan(0.7f), message.length() + 1, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            ((ReceiveViewHolder) holder).receivemessage.setText(spannable);
         }
         else if (holder.getClass()==SessionViewHolder.class){
 

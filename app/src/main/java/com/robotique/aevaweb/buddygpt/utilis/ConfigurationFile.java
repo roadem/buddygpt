@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 3; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 4; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -105,6 +105,9 @@ public class ConfigurationFile {
             setProperty("TeamGPT_url", "https://chat.teamgpt.fr/api/");
             setProperty("TeamGPT_ApiEndpoint_Params","get_parameters");
             setProperty("TeamGPT_ApiEndpoint_Response","get-response");
+
+            props.addPropertyComment("TeamGPT_ID_Device", "TeamGPT Device ID");
+            setProperty("TeamGPT_ID_Device", "1");
             //props.addPropertyComment("Speech_To_Text_List","");
             //props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/ApiGoogle/Whisper/Cerence");
             //setProperty("Speech_To_Text_List","SpeechRecognizer/ApiGoogle/Whisper/Cerence");
