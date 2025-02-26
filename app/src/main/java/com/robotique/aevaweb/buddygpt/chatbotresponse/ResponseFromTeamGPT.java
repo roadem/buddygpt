@@ -195,6 +195,7 @@ public class ResponseFromTeamGPT{
                         Log.i(TAG_NSTREAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
                         buddyGPTApplication.setparam("TeamGPT_Key",gptKey);
                         buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                     }
                     con.disconnect();
                 } catch (Exception e) {
@@ -249,6 +250,7 @@ public class ResponseFromTeamGPT{
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     try {
                         buddyGPTApplication.setResponseTime(System.currentTimeMillis());
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
                         // Traitez la réponse en flux.
                         handleStreamingResponse(response.body().byteStream());
                     } catch (Exception e) {

@@ -1,7 +1,6 @@
 package com.robotique.aevaweb.buddygpt.activities;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -120,9 +119,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private Spinner menu_option_tts_spinner;
     private TextView menu_option_chatbot_spinner;
     private TextView menu_option_chatbotmodel_spinner;
-    private EditText menu_option_listening_duration_editText;
 
-    private EditText menu_option_listening_attempt_editText;
     private TextView menu_header_editText;
     private EditText menu_apiKey_editText;
 
@@ -180,7 +177,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private boolean english_is_downloaded = false;
     private boolean french_is_downloaded = false;
     private WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
-
+    private boolean isCalledOnce= false; // focus changed
     private int chosenLanguagePos = -1;
     private int chosenSTTPos = -1;
     private int chosenTTSPos = -1;
@@ -203,14 +200,14 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         buddyGPTApplication.hideSystemUI(this);
         buddyGPTApplication.setInitSharedpreferences(false);
         decorView=getWindow().getDecorView();
-//        decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
-//            @Override
-//            public void onSystemUiVisibilityChange(int visibility) {
-//                if(visibility==0 && !menu_option_listening_duration_editText.hasFocus()){
-//                    decorView.setSystemUiVisibility(buddyGPTApplication.hideSystemUI(SettingsActivity.this));
-//                }
-//            }
-//        });
+        decorView.setOnSystemUiVisibilityChangeListener(new View.OnSystemUiVisibilityChangeListener() {
+            @Override
+            public void onSystemUiVisibilityChange(int visibility) {
+                if(menu_apiKey_editText != null && visibility==0 && !menu_apiKey_editText.hasFocus()){
+                    decorView.setSystemUiVisibility(buddyGPTApplication.hideSystemUI(SettingsActivity.this));
+                }
+            }
+        });
 
 
         menu_title = findViewById(R.id.menu_title);
@@ -972,6 +969,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             }
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+                    isCalledOnce= false;
                     buddyGPTApplication.setparam(teamGPT_Key, charSequence.toString());
                     set.setApiKey(buddyGPTApplication.getparam(teamGPT_Key));
                     setting.setApiKey(buddyGPTApplication.getparam(teamGPT_Key));
@@ -993,8 +991,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                                 | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                                 | View.SYSTEM_UI_FLAG_FULLSCREEN);
             } else {
-                buddyGPTApplication.hideSystemUI(SettingsActivity.this);
-                buddyGPTApplication.setparam(teamGPT_Key, menu_apiKey_editText.getText().toString());
+                if(!isCalledOnce){
+                    isCalledOnce= true;
+                    buddyGPTApplication.hideSystemUI(SettingsActivity.this);
+                    buddyGPTApplication.setparam(teamGPT_Key, menu_apiKey_editText.getText().toString());
                     Log.i("TAG", "run: menu_apiKey_editText"+menu_apiKey_editText.getText().toString());
 
                     if(menu_apiKey_editText.getText().toString().equals("")){
@@ -1008,37 +1008,40 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         }
                         if(buddyGPTApplication.getResponseFromTeamGPT()!=null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null " );
-                           // buddyGPTApplication.getResponseFromTeamGPT().reset();
+                            // buddyGPTApplication.getResponseFromTeamGPT().reset();
 
                             buddyGPTApplication.getResponseFromTeamGPT().getParameters();
                         }
                         refresh(1);
                     }
 
-
-
+                }
             }
         });
 
         menu_apiKey_editText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int i, KeyEvent keyEvent) {
-                buddyGPTApplication.setparam(teamGPT_Key, textView.getText().toString());
-                    Log.i("TAG", "run: getParameters 3"+textView.getText().toString());
 
-                    if(textView.getText().toString().equals("")){
+                if(!isCalledOnce){
+                    isCalledOnce= true;
+                    buddyGPTApplication.setparam(teamGPT_Key, textView.getText().toString());
+                    Log.i("TAG", "run: getParameters 3" + textView.getText().toString());
+
+                    if (textView.getText().toString().equals("")) {
                         Log.i("TAG", "run: getParameters 31");
                         resetSharedPreferences();
                         refresh(0);
-                    }else{
-                        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
-                            buddyGPTApplication.setparam("Mail_Destination","");
-                        }
+                    } else {
                         Log.i("TAG", "run: getParameters 32");
-                        if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
+                        if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))) {
+                            buddyGPTApplication.setparam("Mail_Destination", "");
+                        }
+                        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
                             buddyGPTApplication.getResponseFromTeamGPT().getParameters();
                         refresh(1);
                     }
+                }
 
 
                 return false;
