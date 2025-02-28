@@ -1058,7 +1058,31 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     }
-
+    public void resetSharedPreferences(){
+        if( getparam("Mail_Destination").equalsIgnoreCase( getparam("Email"))){
+             setparam("Mail_Destination","");
+        }
+         setparam("NomCompte",  "");
+         setparam("SelectedChatbot", "");
+         setparam("STT-TeamGPT", "");
+         setparam("TTS-TeamGPT", "");
+         setparam("Header", "");
+         setparam("Entete","");
+         setparam("Email", "");
+         setparam("Stream_mode","");
+         setparam("Mail_sender","");
+         setparam("Smtp_host","");
+         setparam("Password_mail_sender","");
+         setparam("Smtp_port","");
+         setparam("show_price","");
+         setparam("CustomGPT_model","");
+         setparam("Modele_Mistral","");
+         setparam("Modele_Openai","");
+         setparam("Modele_gemini","");
+         setparam("IMEI_ID_Device","_");
+         setparam("IdCompte","_");
+         setparam("email_support","_");
+    }
     private void initChatTextSize() {
         int textSize = Integer.parseInt(getParamFromFile("Chat_TextSize", configurationFilePseudo));
         if (textSize < 20 || textSize > 50) {

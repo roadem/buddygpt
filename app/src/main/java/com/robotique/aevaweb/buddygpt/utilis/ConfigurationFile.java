@@ -106,7 +106,6 @@ public class ConfigurationFile {
             setProperty("TeamGPT_ApiEndpoint_Params","get_parameters");
             setProperty("TeamGPT_ApiEndpoint_Response","get-response");
 
-            props.addPropertyComment("TeamGPT_ID_Device", "TeamGPT Device ID");
             setProperty("TeamGPT_ID_Device", "");
             //props.addPropertyComment("Speech_To_Text_List","");
             //props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/ApiGoogle/Whisper/Cerence");

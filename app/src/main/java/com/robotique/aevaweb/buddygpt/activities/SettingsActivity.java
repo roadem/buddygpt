@@ -37,6 +37,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 
 import com.bfr.buddy.utils.events.EventItem;
+import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
 import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddysdk.BuddySDK;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -999,7 +1000,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
                     if(menu_apiKey_editText.getText().toString().equals("")){
                         Log.i("TAG", "run: getParameters");
-                        resetSharedPreferences();
+                        buddyGPTApplication.resetSharedPreferences();
                         refresh(0);
                     }else{
                         Log.i("TAG", "run: getParameters else");
@@ -1030,7 +1031,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 
                     if (textView.getText().toString().equals("")) {
                         Log.i("TAG", "run: getParameters 31");
-                        resetSharedPreferences();
+                        buddyGPTApplication.resetSharedPreferences();
                         refresh(0);
                     } else {
                         Log.i("TAG", "run: getParameters 32");
@@ -1048,31 +1049,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             }
         });
     }
-    private void resetSharedPreferences(){
-        if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))){
-            buddyGPTApplication.setparam("Mail_Destination","");
-        }
-        buddyGPTApplication.setparam("NomCompte",  "");
-        buddyGPTApplication.setparam("SelectedChatbot", "");
-        buddyGPTApplication.setparam("STT-TeamGPT", "");
-        buddyGPTApplication.setparam("TTS-TeamGPT", "");
-        buddyGPTApplication.setparam("Header", "");
-        buddyGPTApplication.setparam("Entete","");
-        buddyGPTApplication.setparam("Email", "");
-        buddyGPTApplication.setparam("Stream_mode","");
-        buddyGPTApplication.setparam("Mail_sender","");
-        buddyGPTApplication.setparam("Smtp_host","");
-        buddyGPTApplication.setparam("Password_mail_sender","");
-        buddyGPTApplication.setparam("Smtp_port","");
-        buddyGPTApplication.setparam("show_price","");
-        buddyGPTApplication.setparam("CustomGPT_model","");
-        buddyGPTApplication.setparam("Modele_Mistral","");
-        buddyGPTApplication.setparam("Modele_Openai","");
-        buddyGPTApplication.setparam("Modele_gemini","");
-        buddyGPTApplication.setparam("IMEI_ID_Device","_");
-        buddyGPTApplication.setparam("IdCompte","_");
-        buddyGPTApplication.setparam("email_support","_");
-    }
+
 
     private void refresh(int state){
 
@@ -1392,7 +1369,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 volume_seekbar.setProgress(defaultVolume);
             }
                 if (message.contains("INVALID_TEAMGPT_KEY")){
-                    resetSharedPreferences();
                     refresh(0);
                     Log.i(TAG, "afterTextChanged: invalid");
                     if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
@@ -1426,6 +1402,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     }
     @Override
     public void onSDKReady() {
+        BuddySDK.UI.setMenuWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
+        BuddySDK.UI.setCloseWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
         Log.w(TAG, "onSDKReady");
     }
 

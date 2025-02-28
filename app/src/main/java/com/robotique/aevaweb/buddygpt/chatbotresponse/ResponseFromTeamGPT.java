@@ -50,6 +50,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -192,8 +193,10 @@ public class ResponseFromTeamGPT{
                         }
                     }
                     else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+                        Log.i(TAG_NSTREAM, "run: notifyObservers response msg "+con.getResponseMessage());
                         Log.i(TAG_NSTREAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
                         buddyGPTApplication.setparam("TeamGPT_Key",gptKey);
+                        buddyGPTApplication.resetSharedPreferences();
                         buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                         buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                     }
