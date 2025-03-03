@@ -168,6 +168,8 @@ public class ResponseFromTeamGPT{
                                 buddyGPTApplication.setparam("CustomGPT_model",parameters.getCustomGptModel());
                                 buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
                                 buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
+                                buddyGPTApplication.setparam("Mail_Subject_fr",parameters.getMailSubjectFr());
+                                buddyGPTApplication.setparam("Mail_Subject_en",parameters.getMailSubjectEn());
 
                                 if(parameters.getEmailSupport()!=null && !parameters.getEmailSupport().equalsIgnoreCase(""))
                                     buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());

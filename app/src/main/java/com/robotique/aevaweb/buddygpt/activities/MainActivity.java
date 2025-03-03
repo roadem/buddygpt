@@ -1504,9 +1504,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
                     buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                }
+                else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
                     buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
+                }
+                else {
                          buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                                  .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
                                  .addOnSuccessListener(new OnSuccessListener<String>() {

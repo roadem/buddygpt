@@ -1082,6 +1082,8 @@ public class BuddyGPTApplication extends BuddyApplication {
          setparam("IMEI_ID_Device","_");
          setparam("IdCompte","_");
          setparam("email_support","_");
+         setparam("Mail_Subject_fr","");
+         setparam("Mail_Subject_en","");
     }
     private void initChatTextSize() {
         int textSize = Integer.parseInt(getParamFromFile("Chat_TextSize", configurationFilePseudo));
