@@ -836,7 +836,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                         }
                         if (!buddyGPTApplication.getSpeaking() && !mlKitIsDownloading){
                             Log.d(TAG, "Mouth touched2");
-                            if(buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")){
+                            if(buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")){
+                                Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
+                                buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
+                            }
+                            else if(buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")){
                                 Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_KEY 3");
                                 buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                             }
@@ -996,7 +1000,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             }
 
             else if (message.contains("STTHotword_success")) {
-                if(buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE")){
+                if(buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE")){
+                    Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 4");
+                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
+                }
+                else if(buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE")){
                     Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_KEY 4");
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                 }else {
@@ -1476,10 +1484,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                          buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
                      } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
                          buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                     } else if (buddyGPTApplication.getLangue().getNom().equals("Espagnol")) {
-                         buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_es), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_es));
-                     } else if (buddyGPTApplication.getLangue().getNom().equals("Allemand")) {
-                         buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_de), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_de));
                      }
                      else {
                          buddyGPTApplication.getEnglishLanguageSelectedTranslator()
@@ -1500,6 +1504,32 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
 
             }
+            if (message.contains("INVALID_TEAMGPT_DEVICE_ID")){
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID","TRUE");
+                     if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                         buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                     } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                         buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                     }
+                     else {
+                         buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                                 .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
+                                 .addOnSuccessListener(new OnSuccessListener<String>() {
+                                     @Override
+                                     public void onSuccess(String translatedText) {
+                                         buddyGPTApplication.showInputDialog(MainActivity.this, translatedText,"Attention !");
+                                     }
+                                 })
+                                 .addOnFailureListener(new OnFailureListener() {
+                                     @Override
+                                     public void onFailure(@NonNull Exception e) {
+                                         buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                                     }
+                                 });
+                     }
+
+
+            }
             if (message.contains("Session_ID_ERROR")){
 
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
@@ -1508,7 +1538,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
                 } else {
                          buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                                 .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
+                                 .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en))
                                  .addOnSuccessListener(new OnSuccessListener<String>() {
                                      @Override
                                      public void onSuccess(String translatedText) {

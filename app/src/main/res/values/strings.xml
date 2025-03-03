@@ -273,6 +273,7 @@
     <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
     <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
+    <string name="toast_teamgpt_id_invalid_fr">Seul le STT/TTS local est pris en charge dans cette version. Ceux du serveur ne sont pas encore disponibles.</string>
     <string name="toast_teamgpt_params_invalid_fr">Les paramètres reçus du serveur TeamGPT sont invalides.</string>
     <string name="toast_teamgpt_session_fr">Une nouvelle session a été créée</string>
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
@@ -287,6 +288,7 @@
     <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
     <string name="toast_teamgpt_invalid_en">Attention !</string>
     <string name="toast_teamgpt_key_invalid_en">The key is invalid</string>
+    <string name="toast_teamgpt_id_invalid_en">Only local STT/TTS is supported in this version. Server-based ones are not yet available.</string>
     <string name="toast_teamgpt_params_invalid_en">The parameters received from the TeamGPT server are invalid.</string>
     <string name="toast_teamgpt_session_en">A new session has been created</string>
     <!-- spanish -->
