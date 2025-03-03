@@ -987,6 +987,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         setparam("TeamGPT_url", getParamFromFile("TeamGPT_url", configurationFilePseudo));
         setparam("TeamGPT_ApiEndpoint_Params", getParamFromFile("TeamGPT_ApiEndpoint_Params", configurationFilePseudo));
         setparam("TeamGPT_ApiEndpoint_Response", getParamFromFile("TeamGPT_ApiEndpoint_Response", configurationFilePseudo));
+        if (getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo).equalsIgnoreCase("")){
+            setparam("TeamGPT_ID_Device", getImeiRobot());
+        }
+        else{
+            setparam("TeamGPT_ID_Device", getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo));
+        }
 
         if (getparam("TeamGPT_Key").equalsIgnoreCase("")) {
 
@@ -1052,7 +1058,31 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     }
-
+    public void resetSharedPreferences(){
+        if( getparam("Mail_Destination").equalsIgnoreCase( getparam("Email"))){
+             setparam("Mail_Destination","");
+        }
+         setparam("NomCompte",  "");
+         setparam("SelectedChatbot", "");
+         setparam("STT-TeamGPT", "");
+         setparam("TTS-TeamGPT", "");
+         setparam("Header", "");
+         setparam("Entete","");
+         setparam("Email", "");
+         setparam("Stream_mode","");
+         setparam("Mail_sender","");
+         setparam("Smtp_host","");
+         setparam("Password_mail_sender","");
+         setparam("Smtp_port","");
+         setparam("show_price","");
+         setparam("CustomGPT_model","");
+         setparam("Modele_Mistral","");
+         setparam("Modele_Openai","");
+         setparam("Modele_gemini","");
+         setparam("IMEI_ID_Device","_");
+         setparam("IdCompte","_");
+         setparam("email_support","_");
+    }
     private void initChatTextSize() {
         int textSize = Integer.parseInt(getParamFromFile("Chat_TextSize", configurationFilePseudo));
         if (textSize < 20 || textSize > 50) {
@@ -3909,7 +3939,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
             params.width = (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.6);
             dialog.getWindow().setAttributes(params);
-
+            dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
             // Display the dialog
             try {
                 dialog.show();
@@ -4144,13 +4174,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     /**
      * Cette fonction permet de changer le volume du device
      */
-    public void setVolume(int percentage) {
+    public void setVolume(int percentage,int type) {
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
-        if (audioManager.isBluetoothScoOn()) {
-            max = audioManager.getStreamMaxVolume(6);
-        }
 
         int volume = getClosestInt((double) (percentage * max) / 100);
 
@@ -4159,9 +4186,10 @@ public class BuddyGPTApplication extends BuddyApplication {
             audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
             audioManager.startBluetoothSco();
             audioManager.setBluetoothScoOn(true);
-            audioManager.setStreamVolume(6, volume, AudioManager.FLAG_SHOW_UI);
+            audioManager.setStreamVolume(6, volume, type);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE );
         } else {
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,type);
         }
     }
 

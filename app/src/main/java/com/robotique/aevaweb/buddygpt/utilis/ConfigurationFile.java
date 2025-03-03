@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 3; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 4; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -105,6 +105,8 @@ public class ConfigurationFile {
             setProperty("TeamGPT_url", "https://chat.teamgpt.fr/api/");
             setProperty("TeamGPT_ApiEndpoint_Params","get_parameters");
             setProperty("TeamGPT_ApiEndpoint_Response","get-response");
+
+            setProperty("TeamGPT_ID_Device", "");
             //props.addPropertyComment("Speech_To_Text_List","");
             //props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/ApiGoogle/Whisper/Cerence");
             //setProperty("Speech_To_Text_List","SpeechRecognizer/ApiGoogle/Whisper/Cerence");
@@ -183,14 +185,14 @@ public class ConfigurationFile {
 
             props.addPropertyComment("Response_Timeout_in_seconds", "");
             props.addPropertyComment("Response_Timeout_in_seconds", "Waiting time for chatbot response and messages when exceeded");
-            setProperty("Response_Timeout_in_seconds","8");
+            setProperty("Response_Timeout_in_seconds","10");
             setProperty("Message_Timeout_NotRespected_fr","Ça prend un peu de temps, la connexion est un peu lente./Aah! Internet n'est pas très rapide aujourd'hui/une petite seconde je connecte mes circuits");
             setProperty("Message_Timeout_NotRespected_en","It takes a little time, the connection is a bit slow./ohh! The internet is not very fast today/Just a moment, I'm connecting my circuits.");
             setProperty("Message_Timeout_NotRespected_es","Tarda un poco, la conexión es un poco lenta./¡ohh! Internet no es muy rápido hoy en día/Un momento, estoy conectando mis circuitos.");
             setProperty("Message_Timeout_NotRespected_de","Es dauert ein wenig, die Verbindung ist ein wenig langsam./ohh! Das Internet ist heute nicht sehr schnell/Einen Moment, ich schließe meine Schaltkreise.");
 
             props.addPropertyComment("Display_of_speech","");
-            props.addPropertyComment("Display_of_speech","Speech display, Emotion activation, Language detection, Streaming mode, Activation stimulis, Commands and tracking (Yes/No)");
+            props.addPropertyComment("Display_of_speech","Speech display, Emotion activation, Language detection");
             setProperty("Display_of_speech","Yes");
             setProperty("Activation_of_emotions","Yes");
             setProperty("Language_detection","Yes");
@@ -226,8 +228,8 @@ public class ConfigurationFile {
             props.addPropertyComment("Mail_Sender", "Conversation sending email");
             setProperty("Mail_Sender","TeamChat@teamnet.fr");
             setProperty("Mail_Destination","");
-            setProperty("Mail_Subject_fr","Dialogues TeamChat");
-            setProperty("Mail_Subject_en","TeamChat Dialogs");
+            setProperty("Mail_Subject_fr","Dialogues BuddyGPT");
+            setProperty("Mail_Subject_en","BuddyGPT Dialogs");
             setProperty("Message_mail_send_fr","Le mail a bien été envoyé !");
             setProperty("Message_mail_send_en","The email was sent successfully!");
 
