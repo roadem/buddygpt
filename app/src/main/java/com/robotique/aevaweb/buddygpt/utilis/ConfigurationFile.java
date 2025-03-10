@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 4; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 5; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -137,11 +137,13 @@ public class ConfigurationFile {
             setProperty("Text_To_Speech_List","ReadSpeaker/Android");
             props.addPropertyComment("ReadSpeaker_pitch_fr","Pitch and speed for TTS");
             setProperty("ReadSpeaker_pitch_fr","130");
-            setProperty("ReadSpeaker_pitch_en","130");
+            setProperty("ReadSpeaker_pitch_en","180");
             setProperty("ReadSpeaker_speed_fr","100");
             setProperty("ReadSpeaker_speed_en","100");
-            setProperty("TTS_Android_pitch","130");
-            setProperty("TTS_Android_speed","100");
+            setProperty("TTS_Android_pitch_fr","130");
+            setProperty("TTS_Android_speed_fr","100");
+            setProperty("TTS_Android_pitch_en","180");
+            setProperty("TTS_Android_speed_en","70");
 //            setProperty("TTS_ApiGoogle_pitch","130");
 //            setProperty("TTS_ApiGoogle_speed","100");
 //            props.addPropertyComment("TTS_ApiGoogle_Voice_Type", "Voice type : Standard/Wavenet");
@@ -202,7 +204,8 @@ public class ConfigurationFile {
 
             props.addPropertyComment("Number_of_words","");
             props.addPropertyComment("Number_of_words","Minimum number of words in the response for activating language detection");
-            setProperty("Number_of_words","3");
+            setProperty("Number_of_words","5");
+            setProperty("Detection_confidence_rate","90");
 
 //            props.addPropertyComment("Pattern_End_Phrase","");
 //            props.addPropertyComment("Pattern_End_Phrase","Set characters marking the end of a sentence using a regular expression for streaming TTS");

@@ -1027,7 +1027,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                         Log.i("HOU", "HOU run: "+ detectedSTTMessage);
                         if (!buddyGPTApplication.isActivityClosed()) {
                             buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber()+1);
-                            buddyGPTApplication.setQuestionTime(System.currentTimeMillis());
+                            //buddyGPTApplication.setQuestionTime(System.currentTimeMillis());
                             BuddySDK.UI.setFacialExpression(FacialExpression.THINKING,1);
                             if (settingClass.getSwitchVisibility().equals("true")) {
                                 if (buddyGPTApplication.getCurrentLanguage().equals("en")) {

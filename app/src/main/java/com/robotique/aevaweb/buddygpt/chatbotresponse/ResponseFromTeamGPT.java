@@ -64,7 +64,7 @@ import retrofit2.Retrofit;
 
 public class ResponseFromTeamGPT{
     private static final String TAG_STREAM = "STREAM_MODE";
-    private static final String TAG_NSTREAM = "NON_STREAM_MODE";
+    private static final String TAG_PARAM = "GET_PARAM";
     String chatBotServerNoResponce_fr;
     String chatBotServerNoResponce_en;
     String chatBotServerNoResponce_es;
@@ -195,8 +195,8 @@ public class ResponseFromTeamGPT{
                         }
                     }
                     else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
-                        Log.i(TAG_NSTREAM, "run: notifyObservers response msg "+con.getResponseMessage());
-                        Log.i(TAG_NSTREAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
+                        Log.i(TAG_PARAM, "run: notifyObservers response msg "+con.getResponseMessage());
+                        Log.i(TAG_PARAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
                         buddyGPTApplication.setparam("TeamGPT_Key",gptKey);
                         buddyGPTApplication.resetSharedPreferences();
                         buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
@@ -242,6 +242,12 @@ public class ResponseFromTeamGPT{
         }
         saveRequestToFile(payload);
         updateMessageHistory(question);
+
+        // Enregistrer le temps d'envoi de la requête
+        long requestStartTime = System.currentTimeMillis();
+        buddyGPTApplication.setQuestionTime(requestStartTime);
+        Log.i(TAG_STREAM, "Request sent at: " + requestStartTime);
+
         // Envoyez la requête avec endpoint et clé.
         Log.i("HOU_DEBUG", "sendPutRequestStream: baseUrl "+baseUrl);
         Log.i("HOU_DEBUG", "sendPutRequestStream: endpoint "+endpoint);
@@ -252,9 +258,19 @@ public class ResponseFromTeamGPT{
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
+                    Log.i(TAG_STREAM, "onResponse: OK");
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     try {
-                        buddyGPTApplication.setResponseTime(System.currentTimeMillis());
+                        // Enregistrer le temps de réception de la première réponse
+                        long responseStartTime = System.currentTimeMillis();
+                        buddyGPTApplication.setResponseTime(responseStartTime);
+                        Log.i(TAG_STREAM, "First response received at: " + responseStartTime);
+
+                        // Calculer et enregistrer le temps de réponse
+                        long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
+                        Log.i(TAG_STREAM, "Response time: " + responseTime + " ms");
+
+
                         buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
                         // Traitez la réponse en flux.
                         handleStreamingResponse(response.body().byteStream());
@@ -464,7 +480,7 @@ public class ResponseFromTeamGPT{
                                     String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
                                     existingHistoryArray = new JSONArray(jsonArrayString);
                                     JSONObject newSessionObject = new JSONObject();
-                                    newSessionObject.put("Session", "New");
+                                    newSessionObject.put("Session", buddyGPTApplication.getparam("SelectedChatbot")+" - "+ buddyGPTApplication.getModel());
                                     existingHistoryArray.put(newSessionObject);
                                     buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
                                 }
