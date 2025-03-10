@@ -149,27 +149,35 @@ public class ResponseFromTeamGPT{
                             Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
 
                             if (parameters != null) {
-                                buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
-                                buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
-                                buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
-                                buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
-                                buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
-                                buddyGPTApplication.setparam("Header", parameters.getHeader());
-                                buddyGPTApplication.setparam("Entete", parameters.getEntete());
-                                buddyGPTApplication.setparam("Email", parameters.getEmail());
-                                if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
-                                    buddyGPTApplication.setparam("Mail_Destination",parameters.getEmail());
-                                buddyGPTApplication.setparam("Stream_mode",parameters.getStreamMode());
-                                buddyGPTApplication.setparam("Mail_sender",parameters.getMailSender());
-                                buddyGPTApplication.setparam("Smtp_host",parameters.getSmtpHost());
-                                buddyGPTApplication.setparam("Password_mail_sender",parameters.getPasswordMailSender());
-                                buddyGPTApplication.setparam("Smtp_port",parameters.getSmtpPort());
-                                buddyGPTApplication.setparam("show_price",parameters.getShowPrice());
-                                buddyGPTApplication.setparam("CustomGPT_model",parameters.getCustomGptModel());
-                                buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
-                                buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
-                                buddyGPTApplication.setparam("Mail_Subject_fr",parameters.getMailSubjectFr());
-                                buddyGPTApplication.setparam("Mail_Subject_en",parameters.getMailSubjectEn());
+                                if (!parameters.getStt().equalsIgnoreCase("local")
+                                        || !parameters.getTts().equalsIgnoreCase("local")){
+                                    buddyGPTApplication.setparam("TeamGPT_Key",gptKey);
+                                    buddyGPTApplication.resetSharedPreferences();
+                                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
+                                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "TRUE");
+                                }else{
+                                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+                                    buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
+                                    buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
+                                    buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
+                                    buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
+                                    buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
+                                    buddyGPTApplication.setparam("Header", parameters.getHeader());
+                                    buddyGPTApplication.setparam("Entete", parameters.getEntete());
+                                    buddyGPTApplication.setparam("Email", parameters.getEmail());
+                                    if(buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
+                                        buddyGPTApplication.setparam("Mail_Destination",parameters.getEmail());
+                                    buddyGPTApplication.setparam("Stream_mode",parameters.getStreamMode());
+                                    buddyGPTApplication.setparam("Mail_sender",parameters.getMailSender());
+                                    buddyGPTApplication.setparam("Smtp_host",parameters.getSmtpHost());
+                                    buddyGPTApplication.setparam("Password_mail_sender",parameters.getPasswordMailSender());
+                                    buddyGPTApplication.setparam("Smtp_port",parameters.getSmtpPort());
+                                    buddyGPTApplication.setparam("show_price",parameters.getShowPrice());
+                                    buddyGPTApplication.setparam("CustomGPT_model",parameters.getCustomGptModel());
+                                    buddyGPTApplication.setparam("Modele_Mistral",parameters.getModeleMistral());
+                                    buddyGPTApplication.setparam("Modele_Openai",parameters.getModeleOpenai());
+                                    buddyGPTApplication.setparam("Mail_Subject_fr",parameters.getMailSubjectFr());
+                                    buddyGPTApplication.setparam("Mail_Subject_en",parameters.getMailSubjectEn());
 
                                 if(parameters.getEmailSupport()!=null && !parameters.getEmailSupport().equalsIgnoreCase(""))
                                     buddyGPTApplication.setparam("email_support",parameters.getEmailSupport());
@@ -192,6 +200,7 @@ public class ResponseFromTeamGPT{
                                         && buddyGPTApplication.getparam("TTS").equalsIgnoreCase(""))
                                     buddyGPTApplication.setparam("TTS", "ReadSpeaker");
                             }
+                            }
                         }
                     }
                     else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
@@ -201,6 +210,7 @@ public class ResponseFromTeamGPT{
                         buddyGPTApplication.resetSharedPreferences();
                         buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                         buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                     }
                     con.disconnect();
                 } catch (Exception e) {

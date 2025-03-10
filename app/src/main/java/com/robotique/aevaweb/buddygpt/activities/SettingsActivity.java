@@ -1397,6 +1397,31 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                                 });
                     }
                 }
+                if (message.contains("INVALID_TEAMGPT_DEVICE_ID")){
+                    refresh(0);
+                    Log.i(TAG, "afterTextChanged: invalid");
+                    if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+
+                        buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                    } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                        buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                    } else {
+                        buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                                .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
+                                .addOnSuccessListener(new OnSuccessListener<String>() {
+                                    @Override
+                                    public void onSuccess(String translatedText) {
+                                        buddyGPTApplication.showInputDialog(SettingsActivity.this, translatedText, "Attention !");
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                                    }
+                                });
+                    }
+                }
 
         }
     }
