@@ -44,6 +44,7 @@ import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
@@ -252,29 +253,31 @@ public class ResponseFromTeamGPT{
         }
         saveRequestToFile(payload);
         updateMessageHistory(question);
-
-        // Enregistrer le temps d'envoi de la requête
         long requestStartTime = System.currentTimeMillis();
+        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
+
+        String formattedTime =sdf.format(new Date(requestStartTime));
+        // Enregistrer le temps d'envoi de la requête
+
         buddyGPTApplication.setQuestionTime(requestStartTime);
-        Log.i(TAG_STREAM, "Request sent at: " + requestStartTime);
+        Log.i(TAG_STREAM, "Request sent at: " + formattedTime);
 
         // Envoyez la requête avec endpoint et clé.
-        Log.i("HOU_DEBUG", "sendPutRequestStream: baseUrl "+baseUrl);
-        Log.i("HOU_DEBUG", "sendPutRequestStream: endpoint "+endpoint);
-        Log.i("HOU_DEBUG", "sendPutRequestStream: gpt key "+gptKey);
-        Log.i("HOU_DEBUG", "sendPutRequestStream: payload session id "+payload.getSessionId());
+        Log.i("HOU_DEBUG", "sendPutRequestStream: baseUrl "+baseUrl+"endpoint "+endpoint);
+
         Call<ResponseBody> call = apiService.sendRequestTeamGPT(baseUrl+""+endpoint, gptKey, payload);
         call.enqueue(new Callback<ResponseBody>() {
             @Override
             public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
                 if (response.isSuccessful()) {
-                    Log.i(TAG_STREAM, "onResponse: OK");
+
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     try {
                         // Enregistrer le temps de réception de la première réponse
                         long responseStartTime = System.currentTimeMillis();
                         buddyGPTApplication.setResponseTime(responseStartTime);
-                        Log.i(TAG_STREAM, "First response received at: " + responseStartTime);
+                        String formattedTime2 =sdf.format(new Date(responseStartTime));
+                        Log.i(TAG_STREAM, "First response received at: " + formattedTime2);
 
                         // Calculer et enregistrer le temps de réponse
                         long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();

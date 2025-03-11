@@ -126,7 +126,6 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         }
         else if (holder.getClass()==SessionViewHolder.class){
 
-            ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
             if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
                 ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
             }
@@ -139,7 +138,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
                         .addOnSuccessListener(new OnSuccessListener<String>() {
                             @Override
                             public void onSuccess(String translatedText) {
-                                ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
+                                ((SessionViewHolder) holder).txt_session.setText("_______________________"+translatedText+"_______________________");
                             }
                         })
                         .addOnFailureListener(new OnFailureListener() {

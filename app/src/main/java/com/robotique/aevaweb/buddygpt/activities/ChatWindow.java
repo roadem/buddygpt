@@ -49,6 +49,7 @@ import com.robotique.aevaweb.buddygpt.utilis.MailSender;
 import com.robotique.aevaweb.buddygpt.adapters.ReplicaListAdapter;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
+import com.robotique.aevaweb.buddygpt.utilis.OnMailReadyListener;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -602,20 +603,40 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
             if (!buddyGPTApplication.getparam("Mail_Destination").trim().isEmpty()){
                 if(buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
-                    smtpService = new MailSender(ChatWindow.this,writeMail(), buddyGPTApplication.getparam("Mail_Destination"), buddyGPTApplication.getparam("Mail_Subject_en"));
-                    smtpService.execute();
+                    writeMail(new OnMailReadyListener() {
+                        @Override
+                        public void onMailReady(String emailContent) {
+                            smtpService = new MailSender(ChatWindow.this,emailContent, buddyGPTApplication.getparam("Mail_Destination"), buddyGPTApplication.getparam("Mail_Subject_en"));
+                            smtpService.execute();
+                        }
+                    });
+
                 }
                 else if(buddyGPTApplication.getLangue().getNom().equals(langueFr)){
-                    smtpService = new MailSender(ChatWindow.this,writeMail(), buddyGPTApplication.getparam("Mail_Destination"), buddyGPTApplication.getparam("Mail_Subject_fr"));
+                    writeMail(new OnMailReadyListener() {
+                        @Override
+                        public void onMailReady(String emailContent) {
+
+                    smtpService = new MailSender(ChatWindow.this,emailContent, buddyGPTApplication.getparam("Mail_Destination"), buddyGPTApplication.getparam("Mail_Subject_fr"));
                     smtpService.execute();
-                }
-                else{
+
+
+                    }
+                });
+
+            }else{
                     final Activity activity = ChatWindow.this;
                     buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(buddyGPTApplication.getparam("Mail_Subject_en")).addOnSuccessListener(new OnSuccessListener<String>() {
                         @Override
                         public void onSuccess(String translatedText) {
-                            smtpService = new MailSender(activity,writeMail(), buddyGPTApplication.getparam("Mail_Destination"), translatedText);
-                            smtpService.execute();
+                            writeMail(new OnMailReadyListener() {
+                                @Override
+                                public void onMailReady(String emailContent) {
+                                    smtpService = new MailSender(activity,emailContent, buddyGPTApplication.getparam("Mail_Destination"), translatedText);
+                                    smtpService.execute();
+                                }
+                            });
+
                         }
 
                     }).addOnFailureListener(new OnFailureListener() {
@@ -657,60 +678,65 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             }
 
     }
-    public String writeMail() {
-        String firstLine;
-
-        // Récupérer la langue actuelle
+    public void writeMail(OnMailReadyListener listener) {
         String langue = buddyGPTApplication.getLangue().getNom();
 
-        // Définir les textes par défaut
+        // Définir des variables pour les textes par défaut
         final String[] newSessionText = new String[1];
         final String[] responseText = new String[1];
         final String[] qstText = new String[1];
 
+        // Si la langue est Anglais ou Français, on remplit directement les textes
         if (langue.equals("Anglais")) {
             newSessionText[0] = "_____________________ New Session _____________________";
             responseText[0] = "Response";
             qstText[0] = "Question";
+            listener.onMailReady(buildEmailContent(newSessionText, responseText, qstText));  // Appel du callback
         } else if (langue.equals("Français")) {
             newSessionText[0] = "_____________________ Nouvelle Session _____________________";
             responseText[0] = "Réponse";
             qstText[0] = "Question";
+            listener.onMailReady(buildEmailContent(newSessionText, responseText, qstText));  // Appel du callback
         } else {
             // Traduction dynamique pour d'autres langues
+            String text = "_____________________ New Session _____________________;Response;Question;";
+            Log.i(TAG, "Texte avant traduction: " + text);
+
             buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                    .translate(newSessionText[0]+";"+responseText[0]+";"+qstText[0])
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            // Utiliser le texte traduit dans l'interface
-                            newSessionText[0] = translatedText.split(";")[0];
-                            responseText[0] = translatedText.split(";")[1];
-                            qstText[0]= translatedText.split(";")[2];// Adapter selon les besoins
-                            buildEmailContent(new String[]{newSessionText[0]}, new String[]{responseText[0]});  // Appel à la fonction pour créer le contenu de l'email avec la traduction
+                    .translate(text)
+                    .addOnSuccessListener(translatedText -> {
+                        Log.i(TAG, "Texte traduit reçu: " + translatedText);
+                        if (translatedText == null || translatedText.isEmpty()) {
+                            Log.e(TAG, "Erreur : La traduction est vide ou nulle.");
+                            translatedText = "_____________________ New Session _____________________;Response;Question"; // Valeurs par défaut
                         }
+
+                        // Découper le texte traduit
+                        String[] parts = translatedText.split(";");
+                        newSessionText[0] = parts[0];
+                        responseText[0] = parts[1];
+                        qstText[0] = parts[2];
+
+                        // Appel du callback après la traduction
+                        listener.onMailReady(buildEmailContent(newSessionText, responseText, qstText));
                     })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            // Fallback en cas d'échec de la traduction
-                            newSessionText[0] = "_____________________ New Session _____________________";
-                            responseText[0] = "Response";
-                            qstText[0] = "Question";
-                            buildEmailContent(new String[]{newSessionText[0]}, new String[]{responseText[0]});  // Création du contenu de l'email en cas de défaut de traduction
-                        }
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Échec de la traduction", e);
+                        // En cas d'échec de traduction, on utilise les valeurs par défaut
+                        newSessionText[0] = "_____________________ New Session _____________________";
+                        responseText[0] = "Response";
+                        qstText[0] = "Question";
+
+                        // Appel du callback avec les valeurs par défaut
+                        listener.onMailReady(buildEmailContent(newSessionText, responseText, qstText));
                     });
-
-            return "";  // On retourne vide car la traduction est asynchrone, on continuera après la réussite de la traduction
         }
-
-        // Si la langue est "Anglais" ou "Français", on passe directement à la création du contenu du mail
-        return buildEmailContent(new String[]{newSessionText[0]}, new String[]{responseText[0]});
     }
 
-    private String buildEmailContent(String[] newSessionText, String[] responseText) {
-        String firstLine;
 
+    private String buildEmailContent(String[] newSessionText, String[] responseText, String[] qstText) {
+        String firstLine;
+        Log.i(TAG, "buildEmailContent: "+newSessionText[0]+"******"+responseText[0]+"******"+qstText[0]+"******");
         if (!buddyGPTApplication.getparam("SelectedChatbot").equalsIgnoreCase("") ||
                 !buddyGPTApplication.getparam("NomCompte").equalsIgnoreCase("")) {
             firstLine = buddyGPTApplication.getparam("NomCompte") + " " +
@@ -724,16 +750,20 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         for (Replica replica : listRepGlobale) {
             if (replica.getType().equalsIgnoreCase("Session")) {
                 question.append("<br>").append(newSessionText[0])
-                        .append("<br>").append("Chatbot/model :").append(replica.getValue());
+                        .append("<br>").append(replica.getValue());
             } else if (replica.getType().equalsIgnoreCase("Response")) {
                 question.append("<br>").append(responseText[0])  // Correction ici
                         .append(" : ").append(replica.getValue().split(";SPLIT;")[0])
                         .append(" (").append(replica.getDuration()).append(")");
+            } else if (replica.getType().equalsIgnoreCase("Question")) {
+                question.append("<br>").append(qstText[0])  // Correction ici
+                        .append(" : ").append(replica.getValue());
+
             } else {
                 question.append("<br>").append(replica.getType()).append(" : ").append(replica.getValue());
             }
         }
-
+        Log.i(TAG, "buildEmailContent: test"+question);
         return question.toString();
     }
 

@@ -141,9 +141,9 @@ public class ConfigurationFile {
             setProperty("ReadSpeaker_speed_fr","100");
             setProperty("ReadSpeaker_speed_en","100");
             setProperty("TTS_Android_pitch_fr","130");
+            setProperty("TTS_Android_pitch_en","130");
             setProperty("TTS_Android_speed_fr","100");
-            setProperty("TTS_Android_pitch_en","180");
-            setProperty("TTS_Android_speed_en","70");
+            setProperty("TTS_Android_speed_en","100");
 //            setProperty("TTS_ApiGoogle_pitch","130");
 //            setProperty("TTS_ApiGoogle_speed","100");
 //            props.addPropertyComment("TTS_ApiGoogle_Voice_Type", "Voice type : Standard/Wavenet");
@@ -231,8 +231,6 @@ public class ConfigurationFile {
             props.addPropertyComment("Mail_Sender", "Conversation sending email");
             setProperty("Mail_Sender","TeamChat@teamnet.fr");
             setProperty("Mail_Destination","");
-            setProperty("Mail_Subject_fr","Dialogues BuddyGPT");
-            setProperty("Mail_Subject_en","BuddyGPT Dialogs");
             setProperty("Message_mail_send_fr","Le mail a bien été envoyé !");
             setProperty("Message_mail_send_en","The email was sent successfully!");
 

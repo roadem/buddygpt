@@ -750,7 +750,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void setQuestionTime(long questionTime) {
-        Log.i("RequestTime", "setQuestionTime with : "+String.valueOf(responseTime));
         this.questionTime = questionTime;
     }
 
@@ -759,7 +758,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void setResponseTime(long responseTime) {
-        Log.i("ResponseTime", "setResponseTime with : "+String.valueOf(responseTime));
         this.responseTime = responseTime;
     }
 
