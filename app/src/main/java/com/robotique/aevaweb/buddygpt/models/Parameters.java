@@ -66,6 +66,40 @@ public class Parameters {
     @SerializedName("email_support")
     private String emailSupport;
 
+    @SerializedName("Mail_Subject_fr")
+    private String mailSubjectFr;
+
+    @SerializedName("Mail_Subject_en")
+    private String mailSubjectEn;
+
+    @SerializedName("Message_mail_send_fr")
+    private String messageMailSendFr;
+
+    @SerializedName("Message_mail_send_en")
+    private String messageMailSendEn;
+
+    @SerializedName("username")
+    private String username;
+
+    @SerializedName("username_Password")
+    private String usernamePassword;
+
+    @SerializedName("isEncryptionRequired")
+    private Boolean isEncryptionRequired;
+
+    @SerializedName("allow_conversation_storage")
+    private Boolean allowConversationStorage;
+
+    @SerializedName("teamgpt_version")
+    private String teamGptVersion;
+
+    @SerializedName("project_id_TeamRAG")
+    private String projectIdTeamRag;
+
+    @SerializedName("Cohere_key")
+    private String cohereKey;
+
+    // Getters et Setters
     public String getMailSender() {
         return mailSender;
     }
@@ -105,7 +139,6 @@ public class Parameters {
     public void setIdCompte(String idCompte) {
         this.idCompte = idCompte;
     }
-
 
     public String getTeamGptKey() {
         return teamGptKey;
@@ -222,6 +255,11 @@ public class Parameters {
     public String getModeleGemini() {
         return modeleGemini;
     }
+
+    public void setModeleGemini(String modeleGemini) {
+        this.modeleGemini = modeleGemini;
+    }
+
     public String getEmailSupport() {
         return emailSupport;
     }
@@ -229,7 +267,92 @@ public class Parameters {
     public void setEmailSupport(String emailSupport) {
         this.emailSupport = emailSupport;
     }
-    public void setModeleGemini(String modeleGemini) {
-        this.modeleGemini = modeleGemini;
+
+    public String getMailSubjectFr() {
+        return mailSubjectFr;
+    }
+
+    public void setMailSubjectFr(String mailSubjectFr) {
+        this.mailSubjectFr = mailSubjectFr;
+    }
+
+    public String getMailSubjectEn() {
+        return mailSubjectEn;
+    }
+
+    public void setMailSubjectEn(String mailSubjectEn) {
+        this.mailSubjectEn = mailSubjectEn;
+    }
+
+    public String getMessageMailSendFr() {
+        return messageMailSendFr;
+    }
+
+    public void setMessageMailSendFr(String messageMailSendFr) {
+        this.messageMailSendFr = messageMailSendFr;
+    }
+
+    public String getMessageMailSendEn() {
+        return messageMailSendEn;
+    }
+
+    public void setMessageMailSendEn(String messageMailSendEn) {
+        this.messageMailSendEn = messageMailSendEn;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getUsernamePassword() {
+        return usernamePassword;
+    }
+
+    public void setUsernamePassword(String usernamePassword) {
+        this.usernamePassword = usernamePassword;
+    }
+
+    public Boolean getIsEncryptionRequired() {
+        return isEncryptionRequired;
+    }
+
+    public void setIsEncryptionRequired(Boolean isEncryptionRequired) {
+        this.isEncryptionRequired = isEncryptionRequired;
+    }
+
+    public Boolean getAllowConversationStorage() {
+        return allowConversationStorage;
+    }
+
+    public void setAllowConversationStorage(Boolean allowConversationStorage) {
+        this.allowConversationStorage = allowConversationStorage;
+    }
+
+    public String getTeamGptVersion() {
+        return teamGptVersion;
+    }
+
+    public void setTeamGptVersion(String teamGptVersion) {
+        this.teamGptVersion = teamGptVersion;
+    }
+
+    public String getProjectIdTeamRag() {
+        return projectIdTeamRag;
+    }
+
+    public void setProjectIdTeamRag(String projectIdTeamRag) {
+        this.projectIdTeamRag = projectIdTeamRag;
+    }
+
+    public String getCohereKey() {
+        return cohereKey;
+    }
+
+    public void setCohereKey(String cohereKey) {
+        this.cohereKey = cohereKey;
     }
 }

@@ -2,7 +2,7 @@
     <string name="app_name">BuddyGPT</string>
     <string name="path">/storage/emulated/0/</string>
     <string name="pathConfig">/storage/emulated/0/BuddyGPT/</string>
-    <string name="copyright">[Ver. 1.4.1] 2025©Teamnet</string>
+    <string name="copyright">[Ver. 1.4.2] 2025©Teamnet</string>
     <!-- Menu de paramètres -->
     <!-- Menu de paramètres french-->
     <string name="menu_title_fr">PARAMETRES</string>
@@ -39,6 +39,7 @@
     <string name="menu_option_tracking_invitation_fr">Invitation</string>
     <string name="menu_option_tracking_invitation_chatGpt_fr">Invitation ChatGPT</string>
     <string name="menu_dialog_supported_languages_Android_STT_fr">Langues prises en charge</string>
+    <string name="no_message_to_send_fr">Aucun message à envoyer</string>
 
 
     <!-- Menu de paramètres english-->
@@ -76,6 +77,7 @@
     <string name="menu_option_tracking_invitation_en">Invitation</string>
     <string name="menu_option_tracking_invitation_chatGpt_en">ChatGPT invitation</string>
     <string name="menu_dialog_supported_languages_Android_STT_en">Supported Languages</string>
+    <string name="no_message_to_send_en">No message to send</string>
 
     <!-- Menu de paramètres spanish-->
     <string name="menu_title_es">AJUSTES</string>
