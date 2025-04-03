@@ -7,7 +7,6 @@ import android.media.MediaScannerConnection;
 import android.os.AsyncTask;
 import android.util.Log;
 
-
 import com.robotique.aevaweb.buddygpt.R;
 
 import java.io.File;
@@ -17,9 +16,6 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
 
 public class ImageGenerator extends AsyncTask<String, Void, Bitmap> {
 

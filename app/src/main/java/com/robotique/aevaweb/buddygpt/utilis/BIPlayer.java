@@ -10,13 +10,11 @@ import androidx.annotation.NonNull;
 import com.bfr.buddy.ui.shared.FacialEvent;
 import com.bfr.buddy.ui.shared.IUIFaceAnimationCallback;
 import com.bfr.buddysdk.BuddySDK;
-
 import com.bfr.buddysdk.services.companion.Task;
 import com.bfr.buddysdk.services.companion.TaskCallback;
 import com.google.android.exoplayer2.ui.PlayerView;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
-
 
 import java.nio.file.Files;
 import java.nio.file.Paths;

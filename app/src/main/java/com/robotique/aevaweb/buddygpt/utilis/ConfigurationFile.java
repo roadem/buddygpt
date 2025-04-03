@@ -9,7 +9,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Arrays;
 
 public class ConfigurationFile {
 
@@ -190,7 +189,7 @@ public class ConfigurationFile {
             setProperty("Message_Timeout_NotRespected_de","Es dauert ein wenig, die Verbindung ist ein wenig langsam./ohh! Das Internet ist heute nicht sehr schnell/Einen Moment, ich schließe meine Schaltkreise.");
 
             props.addPropertyComment("Display_of_speech","");
-            props.addPropertyComment("Display_of_speech","Speech display, Emotion activation, Language detection, Streaming mode, Activation stimulis, Commands and tracking (Yes/No)");
+            props.addPropertyComment("Display_of_speech","Speech display, Emotion activation, Language detection (Yes/No)");
             setProperty("Display_of_speech","Yes");
             setProperty("Activation_of_emotions","Yes");
             setProperty("Language_detection","Yes");

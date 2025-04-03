@@ -1,4 +1,5 @@
 package com.robotique.aevaweb.buddygpt.adapters;
+
 import android.content.Context;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -7,7 +8,6 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 
 import com.robotique.aevaweb.buddygpt.models.TtsModel;
 

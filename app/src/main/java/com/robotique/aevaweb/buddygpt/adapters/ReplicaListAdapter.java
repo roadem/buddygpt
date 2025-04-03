@@ -1,7 +1,6 @@
 package com.robotique.aevaweb.buddygpt.adapters;
 
 import android.graphics.text.LineBreaker;
-import android.text.Layout;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;

@@ -6,7 +6,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
-import android.view.View;
 
 import androidx.annotation.NonNull;
 
@@ -22,14 +21,16 @@ import com.google.gson.JsonParser;
 import com.google.mlkit.nl.languageid.IdentifiedLanguage;
 import com.google.mlkit.nl.languageid.LanguageIdentification;
 import com.google.mlkit.nl.languageid.LanguageIdentifier;
-
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.models.Parameters;
-import com.robotique.aevaweb.buddygpt.models.ParametersResponse;
 import com.robotique.aevaweb.buddygpt.models.Request;
 import com.robotique.aevaweb.buddygpt.utilis.ApiEndpointInterface;
 import com.robotique.aevaweb.buddygpt.utilis.RetrofitClient;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -37,23 +38,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -508,9 +500,9 @@ public class ResponseFromTeamGPT{
         // Préparez le corps de la requête.
         Request payload = new Request();
         payload.setTextInput(question);
-        payload.setImeiIdDevice(imeiDevice);
+        payload.setImeiIdDevice("1");
         payload.setEmotion(buddyGPTApplication.getparam("switch_emotion").equals("true"));
-        payload.setCommandes(true);
+        payload.setCommandes(false);
         payload.setLangue(buddyGPTApplication.getLangue().getLanguageCode().split("-")[0]);
         if (!buddyGPTApplication.getparam("session_id").isEmpty()) {
             payload.setSessionId(buddyGPTApplication.getparam("session_id"));
@@ -689,8 +681,15 @@ public class ResponseFromTeamGPT{
 
                     JSONObject jsonObject = new JSONObject(jsonData);
 
-                    // Handle "emotion"
 
+                    if(jsonObject.has("Emotion") && jsonObject.getString("Emotion").equalsIgnoreCase("") && jsonObject.has("Answer") && jsonObject.getString("Answer").equalsIgnoreCase("")){
+                        Log.i(TAG_STREAM, "handleStreamingResponse: continue");
+                        if(jsonObject.has("is_finished") && jsonObject.getBoolean("is_finished")){
+                            isFullResponseReceived=true;
+                            isSessionIdProcessed=false;
+                        }
+                    }else {
+                        Log.i(TAG_STREAM, "handleStreamingResponse: else continue");
                         if (buddyGPTApplication.getparam("switch_emotion").equals("true")) {
 
                             if ( jsonObject.has("Emotion") && !jsonObject.getString("Emotion").equalsIgnoreCase("")) {
@@ -713,14 +712,14 @@ public class ResponseFromTeamGPT{
                         }
 
 
-                    // Handle "session_id"
-                    Handler mainHandler2 = new Handler(Looper.getMainLooper());
-                    if(!isSessionIdProcessed){
-                        if (jsonObject.has("session_id")) {
-                            String sessionId = jsonObject.getString("session_id");
-                            Log.i(TAG_STREAM, "handleStreamingResponse: session "+jsonObject.getString("session_id"));
+                        // Handle "session_id"
+                        Handler mainHandler2 = new Handler(Looper.getMainLooper());
+                        if(!isSessionIdProcessed){
+                            if (jsonObject.has("session_id")) {
+                                String sessionId = jsonObject.getString("session_id");
+                                Log.i(TAG_STREAM, "handleStreamingResponse: session "+jsonObject.getString("session_id"));
 
-                                 if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
+                                if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
 
                                     mainHandler2.post(() -> {
                                         buddyGPTApplication.notifyObservers("Session_ID_Changed");
@@ -735,33 +734,36 @@ public class ResponseFromTeamGPT{
                                 }
 
 
-                        }
-                        isSessionIdProcessed = true;
-                    }
-
-
-                    // Handle "Answer"
-                    if (jsonObject.has("Answer")) {
-
-                        String resp = jsonObject.getString("Answer");
-
-                        if (!resp.isEmpty()) {
-                            Log.i(TAG_STREAM, "handleStreamingResponse: if1 "+resp);
-                            answer += " "+resp;
-                            phrase =resp;
-                            onNewPhrase();
-                            if(jsonObject.getBoolean("is_finished")){
-                                isFullResponseReceived=true;
-                                isSessionIdProcessed=false;
                             }
+                            isSessionIdProcessed = true;
+                        }
 
-                        }else{
-                            if(jsonObject.getBoolean("is_finished")){
-                                isFullResponseReceived=true;
-                                isSessionIdProcessed=false;
+
+                        // Handle "Answer"
+                        if (jsonObject.has("Answer")) {
+
+                            String resp = jsonObject.getString("Answer");
+
+                            if (!resp.isEmpty()) {
+                                Log.i(TAG_STREAM, "handleStreamingResponse: if1 "+resp);
+                                answer += " "+resp;
+                                phrase =resp;
+                                onNewPhrase();
+                                if(jsonObject.getBoolean("is_finished")){
+                                    isFullResponseReceived=true;
+                                    isSessionIdProcessed=false;
+                                }
+
+                            }else{
+                                if(jsonObject.getBoolean("is_finished")){
+                                    isFullResponseReceived=true;
+                                    isSessionIdProcessed=false;
+                                }
                             }
                         }
+
                     }
+                    // Handle "emotion"
 
 
 
@@ -873,6 +875,7 @@ public class ResponseFromTeamGPT{
             Log.i(TAG_STREAM, "processPhrasesWithDelay: isReadyToSpeak "+isReadyToSpeak);
             Log.i(TAG_STREAM, "processPhrasesWithDelay: isFullResponseReceived :" + isFullResponseReceived);
             if( isDisplayFinished && ((isFullResponseReceived && isReadyToSpeak) || (isError && isReadyToSpeak) )){
+                Log.i(TAG_STREAM, "else if HOU");
                 onFinishStreaming();
                 buddyGPTApplication.notifyObservers("TTS_success");
                 reset();

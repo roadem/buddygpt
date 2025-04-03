@@ -1,7 +1,6 @@
 package com.robotique.aevaweb.buddygpt.activities;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -38,24 +37,23 @@ import androidx.annotation.NonNull;
 
 import com.bfr.buddy.utils.events.EventItem;
 import com.bfr.buddysdk.BuddyActivity;
-import com.bfr.buddysdk.BuddySDK;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
+import com.robotique.aevaweb.buddygpt.adapters.LangueSpinnerAdapter;
+import com.robotique.aevaweb.buddygpt.adapters.SttSpinnerAdapter;
+import com.robotique.aevaweb.buddygpt.adapters.TtsSpinnerAdapter;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
 import com.robotique.aevaweb.buddygpt.models.Langue;
 import com.robotique.aevaweb.buddygpt.models.Setting;
 import com.robotique.aevaweb.buddygpt.models.SttModel;
 import com.robotique.aevaweb.buddygpt.models.TtsModel;
-import com.robotique.aevaweb.buddygpt.utilis.LanguageDetailsChecker;
-import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
-import com.robotique.aevaweb.buddygpt.adapters.LangueSpinnerAdapter;
-import com.robotique.aevaweb.buddygpt.adapters.SttSpinnerAdapter;
-import com.robotique.aevaweb.buddygpt.adapters.TtsSpinnerAdapter;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
+import com.robotique.aevaweb.buddygpt.utilis.LanguageDetailsChecker;
+import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 
 import java.io.IOException;
 import java.lang.reflect.Field;

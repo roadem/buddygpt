@@ -8,7 +8,6 @@ import android.util.Log;
 
 import com.bfr.buddy.usb.shared.IUsbCommadRsp;
 import com.bfr.buddysdk.BuddySDK;
-
 import com.google.mediapipe.tasks.components.containers.NormalizedLandmark;
 import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult;
 
