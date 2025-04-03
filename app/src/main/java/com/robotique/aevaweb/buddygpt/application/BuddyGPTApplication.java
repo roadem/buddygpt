@@ -987,6 +987,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         setparam("TeamGPT_url", getParamFromFile("TeamGPT_url", configurationFilePseudo));
         setparam("TeamGPT_ApiEndpoint_Params", getParamFromFile("TeamGPT_ApiEndpoint_Params", configurationFilePseudo));
         setparam("TeamGPT_ApiEndpoint_Response", getParamFromFile("TeamGPT_ApiEndpoint_Response", configurationFilePseudo));
+        if (getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo).equalsIgnoreCase("")){
+            setparam("TeamGPT_ID_Device", getImeiRobot());
+        }
+        else{
+            setparam("TeamGPT_ID_Device", getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo));
+        }
 
         if (getparam("TeamGPT_Key").equalsIgnoreCase("")) {
 
@@ -1052,7 +1058,33 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     }
-
+    public void resetSharedPreferences(){
+        if( getparam("Mail_Destination").equalsIgnoreCase( getparam("Email"))){
+             setparam("Mail_Destination","");
+        }
+         setparam("NomCompte",  "");
+         setparam("SelectedChatbot", "");
+         setparam("STT-TeamGPT", "");
+         setparam("TTS-TeamGPT", "");
+         setparam("Header", "");
+         setparam("Entete","");
+         setparam("Email", "");
+         setparam("Stream_mode","");
+         setparam("Mail_sender","");
+         setparam("Smtp_host","");
+         setparam("Password_mail_sender","");
+         setparam("Smtp_port","");
+         setparam("show_price","");
+         setparam("CustomGPT_model","");
+         setparam("Modele_Mistral","");
+         setparam("Modele_Openai","");
+         setparam("Modele_gemini","");
+         setparam("IMEI_ID_Device","_");
+         setparam("IdCompte","_");
+         setparam("email_support","_");
+         setparam("Mail_Subject_fr","");
+         setparam("Mail_Subject_en","");
+    }
     private void initChatTextSize() {
         int textSize = Integer.parseInt(getParamFromFile("Chat_TextSize", configurationFilePseudo));
         if (textSize < 20 || textSize > 50) {
@@ -1923,11 +1955,16 @@ public class BuddyGPTApplication extends BuddyApplication {
                     public void onPartialResults(Bundle bundle) {
                         Log.i(TAG, "onPartialResults listen");
                         ArrayList<String> data = bundle.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                        if (data != null && data.size() > 0) {
+                        if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onPartialResults  : " + data.get(0));
-                            notifyObservers("STTQuestion_success;" + data.get(0));
-                            BuddySDK.UI.stopListenAnimation();
-                            setLed("neutral");
+                            if(!data.get(0).trim().equals("")) {
+                                Log.e(TAG, "question result onPartialResults  : " + data.get(0));
+                                notifyObservers("STTQuestion_success;" + data.get(0));
+                                BuddySDK.UI.stopListenAnimation();
+                                setLed("neutral");
+                            }else{
+                                Log.e(TAG, "question result onPartialResults  : vide " + data.get(0));
+                            }
                         } else {
                             Log.e(TAG, "question result onPartialResults size = 0 : ");
                         }
@@ -2005,7 +2042,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 //            Log.e(TAG_STREAMING, "Failed to initialize AudioRecord");
 //        }
     }
-    public void stopWhisperSTT(Boolean shouldRestartListening,Boolean shouldRestartNewCycle) {
+
+    public void stopWhisperSTT(Boolean shouldRestartListening, Boolean shouldRestartNewCycle) {
         try {
             byte[] audioDataF = readAudioFile(); // Read the recorded audio data
             // Annuler la tâche précédente si elle existe
@@ -3149,11 +3187,18 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                             if (getLangue().getLanguageCode().split("-")[0].equals("en")){
                                 usingReadSpeaker = false;
-                                if (getparam("TTS").equalsIgnoreCase("Android") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("Android"))){
-                                    tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                                    tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                                    tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
-                                }else if (getparam("TTS").equalsIgnoreCase("ApiGoogle") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))){
+                                if (getparam("TTS").equalsIgnoreCase("Android")
+                                        || (getparam("TTS").equalsIgnoreCase("ReadSpeaker")
+                                                && getSecondTTSfromTTSList().equalsIgnoreCase("Android"))) {
+                                    tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(
+                                            getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                                    tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(
+                                            getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                                    tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                            getLangue().getLanguageCode().split("-")[1]));
+                                } else if (getparam("TTS").equalsIgnoreCase("ApiGoogle")
+                                        || (getparam("TTS").equalsIgnoreCase("ReadSpeaker")
+                                                && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))) {
 
                                 }
                                 //0.5,2.0
@@ -3170,74 +3215,88 @@ public class BuddyGPTApplication extends BuddyApplication {
                     else {
                         if (getLangue().getLanguageCode().split("-")[0].equals("en")){
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
-                        }
-                        else {
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                    getLangue().getLanguageCode().split("-")[1]));
+                        } else {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale("en","US"));
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale("en", "US"));
                         }
                     }
                     break;
                 case "fr":
-                    if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")){
-                        Log.e("MEHDI","usingReadSpeaker y");
-                        if (getLangue().getLanguageCode().equals("fr-FR")){
-                            Log.e("MRAA","frensh roxane");
+                    if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")) {
+                        Log.e("MEHDI", "usingReadSpeaker y");
+                        if (getLangue().getLanguageCode().equals("fr-FR")) {
+                            Log.e("MRAA", "frensh roxane");
                             BuddySDK.Speech.setSpeakerVoice("roxane");
-                            Log.e("MEHDI","usingReadSpeaker 1");
+                            Log.e("MEHDI", "usingReadSpeaker 1");
                             usingReadSpeaker = true;
-                        }else {
-                            if (getLangue().getLanguageCode().split("-")[0].equals("fr")){
-                                Log.e("MEHDI","usingReadSpeaker 2");
+                        } else {
+                            if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
+                                Log.e("MEHDI", "usingReadSpeaker 2");
                                 usingReadSpeaker = false;
-                                tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                                tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                                tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
-                            }
-                            else {
-                                Log.e("MRAA","frensh roxane");
+                                tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                        .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
+                                tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                        .parseInt(getParamFromFile("TTS_Android_speed_fr", configurationFilePseudo))));
+                                tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                        getLangue().getLanguageCode().split("-")[1]));
+                            } else {
+                                Log.e("MRAA", "frensh roxane");
                                 BuddySDK.Speech.setSpeakerVoice("roxane");
-                                Log.e("MEHDI","usingReadSpeaker 3");
+                                Log.e("MEHDI", "usingReadSpeaker 3");
                                 usingReadSpeaker = true;
                             }
                         }
-                    }else {
-                        if (getLangue().getLanguageCode().split("-")[0].equals("fr")){
+                    } else {
+                        if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
-                        }
-                        else {
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_fr", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                    getLangue().getLanguageCode().split("-")[1]));
+                        } else {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale("fr","FR"));
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale("fr", "FR"));
                         }
                     }
-
                     break;
                 case "es":
                     usingReadSpeaker = false;
                     if (getLangue().getLanguageCode().split("-")[0].equals("es")) {
 
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch", configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed", configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0], getLangue().getLanguageCode().split("-")[1]));
-                    }
-                    else{
-                        int result = tts_android.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
+                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                getLangue().getLanguageCode().split("-")[1]));
+                    } else {
+                        int result = tts_android
+                                .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
-                            Log.e("TEST", "langue qui doit etre "+code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+                            Log.e("TEST", "langue qui doit etre " + code);
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
@@ -3246,42 +3305,54 @@ public class BuddyGPTApplication extends BuddyApplication {
                     usingReadSpeaker = false;
                     if (getLangue().getLanguageCode().split("-")[0].equals("de")) {
 
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch", configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed", configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0], getLangue().getLanguageCode().split("-")[1]));
-                    }
-                    else{
-                        int result = tts_android.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
+                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                getLangue().getLanguageCode().split("-")[1]));
+                    } else {
+                        int result = tts_android
+                                .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
-                            Log.e("TEST", "langue qui doit etre "+code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+                            Log.e("TEST", "langue qui doit etre " + code);
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
                     break;
                 default:
                     usingReadSpeaker = false;
-                    Log.e("TEST","default language "+language);
-                    Log.e("TEST","default getCurrentLanguage().split(\"-\")[0].trim() "+getCurrentLanguage().split("-").length);
-                    if (!getCurrentLanguage().equals("") && getCurrentLanguage().split("-")[0].trim().equalsIgnoreCase(language)){
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),getCurrentLanguage().split("-")[1].trim()));
-                    }
-                    else {
-                        Log.e("TEST","set Langue TTS "+language.toLowerCase()+","+language.toUpperCase());
-                        int result = tts_android.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
+                    Log.e("TEST", "default language " + language);
+                    Log.e("TEST", "default getCurrentLanguage().split(\"-\")[0].trim() "
+                            + getCurrentLanguage().split("-").length);
+                    if (!getCurrentLanguage().equals("")
+                            && getCurrentLanguage().split("-")[0].trim().equalsIgnoreCase(language)) {
+                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                                Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                        tts_android.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),
+                                getCurrentLanguage().split("-")[1].trim()));
+                    } else {
+                        Log.e("TEST", "set Langue TTS " + language.toLowerCase() + "," + language.toUpperCase());
+                        int result = tts_android
+                                .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
-                            Log.e("TEST", "langue qui doit etre "+code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+                            Log.e("TEST", "langue qui doit etre " + code);
+                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
+                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                    .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
+                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
@@ -3909,7 +3980,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
             params.width = (int) (activity.getResources().getDisplayMetrics().widthPixels * 0.6);
             dialog.getWindow().setAttributes(params);
-
+            dialog.getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
             // Display the dialog
             try {
                 dialog.show();
@@ -4144,13 +4215,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     /**
      * Cette fonction permet de changer le volume du device
      */
-    public void setVolume(int percentage) {
+    public void setVolume(int percentage,int type) {
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
-        if (audioManager.isBluetoothScoOn()) {
-            max = audioManager.getStreamMaxVolume(6);
-        }
 
         int volume = getClosestInt((double) (percentage * max) / 100);
 
@@ -4159,9 +4227,10 @@ public class BuddyGPTApplication extends BuddyApplication {
             audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
             audioManager.startBluetoothSco();
             audioManager.setBluetoothScoOn(true);
-            audioManager.setStreamVolume(6, volume, AudioManager.FLAG_SHOW_UI);
+            audioManager.setStreamVolume(6, volume, type);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE );
         } else {
-            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume, AudioManager.FLAG_SHOW_UI);
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, volume,type);
         }
     }
 
@@ -4196,7 +4265,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         String show_openAI_prices = getParamFromFile("show_openAI_prices", "BuddyGPT.properties");
         if (show_openAI_prices != null && show_openAI_prices.trim().equalsIgnoreCase("yes")) {
-
 
             double totalConsumptionSaved = Double.parseDouble(getparam("Total_cons"));
             Log.i("USAGE", "totalConsumption (avant calcul) : "+totalConsumptionSaved);
