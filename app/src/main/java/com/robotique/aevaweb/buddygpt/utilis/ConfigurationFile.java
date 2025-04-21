@@ -111,7 +111,7 @@ public class ConfigurationFile {
             //props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/ApiGoogle/Whisper/Cerence");
             //setProperty("Speech_To_Text_List","SpeechRecognizer/ApiGoogle/Whisper/Cerence");
 //            setProperty("Speech_To_Text","SpeechRecognizer");
-            //setProperty("ApiGoogle_Key","AIzaSyAZDkir2v7wk1j-5rKrORCyOA_tlfSaa8E");
+
 
             //props.addPropertyComment("Change_STT","");
             //props.addPropertyComment("Change_STT","Possibility of changing the STT (Yes/No)");

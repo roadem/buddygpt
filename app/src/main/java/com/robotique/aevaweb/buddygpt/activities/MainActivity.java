@@ -104,7 +104,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private static final int PERMISSION_REQ_ID = 22;
     private BuddyGPTApplication buddyGPTApplication;
     private View decorView;
-
+    private Random random = new Random();
     //views
     private RelativeLayout buddy_texte_qst_lyt;
     private RelativeLayout buddy_texte_resp_lyt;
@@ -203,7 +203,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private CountDownTimer timerDownloading;
     private CountDownTimer timerPhoto;
 
-    private static final Random random = new Random();
     private WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
     private ArrayList<Replica> listRep=new ArrayList();
     private AudioManager amanager;
@@ -1109,7 +1108,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                                     @Override
                                     public void run() {
                                         buddyGPTApplication.setAnswerHasExceededTimeOut(false);
-                                        responseTimeout = new CountDownTimer(Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", "BuddyGPT.properties")) * 1000, 1000) {
+                                        responseTimeout = new CountDownTimer((long)Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", "BuddyGPT.properties")) * 1000, 1000) {
                                             @Override
                                             public void onTick(long l) {}
                                             @Override
@@ -1124,27 +1123,27 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                                                     }
                                                     if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
                                                         String[] message_Timeout_NotRespected_en = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en","BuddyGPT.properties").split("/");
-                                                        int randomNumber_message_Timeout_NotRespected_en = new Random().nextInt(message_Timeout_NotRespected_en.length);
+                                                        int randomNumber_message_Timeout_NotRespected_en = random.nextInt(message_Timeout_NotRespected_en.length);
                                                         speak(message_Timeout_NotRespected_en[randomNumber_message_Timeout_NotRespected_en],"timeOutExpired");
                                                     }
                                                     else if (buddyGPTApplication.getCurrentLanguage().equals("fr")){
                                                         String[] message_Timeout_NotRespected_fr = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_fr","BuddyGPT.properties").split("/");
-                                                        int randomNumber_message_Timeout_NotRespected_fr = new Random().nextInt(message_Timeout_NotRespected_fr.length);
+                                                        int randomNumber_message_Timeout_NotRespected_fr = random.nextInt(message_Timeout_NotRespected_fr.length);
                                                         speak(message_Timeout_NotRespected_fr[randomNumber_message_Timeout_NotRespected_fr],"timeOutExpired");
                                                     }
                                                     else if (buddyGPTApplication.getCurrentLanguage().equals("es")){
                                                         String[] message_Timeout_NotRespected_es = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_es","BuddyGPT.properties").split("/");
-                                                        int randomNumber_message_Timeout_NotRespected_es = new Random().nextInt(message_Timeout_NotRespected_es.length);
+                                                        int randomNumber_message_Timeout_NotRespected_es = random.nextInt(message_Timeout_NotRespected_es.length);
                                                         speak(message_Timeout_NotRespected_es[randomNumber_message_Timeout_NotRespected_es],"timeOutExpired");
                                                     }
                                                     else if (buddyGPTApplication.getCurrentLanguage().equals("de")){
                                                         String[] message_Timeout_NotRespected_de = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_de","BuddyGPT.properties").split("/");
-                                                        int randomNumber_message_Timeout_NotRespected_de = new Random().nextInt(message_Timeout_NotRespected_de.length);
+                                                        int randomNumber_message_Timeout_NotRespected_de = random.nextInt(message_Timeout_NotRespected_de.length);
                                                         speak(message_Timeout_NotRespected_de[randomNumber_message_Timeout_NotRespected_de],"timeOutExpired");
                                                     }
                                                     else {
                                                         String[] message_Timeout_NotRespected_en = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en","BuddyGPT.properties").split("/");
-                                                        int randomNumber_message_Timeout_NotRespected_en = new Random().nextInt(message_Timeout_NotRespected_en.length);
+                                                        int randomNumber_message_Timeout_NotRespected_en = random.nextInt(message_Timeout_NotRespected_en.length);
                                                         buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(message_Timeout_NotRespected_en[randomNumber_message_Timeout_NotRespected_en]).addOnSuccessListener(new OnSuccessListener<String>() {
                                                             @Override
                                                             public void onSuccess(String translatedText) {
@@ -1207,7 +1206,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                         }
                     }
                 };
-                handler.postDelayed(runnable,500);
+                if (handler != null) {
+                    handler.postDelayed(runnable, 500);
+                } else {
+                    Log.e(TAG, "Handler is null. Unable to post the runnable.");
+                }
             }
 
             else if (message.contains("Emotion_Change")) {
@@ -1277,7 +1280,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                                                     }
                                                 }
                                             };
-                                            handler.postDelayed(runnable,500);
+                                            if (handler != null) {
+                                                handler.postDelayed(runnable, 500);
+                                            } else {
+                                                Log.e(TAG, "Handler is null. Unable to post the runnable.");
+                                            }
                                         }
                                     }
                                 });
@@ -1351,7 +1358,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                                                             }
                                                         }
                                                     };
-                                                    handler.postDelayed(runnable,500);
+                                                    if (handler != null) {
+                                                        handler.postDelayed(runnable, 500);
+                                                    } else {
+                                                        Log.e(TAG, "Handler is null. Unable to post the runnable.");
+                                                    }
                                                 }
                                             }
                                         });
@@ -1879,7 +1890,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 listBehaviour.add(result.toLowerCase());
             }
             if (listBehaviour.size() > 0) {
-                xmlBehaviour = listBehaviour.get(new Random().nextInt(listBehaviour.size())).trim();
+                xmlBehaviour = listBehaviour.get(random.nextInt(listBehaviour.size())).trim();
             } else {
                 xmlBehaviour = "";
             }
@@ -1890,7 +1901,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         if (!xmlBehaviour.contains(".xml") && !xmlBehaviour.equals("")){
             List<String> nomsFichiers = getFilenamesForCategory(dossierExterne, xmlBehaviour);
             if (!nomsFichiers.isEmpty()) {
-                xmlBehaviour = nomsFichiers.get(new Random().nextInt(nomsFichiers.size()));
+                xmlBehaviour = nomsFichiers.get(random.nextInt(nomsFichiers.size()));
                 Log.i("DEBUG_BI","Nom du fichier choisi : " + xmlBehaviour);
             } else {
                 Log.i("DEBUG_BI","Aucun fichier trouvé pour la catégorie : " + xmlBehaviour);
@@ -2658,6 +2669,9 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 preview.setSurfaceProvider(previewView.getSurfaceProvider());
                 camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer);
                 Log.i(TAG, "Camera bound successfully");
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // Re-interrupt the thread
+                Log.e(TAG, "Camera binding interrupted", e);
             } catch (Exception e) {
                 Log.e(TAG, "Camera binding failed", e);
             }

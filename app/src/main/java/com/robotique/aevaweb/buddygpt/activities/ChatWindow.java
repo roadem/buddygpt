@@ -1,11 +1,6 @@
 package com.robotique.aevaweb.buddygpt.activities;
 
-import androidx.annotation.NonNull;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.Activity;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -27,6 +22,10 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.GazePosition;
 import com.bfr.buddy.ui.shared.LabialExpression;
@@ -34,21 +33,20 @@ import com.bfr.buddy.utils.events.EventItem;
 import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
 import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddysdk.BuddySDK;
-import com.google.android.exoplayer2.C;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
+import com.robotique.aevaweb.buddygpt.adapters.ReplicaListAdapter;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
 import com.robotique.aevaweb.buddygpt.models.Langue;
 import com.robotique.aevaweb.buddygpt.models.Replica;
 import com.robotique.aevaweb.buddygpt.models.Session;
 import com.robotique.aevaweb.buddygpt.models.Setting;
-import com.robotique.aevaweb.buddygpt.utilis.MailSender;
-import com.robotique.aevaweb.buddygpt.adapters.ReplicaListAdapter;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
+import com.robotique.aevaweb.buddygpt.utilis.MailSender;
 import com.robotique.aevaweb.buddygpt.utilis.OnMailReadyListener;
 
 import org.json.JSONArray;
@@ -70,16 +68,15 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private static final String KEY_RESPONSE = "Response";
     private BuddyGPTApplication buddyGPTApplication;
     private View decorView;
-
+    private Random random = new Random();
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private boolean isListeningFreeSpeech = false;
     private boolean isWaitingForResponse = false;
 
 
-    private String fullResponse="";
     private Setting settingClass;
-    private ArrayList<Replica> listRep=new ArrayList();
-    private ArrayList<Replica> listRepGlobale=new ArrayList();
+    private ArrayList<Replica> listRep=new ArrayList<>();
+    private ArrayList<Replica> listRepGlobale=new ArrayList<>();
     private ReplicaListAdapter adapter;
 
     //timers
@@ -89,8 +86,8 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     //views
     private RelativeLayout popupAddMail;
     private LinearLayout popupAddMailContent;
-    private RelativeLayout parent_chat;
-    private ImageView micro_btn;
+    private RelativeLayout parentChat;
+    private ImageView microBtn;
     private RecyclerView recyclerView;
     private ScrollView scrollView;
     private TextView textEmail;
@@ -106,13 +103,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private Handler handlerTTSError = new Handler();
     private Runnable runnableTTSError;
     private String configFile ="BuddyGPT.properties";
-    private String header ="header";
-    private String entete ="entete";
-    private String cabecera ="Cabecera";
-    private String kopfzeile ="Kopfzeile";
-    private String openAIKey = "openAI_API_Key";
-    private String addDestinationMail="";
-    private String addDestinationMailEditText="";
+// todo
     private boolean isClickedBtnCloseChat=false;
     String[] newSessionText = new String[1];
     String[] responseText = new String[1];
@@ -144,8 +135,8 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         responseFromTeamGPT=new ResponseFromTeamGPT(buddyGPTApplication);
         //init views
         popupAddMail = findViewById(R.id.popup_add_mail);
-        parent_chat = findViewById( R.id.parent_chat );
-        micro_btn = findViewById( R.id.micro_btn );
+        parentChat = findViewById( R.id.parent_chat );
+        microBtn = findViewById( R.id.micro_btn );
         scrollView=findViewById(R.id.scrollview);
         recyclerView=findViewById(R.id.chatRecyclerView);
         editTextEmail = findViewById(R.id.editTextEmail);
@@ -217,7 +208,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
             BuddySDK.UI.lookAt(GazePosition.CENTER, true);
             BuddySDK.UI.stopListenAnimation();
-            BuddySDK.UI.setViewAsFace(parent_chat);
+            BuddySDK.UI.setViewAsFace(parentChat);
             BuddySDK.UI.setMenuWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
             BuddySDK.UI.setCloseWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
 
@@ -504,7 +495,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 }
                 else {
                     buddyGPTApplication.setLed("neutral");
-                    micro_btn.setImageResource(R.drawable.micro_off);
+                    microBtn.setImageResource(R.drawable.micro_off);
                     buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                     Log.e("MEHDII","buddyGPTApplication.traitementAudio---------------------------------------");
                     buddyGPTApplication.traitementAudio(false);
@@ -575,10 +566,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
      */
     public void onClickSend(View view){
         if(listRepGlobale.isEmpty()){
-            if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
+            if (buddyGPTApplication.getLangue().getNom().equals(langueEn)){
                 buddyGPTApplication.showToast(getString(R.string.no_message_to_send_en));
             }
-            else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+            else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
                 buddyGPTApplication.showToast(getString(R.string.no_message_to_send_fr));
             }
             else{
@@ -687,13 +678,13 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     public void writeMail(OnMailReadyListener listener) {
         String langue = buddyGPTApplication.getLangue().getNom();
 
-        if (langue.equals("Anglais")) {
+        if (langue.equals(langueEn)) {
             listener.onMailReady(buildEmailContent(
                     new String[]{"_____________________ New Session _____________________"},
                     new String[]{"Response"},
                     new String[]{"Question"}
             ));
-        } else if (langue.equals("Français")) {
+        } else if (langue.equals(langueFr)) {
             listener.onMailReady(buildEmailContent(
                     new String[]{"_____________________ Nouvelle Session _____________________"},
                     new String[]{"Réponse"},
@@ -889,7 +880,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                                 @Override
                                 public void run() {
                                     buddyGPTApplication.setAnswerHasExceededTimeOut(false);
-                                    responseTimeout = new CountDownTimer(Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) * 1000, 1000) {
+                                    responseTimeout = new CountDownTimer((long) Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) * 1000, 1000) {
                                         @Override
                                         public void onTick(long l) {
 
@@ -902,27 +893,27 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                                                 buddyGPTApplication.setTimeoutExpired(true);
                                                 if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
                                                     String[] message_Timeout_NotRespected_en = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en",configFile).split("/");
-                                                    int randomNumber_message_Timeout_NotRespected_en = new Random().nextInt(message_Timeout_NotRespected_en.length);
+                                                    int randomNumber_message_Timeout_NotRespected_en = random.nextInt(message_Timeout_NotRespected_en.length);
                                                     speak(message_Timeout_NotRespected_en[randomNumber_message_Timeout_NotRespected_en],"timeOutExpired");
                                                 }
                                                 else if (buddyGPTApplication.getCurrentLanguage().equals("fr")) {
                                                     String[] message_Timeout_NotRespected_fr = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_fr",configFile).split("/");
-                                                    int randomNumber_message_Timeout_NotRespected_fr = new Random().nextInt(message_Timeout_NotRespected_fr.length);
+                                                    int randomNumber_message_Timeout_NotRespected_fr = random.nextInt(message_Timeout_NotRespected_fr.length);
                                                     speak(message_Timeout_NotRespected_fr[randomNumber_message_Timeout_NotRespected_fr],"timeOutExpired");
                                                 }
                                                 else if (buddyGPTApplication.getCurrentLanguage().equals("es")) {
                                                     String[] message_Timeout_NotRespected_es = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_es",configFile).split("/");
-                                                    int randomNumber_message_Timeout_NotRespected_es = new Random().nextInt(message_Timeout_NotRespected_es.length);
+                                                    int randomNumber_message_Timeout_NotRespected_es = random.nextInt(message_Timeout_NotRespected_es.length);
                                                     speak(message_Timeout_NotRespected_es[randomNumber_message_Timeout_NotRespected_es],"timeOutExpired");
                                                 }
                                                 else if (buddyGPTApplication.getCurrentLanguage().equals("de")) {
                                                     String[] message_Timeout_NotRespected_de = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_de",configFile).split("/");
-                                                    int randomNumber_message_Timeout_NotRespected_de = new Random().nextInt(message_Timeout_NotRespected_de.length);
+                                                    int randomNumber_message_Timeout_NotRespected_de = random.nextInt(message_Timeout_NotRespected_de.length);
                                                     speak(message_Timeout_NotRespected_de[randomNumber_message_Timeout_NotRespected_de],"timeOutExpired");
                                                 }
                                                 else {
                                                     String[] message_Timeout_NotRespected_en = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en","BuddyGPT.properties").split("/");
-                                                    int randomNumber_message_Timeout_NotRespected_en = new Random().nextInt(message_Timeout_NotRespected_en.length);
+                                                    int randomNumber_message_Timeout_NotRespected_en = random.nextInt(message_Timeout_NotRespected_en.length);
                                                     buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(message_Timeout_NotRespected_en[randomNumber_message_Timeout_NotRespected_en]).addOnSuccessListener(new OnSuccessListener<String>() {
                                                         @Override
                                                         public void onSuccess(String translatedText) {
@@ -1201,9 +1192,9 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             }
             if (message.contains("INVALID_TEAMGPT_DEVICE_ID")){
                 buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID","TRUE");
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
                     buddyGPTApplication.showInputDialog(ChatWindow.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
                     buddyGPTApplication.showInputDialog(ChatWindow.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
                 }
                 else {
@@ -1311,7 +1302,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                     @Override
                     public void run() {
                         buddyGPTApplication.setLed("neutral");
-                        micro_btn.setImageResource(R.drawable.micro_off);
+                        microBtn.setImageResource(R.drawable.micro_off);
                     }
                 });
 
@@ -1331,7 +1322,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             else if (message.contains("Obtain audio transcription after the listening time has elapsed")){
                 String shouldRestartNewCycle = message.split(";SPLIT;")[1];
                 Log.e("ARR","Obtain audio transcription after the listening time has elapsed "+shouldRestartNewCycle);
-                micro_btn.setImageResource(R.drawable.micro_off);
+                microBtn.setImageResource(R.drawable.micro_off);
                 buddyGPTApplication.setLed("neutral");
                 buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                 if (shouldRestartNewCycle.equals("true")) {
@@ -1390,7 +1381,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         };
         timerEcoute.start();
 
-        micro_btn.setImageResource(R.drawable.micro_on);
+        microBtn.setImageResource(R.drawable.micro_on);
 
     }
     private void startCycle(){
@@ -1440,7 +1431,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         };
         timerEcoute.start();
 
-        micro_btn.setImageResource(R.drawable.micro_on);
+        microBtn.setImageResource(R.drawable.micro_on);
     }
     public void startNextCycle() {
         // Si nous avons encore des tentatives restantes
@@ -1465,7 +1456,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         if (timerEcoute!=null) timerEcoute.cancel();
         buddyGPTApplication.stopListening(this);
         buddyGPTApplication.setLed("neutral");
-        micro_btn.setImageResource(R.drawable.micro_off);
+        microBtn.setImageResource(R.drawable.micro_off);
     }
 
 

@@ -74,7 +74,7 @@ public class LangueSpinnerAdapter extends BaseAdapter {
             if(nameToDisplay.equals(langueEs)) nameToDisplay = "Spanish";
             if(nameToDisplay.equals(langueDe)) nameToDisplay = "German";
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL |Gravity.START) ;
-            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize()-10);
+            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float) buddyGPTApplication.getBestTextSize()-10);
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL);
             textViewItemName.setText(nameToDisplay);
             ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
@@ -86,7 +86,7 @@ public class LangueSpinnerAdapter extends BaseAdapter {
             if(nameToDisplay.equals(langueEs)) nameToDisplay = "Español";
             if(nameToDisplay.equals(langueDe)) nameToDisplay = "Alemán";
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL |Gravity.START) ;
-            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize()-10);
+            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float) buddyGPTApplication.getBestTextSize()-10);
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL);
             textViewItemName.setText(nameToDisplay);
             ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
@@ -98,7 +98,7 @@ public class LangueSpinnerAdapter extends BaseAdapter {
             if(nameToDisplay.equals(langueEs)) nameToDisplay = "Spanisch";
             if(nameToDisplay.equals(langueDe)) nameToDisplay = "Deutsch";
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL |Gravity.START) ;
-            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize()-10);
+            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float)buddyGPTApplication.getBestTextSize()-10);
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL);
             textViewItemName.setText(nameToDisplay);
             ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
@@ -110,7 +110,7 @@ public class LangueSpinnerAdapter extends BaseAdapter {
             if(nameToDisplay.equals(langueEs)) nameToDisplay = "Espagnol";
             if(nameToDisplay.equals(langueDe)) nameToDisplay = "Allemand";
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL |Gravity.START) ;
-            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize()-10);
+            textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float)buddyGPTApplication.getBestTextSize()-10);
             textViewItemName.setGravity(Gravity.CENTER_VERTICAL);
             textViewItemName.setText(nameToDisplay);
             ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
@@ -139,14 +139,14 @@ public class LangueSpinnerAdapter extends BaseAdapter {
     }
     private void updateView(View rowView,TextView textViewItemName) {
         textViewItemName.setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize() - 10);
+        textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float)buddyGPTApplication.getBestTextSize() - 10);
         textViewItemName.setGravity(Gravity.CENTER_VERTICAL);
         textViewItemName.setText(translatedLanguageName);
         ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
         checkedIcon.setVisibility(View.GONE);
     }
     public void updateDropDownView(View rowView,TextView textViewItemName,Langue langue){
-        textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getBestTextSize()-10);
+        textViewItemName.setTextSize(TypedValue.COMPLEX_UNIT_PX, (float)buddyGPTApplication.getBestTextSize()-10);
         textViewItemName.setText(translatedLanguageName);
         ImageView checkedIcon = (ImageView) rowView.findViewById(itemCheckedId);
         if (langue.isChosen()) {

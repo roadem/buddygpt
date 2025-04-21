@@ -225,7 +225,8 @@ public class ResponseFromTeamGPT{
         try {
             latch.await(); // Wait for the thread to finish
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt(); // Re-interrupt the thread
+            Log.e(TAG_PARAM, "Thread was interrupted while waiting for latch", e);
         }
 
     }

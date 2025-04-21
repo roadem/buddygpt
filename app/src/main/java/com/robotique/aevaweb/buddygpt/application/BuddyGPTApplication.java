@@ -1248,7 +1248,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     languageCode = getFullLanguageCodeFromCountryCode(langueDisponible.get(i));
                 }
                 Boolean isChosen;
-                if (getParamFromFile(langueInconfigurationFilePseudo, configurationFilePseudo).trim().equalsIgnoreCase(languageCode.split("-")[0])) {
+                if (languageCode != null && getParamFromFile(langueInconfigurationFilePseudo, configurationFilePseudo).trim().equalsIgnoreCase(languageCode.split("-")[0])) {
                     isChosen = true;
                 } else {
                     isChosen = false;
@@ -1992,9 +1992,10 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         try {
 
-            FileWriter fileWriter = new FileWriter(file2, true);
-            fileWriter.write(errorTXT);
-            fileWriter.close();
+            try (FileWriter fileWriter = new FileWriter(file2, true)) {
+                fileWriter.write(errorTXT);
+            }
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -2386,7 +2387,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("")
                         && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("0")
                 ){
-                    handler2.postDelayed(periodicTask,Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000 );
+                    handler2.postDelayed(periodicTask,(long) Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000 );
                 }
             }
         }
@@ -2468,7 +2469,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
             });
             thread1.start();
-            handler2.postDelayed(this, Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000);
+            handler2.postDelayed(this, (long) Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000);
         }
     };
     public void stopRecording() {
@@ -2919,7 +2920,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     if (!type.equals("timeOutExpired")) {
                         // Split the text based on periods and commas
                         texteToSpeakSplitted = texteToSpeak_modified.split("[.,]");
-                        Log.e("texteToSpeakSplitted", texteToSpeakSplitted.toString());
+                        Log.e("texteToSpeakSplitted", Arrays.toString(texteToSpeakSplitted));
 
                         Log.d("FCH_DEBUG", "calling startSpeakingSplittedText : " + texteToSpeak);
                         startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
