@@ -43,10 +43,10 @@ allprojects {
 }
 sonarqube {
     properties {
-        property "sonar.projectName", "buddygpt-app"
+        property "sonar.projectName", "buddygpt3"
         property "sonar.projectKey", "buddygpt"
         property "sonar.host.url", "http://localhost:9000"
-        property "sonar.token", "sqp_dba326fb4930cca8c0dc56fc0f021247e3a98294"
+        property "sonar.token", "sqp_75a6335562a343c5c3c179e83d3f13ab3d207a40"
     }
 }
 task clean(type: Delete) {

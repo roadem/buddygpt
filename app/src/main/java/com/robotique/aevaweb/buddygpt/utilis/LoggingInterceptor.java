@@ -40,49 +40,49 @@ public class LoggingInterceptor implements Interceptor {
         // Create log file
         File logFile = createLogFile(request.url().toString());
         boolean overwriteFile = shouldOverwriteFile(logFile);
-        FileWriter writer = new FileWriter(logFile, !overwriteFile);
+        try (FileWriter writer = new FileWriter(logFile, !overwriteFile)) {
+            // Log request information
+            writer.append(">>>>>>>>>>>>>>>>>> Sending request\n\n");
+            writer.append("URL: ").append(request.url().toString()).append("\n");
+            writer.append("Method: ").append(request.method()).append("\n");
+            writer.append("Headers: ").append(request.headers().toString()).append("\n");
 
-        // Log request information
-        writer.append(">>>>>>>>>>>>>>>>>> Sending request\n\n");
-        writer.append("URL: ").append(request.url().toString()).append("\n");
-        writer.append("Method: ").append(request.method()).append("\n");
-        writer.append("Headers: ").append(request.headers().toString()).append("\n");
+            Request copy = request.newBuilder().build();
+            try (Buffer requestBuffer = new Buffer()) {
+                if (copy.body() != null) {
+                    copy.body().writeTo(requestBuffer);
+                    writer.append("Request body: ").append(formatJson(requestBuffer.readUtf8())).append("\n");
+                }
+            }
+            Response response = chain.proceed(request);
+            long endTime = System.nanoTime();
 
-        Request copy = request.newBuilder().build();
-        Buffer requestBuffer = new Buffer();
-        if (copy.body() != null) {
-            copy.body().writeTo(requestBuffer);
-            writer.append("Request body: ").append(formatJson(requestBuffer.readUtf8())).append("\n");
+            // Log response information
+            writer.append("\n\n\n<<<<<<<<<<<<<<<<<< Received response\n\n");
+            writer.append("URL: ").append(response.request().url().toString()).append("\n");
+            writer.append("Code: ").append(String.valueOf(response.code())).append("\n");
+            writer.append("Headers: ").append(response.headers().toString()).append("\n");
+
+            ResponseBody responseBody = response.body();
+            if (responseBody != null) {
+                String responseBodyString = responseBody.string();
+                writer.append("Response body: ").append(formatJson(responseBodyString)).append("\n");
+                response = response.newBuilder()
+                        .body(ResponseBody.create(responseBody.contentType(), responseBodyString.getBytes()))
+                        .build();
+            }
+
+            writer.append("\nTime taken: ").append(String.valueOf((endTime - startTime) / 1e6)).append("ms\n");
+            writer.append("\n\n\n****************************************************************************************************\n\n\n");
+
+            writer.flush();
+            writer.close();
+
+            return response;
         }
-
-        Response response = chain.proceed(request);
-        long endTime = System.nanoTime();
-
-        // Log response information
-        writer.append("\n\n\n<<<<<<<<<<<<<<<<<< Received response\n\n");
-        writer.append("URL: ").append(response.request().url().toString()).append("\n");
-        writer.append("Code: ").append(String.valueOf(response.code())).append("\n");
-        writer.append("Headers: ").append(response.headers().toString()).append("\n");
-
-        ResponseBody responseBody = response.body();
-        if (responseBody != null) {
-            String responseBodyString = responseBody.string();
-            writer.append("Response body: ").append(formatJson(responseBodyString)).append("\n");
-            response = response.newBuilder()
-                    .body(ResponseBody.create(responseBody.contentType(), responseBodyString.getBytes()))
-                    .build();
-        }
-
-        writer.append("\nTime taken: ").append(String.valueOf((endTime - startTime) / 1e6)).append("ms\n");
-        writer.append("\n\n\n****************************************************************************************************\n\n\n");
-
-        writer.flush();
-        writer.close();
-
-        return response;
     }
 
-    private String formatJson(String json) {
+private String formatJson(String json) {
         try {
             Object jsonObject = gson.fromJson(json, Object.class);
             return gson.toJson(jsonObject);

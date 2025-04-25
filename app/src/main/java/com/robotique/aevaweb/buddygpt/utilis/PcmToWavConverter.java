@@ -23,8 +23,11 @@ public class PcmToWavConverter {
         byte[] data = new byte[1024];
 
         try {
-            in = new FileInputStream(new File(pcmFilePath));
-            out = new FileOutputStream(new File(wavFilePath));
+            try (FileInputStream inStream = new FileInputStream(new File(pcmFilePath));
+                 FileOutputStream outStream = new FileOutputStream(new File(wavFilePath))) {
+                in = inStream;
+                out = outStream;
+            }
             totalAudioLen = in.getChannel().size();
             totalDataLen = totalAudioLen + 36;
 

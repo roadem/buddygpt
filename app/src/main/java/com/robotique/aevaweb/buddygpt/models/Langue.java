@@ -13,12 +13,14 @@ public class Langue {
         this.nom = nom;
         this.isChosen = isChosen;
     }
-    public Langue(long id, String nom, boolean isChosen,String languageCode){
+
+    public Langue(long id, String nom, boolean isChosen, String languageCode) {
         this.id = id;
         this.nom = nom;
         this.isChosen = isChosen;
         this.languageCode = languageCode;
     }
+
     public long getId() {
         return id;
     }
@@ -42,6 +44,7 @@ public class Langue {
     public void setChosen(boolean chosen) {
         isChosen = chosen;
     }
+
     public String getLanguageCode() {
         return languageCode;
     }
@@ -50,15 +53,20 @@ public class Langue {
         this.languageCode = languageCode;
     }
 
-
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (obj == null) return false;
-        if (obj == this) return true;
-        if (!(obj instanceof Langue)) return false;
+        if (obj == null)
+            return false;
+        if (obj == this)
+            return true;
+        if (!(obj instanceof Langue))
+            return false;
         return ((Langue) obj).id == this.id;
     }
-
+    @Override
+    public int hashCode() {
+        return Long.hashCode(id);
+    }
     @Override
     public String toString() {
         return "Langue{" +

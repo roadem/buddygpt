@@ -14,24 +14,22 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 
-
 public class GoogleSTTResponseParser {
 
-    private static final String RESULT= "result";
-    private static final String RESULT_INDEX= "result_index";
-    private static final String TRANSCRIPT= "transcript";
-    private static final String CONFIDENCE= "confidence";
-    private static final String ALTERNATIVE= "alternative";
+    private static final String RESULT = "result";
+    private static final String RESULT_INDEX = "result_index";
+    private static final String TRANSCRIPT = "transcript";
+    private static final String CONFIDENCE = "confidence";
+    private static final String ALTERNATIVE = "alternative";
 
-    private double mConfidence=1.0;
-    private String mTranscript=null;
+    private double mConfidence = 1.0;
+    private String mTranscript = null;
 
     private static String extractJsonString(InputStream in) throws IOException {
         InputStreamReader inputStreamReader = new InputStreamReader(in, "UTF-8");
         BufferedReader br = new BufferedReader(inputStreamReader);
         String s;
         StringBuilder resultContent = new StringBuilder();
-        br.readLine();
         while ((s = br.readLine()) != null) {
             resultContent.append(s);
         }
@@ -40,6 +38,7 @@ public class GoogleSTTResponseParser {
 
     /**
      * parse the response
+     * 
      * @param response response stream
      * @throws JSONException exception throw if the response is malformed
      */
@@ -56,13 +55,13 @@ public class GoogleSTTResponseParser {
     private ArrayList<Result> extractAllResults(JSONArray alternative) throws JSONException {
         int nAlternative = alternative.length();
         ArrayList<Result> res = new ArrayList<>(nAlternative);
-        for(int i=0;i<nAlternative ; i++){
+        for (int i = 0; i < nAlternative; i++) {
             JSONObject result = alternative.getJSONObject(i);
             String str = result.getString(TRANSCRIPT);
-            double conf =1.0;
-            if(result.has(CONFIDENCE))
+            double conf = 1.0;
+            if (result.has(CONFIDENCE))
                 conf = result.getDouble(CONFIDENCE);
-            res.add(new Result(str,conf));
+            res.add(new Result(str, conf));
 
         }
         return res;
@@ -79,43 +78,44 @@ public class GoogleSTTResponseParser {
         ArrayList<Result> allResult = extractAllResults(jsonArrayAlternative);
         Collections.sort(allResult);
         Result bestResult = allResult.get(0);
-        mConfidence=bestResult.confidence;
-        mTranscript=bestResult.transcript;
+        mConfidence = bestResult.confidence;
+        mTranscript = bestResult.transcript;
 
     }
 
     /**
      * get the best transcript
+     * 
      * @return transcript or null if the is not present
      */
-    @Nullable String getTranscript(){
+    @Nullable
+    String getTranscript() {
         return mTranscript;
     }
 
     /**
      * get the confidence value (between 0 and 1) of the best transcript
+     * 
      * @return confidence value for the transcript
      */
-    double getConfidence(){
+    double getConfidence() {
         return mConfidence;
     }
-
 
     private static class Result implements Comparable<Result> {
 
         public String transcript;
         public double confidence;
 
-        public Result(String t, double c){
-            transcript=t;
-            confidence=c;
+        public Result(String t, double c) {
+            transcript = t;
+            confidence = c;
         }
 
         @Override
         public int compareTo(@NonNull Result result) {
-            return Double.compare(result.confidence,confidence);
+            return Double.compare(result.confidence, confidence);
         }
     }
 
 }
-

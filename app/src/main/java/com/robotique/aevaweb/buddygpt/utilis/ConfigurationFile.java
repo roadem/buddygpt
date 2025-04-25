@@ -36,9 +36,9 @@ public class ConfigurationFile {
         // First try loading from the current directory
         try {
             File f = new File(directory, fileName);
-            is = new FileInputStream(f);
-
-            if (is == null) {
+            if (f.exists() && f.isFile()) {
+                is = new FileInputStream(f);
+            } else {
                 // Try loading from classpath
                 ClassLoader loader = Thread.currentThread().getContextClassLoader();
                 is = loader.getResourceAsStream(fileName);

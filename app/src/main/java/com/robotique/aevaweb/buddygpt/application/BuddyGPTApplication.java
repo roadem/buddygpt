@@ -971,11 +971,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         Log.i(TAG, "initListeningSettings: HOU " +getParamFromFile("Listening_time", configurationFilePseudo));
     }
 
-    private void initProjectID() {
-        if (getparam("CustomGPT_Project_ID").equals("")) {
-            setparam("CustomGPT_Project_ID", getParamFromFile("CustomGPT_Project_ID", configurationFilePseudo));
-        }
-    }
 
     public void initTeamGPTSettings() throws IOException {
         //setparam("INVALID_TEAMGPT_KEY","FALSE");
@@ -2259,7 +2254,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                 double durationInMinutes = (double) getAudioDuration() / (60 * 1000);
                 Log.i("MYA", "Calling Whisper API is successful1------"+durationInMinutes);
-                calcul_consommation(getParamFromFile("Whisper_model","BuddyGPT.properties"), (double) durationInMinutes,0);
 
                 Gson gson = new Gson();
                 String responseBody = response.body().string();
@@ -2267,12 +2261,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                 return result.text;
 
             } else {
-                int checkErrorCode = response.code();
-                // Calcul de la consommation openai de le cas d'echec
-                if (checkErrorCode == 500 || checkErrorCode == 503 || checkErrorCode == 504) {
-                    double durationInMinutes = (double) getAudioDuration() / (60 * 1000);
-                    calcul_consommation(getParamFromFile("Whisper_model","BuddyGPT.properties"), (double) durationInMinutes,0);
-                }
                 Log.i("MRA", "Calling Whisper API is failed");
                 throw new IOException("Unexpected response code: " + response.code());
             }
@@ -3495,18 +3483,23 @@ public class BuddyGPTApplication extends BuddyApplication {
                         String fileName = "ERROR-LOG";
                         File file1 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/" + fileName + ".json");
                         if (file1.exists() && file1.isFile()) {
-                            file1.delete();
+                            boolean isDeleted = file1.delete();
+                            if (!isDeleted) {
+                                Log.e(TAG, "Failed to delete the existing file: " + file1.getAbsolutePath());
+                            }
                         }
-                        FileWriter fileWriter = new FileWriter(file1);
-                        Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-                        String jsonStringF=gson.toJson(errorLOG);
-                        fileWriter.write(jsonStringF);
-                        fileWriter.close();
+                        try (FileWriter fileWriter = new FileWriter(file1)) {
+                            Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+                            String jsonStringF = gson.toJson(errorLOG);
+                            fileWriter.write(jsonStringF);
+                        } catch (IOException ex) {
+                            Log.e(TAG, "Error writing to file: " + ex.getMessage());
+                        }
                         String errorTXT= new Date().toString()+", GoogleCloudTTSERROR,ERROR CODE= "+errorLOG.getAsJsonObject("error").get("code")+", ERROR Body{ message= "+errorLOG.getAsJsonObject("error").get("message")+", status= "+errorLOG.getAsJsonObject("error").get("status")+"}"+System.getProperty("line.separator");
                         File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
-                        FileWriter fileWriter2 = new FileWriter(file2,true);
-                        fileWriter2.write(errorTXT);
-                        fileWriter2.close();
+                        try (FileWriter fileWriter2 = new FileWriter(file2, true)) {
+                            fileWriter2.write(errorTXT);
+                        }
 
                     } catch (IOException ej) {
                         e.printStackTrace();
@@ -4261,120 +4254,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         return (int)Math.rint(x);
     }
 
-    public void calcul_consommation(String modelName, double inputTokens, double outputTokens) {
-        Log.i("USAGE","----------- calcul_consommation : modelName=" + modelName + " , inputTokens=" + inputTokens + " , outputTokens=" + outputTokens);
-
-        String show_openAI_prices = getParamFromFile("show_openAI_prices", "BuddyGPT.properties");
-        if (show_openAI_prices != null && show_openAI_prices.trim().equalsIgnoreCase("yes")) {
-
-            double totalConsumptionSaved = Double.parseDouble(getparam("Total_cons"));
-            Log.i("USAGE", "totalConsumption (avant calcul) : "+totalConsumptionSaved);
-
-            double prixCalcul = 0;
-            boolean modelFound = false;
 
 
 
-            if (!modelFound) {
-                Log.e("USAGE","Model ("+modelName+") not found !");
-                priceNotAvailable();
-            } else {
-                totalConsumptionSaved += prixCalcul;
-                setparam("Total_cons", String.valueOf(totalConsumptionSaved));
-                Log.i("USAGE", "totalConsumption (après calcul) : "+totalConsumptionSaved);
-            }
-        }
-        else{
-            Log.e("USAGE","show_openAI_prices is not set to 'YES' ");
-        }
-    }
-
-
-
-    public void priceNotAvailable(){
-        if (getLangue().getNom().equals("Anglais")){
-            showToast(getString(R.string.toast_pricing_indispo_en));
-        }
-        else if (getLangue().getNom().equals("Français")) {
-            showToast(getString(R.string.toast_pricing_indispo_fr));
-        }
-        else if (getLangue().getNom().equals("Espagnol")) {
-            showToast(getString(R.string.toast_pricing_indispo_de));
-        }
-        else if (getLangue().getNom().equals("Allemand")){
-            showToast(getString(R.string.toast_pricing_indispo_es));
-        }
-        else{
-            getEnglishLanguageSelectedTranslator()
-                    .translate(getString(R.string.toast_pricing_indispo_en))
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            showToast(translatedText);
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            showToast(getString(R.string.toast_pricing_indispo_en));
-                        }
-                    });
-        }
-    }
-
-    public int getRequestTotalTokens(RequestBody requestBody){
-        try{
-            int requestTotalTokens = 0;
-            int totalTokensContent = 0;
-            int totalTokensRole = 0;
-            Optional<Encoding> encoding = getRegistry().getEncodingForModel(getparam("model"));
-            if (encoding.isPresent()) {
-                Encoding actualEncoding = encoding.get();
-                Log.i(TAG_STREAM_USAGE, "Encoding is available for the model "+getparam("model") + " --> " + actualEncoding.getName());
-                Buffer buffer = new Buffer();
-                requestBody.writeTo(buffer);
-                String requestBodyString = buffer.readUtf8();
-                Log.d(TAG_STREAM, "requestBody: " + requestBodyString);
-                JSONObject json = new JSONObject(requestBodyString);
-                if (json.has("messages")) {
-                    JSONArray messagesArray = json.getJSONArray("messages");
-                    String[] roleArray = new String[messagesArray.length()];
-                    String[] contentArray = new String[messagesArray.length()];
-                    for (int i = 0; i < messagesArray.length(); i++) {
-                        JSONObject message = messagesArray.getJSONObject(i);
-                        if (message.has("role") && message.has("content")) {
-                            String role = message.getString("role");
-                            String content = message.getString("content");
-                            roleArray[i] = role;
-                            contentArray[i] = content;
-                            totalTokensContent += actualEncoding.countTokens(content);
-                            totalTokensRole += actualEncoding.countTokens(role);
-                        }
-                    }
-                    //Log.v(TAG_STREAM_USAGE, "contentArray: " + Arrays.toString(contentArray));
-                    //Log.v(TAG_STREAM_USAGE, "Total Tokens for Content: " + totalTokensContent);
-                    //Log.v(TAG_STREAM_USAGE, "roleArray: " + Arrays.toString(roleArray));
-                    //Log.v(TAG_STREAM_USAGE, "Total Tokens for Role: " + totalTokensRole);
-                    requestTotalTokens = totalTokensContent + totalTokensRole;
-                    Log.d(TAG_STREAM_USAGE, "Request Total Tokens : " + requestTotalTokens);
-                    return requestTotalTokens;
-                }
-                else {
-                    Log.e(TAG_STREAM_USAGE, "No 'messages' array found in the JSON.");
-                    return 0;
-                }
-            }
-            else {
-                Log.e(TAG_STREAM_USAGE, "Encoding is not available for the model "+getparam("model"));
-                return 0;
-            }
-        }
-        catch(Exception e){
-            Log.e(TAG_STREAM_USAGE, "getRequestTotalTokens() ERROR : " + e);
-            e.printStackTrace();
-            return 0;
-        }
-    }
     //fonction pour push files
 
     public void pushFiles(String assetPath, String dir) {

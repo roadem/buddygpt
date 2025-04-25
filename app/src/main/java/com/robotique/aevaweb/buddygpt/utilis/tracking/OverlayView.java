@@ -91,7 +91,7 @@ public class OverlayView extends View {
         }
         // Dessinez le texte avec le nombre de landmarks
         if (nbrLandmarks > 0) {
-            canvas.drawText( nbrLandmarks+"/33", getWidth()-30, 190f, textPaint);
+            canvas.drawText(nbrLandmarks + "/33", getWidth() - 30f, 190f, textPaint);
         }
     }
     public void setResults(PoseLandmarkerResult poseLandmarkerResults, int imageHeight, int imageWidth, RunningMode runningMode) {

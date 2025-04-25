@@ -31,7 +31,7 @@ public class BIPlayer {
     private Boolean biContainsEyesAnimation = false;
 
     // private static instance variable to hold the singleton instance
-    private static volatile BIPlayer INSTANCE = null;
+    private static BIPlayer INSTANCE = new BIPlayer();
 
     // private constructor to prevent instantiation of the class
     private BIPlayer() {}

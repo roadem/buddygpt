@@ -1144,14 +1144,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 Log.i(TAG, "timerEcoute onFinish");
                 if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT) || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)){
                     buddyGPTApplication.notifyObservers("end of cycle");
-                    runnablePauseTime =new Runnable() {
-                        @Override
-                        public void run() {
-                            // startCycle(settingClass, listRep, nameActivity, adapter, cancelTheTimer);
-                            startNextCycle();
-                            Log.e("ARR","startNextCycle  after handler ");
-                        }
-                    };
+                    runnablePauseTime = () -> startNextCycle();
                     handlerPauseTime.postDelayed(runnablePauseTime,1000);
                 }
                 else{
@@ -1194,58 +1187,70 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
      * ------------------------------------------ TTS  -------------------------------------------
      */
 
-    private void speak(final String texte,String type) {
-        Log.d(TAG," --- speak("+texte+") ---");
-        if (responseTimeout!=null) responseTimeout.cancel();
+
+    private void speak(final String texte, String type) {
+        Log.d(TAG, " --- speak(" + texte + ") ---");
+        if (responseTimeout != null) responseTimeout.cancel();
+
         if (type.equals("nothealysa") || type.equals("storedResponse")) {
-
-            buddyGPTApplication.setAlreadyGetAnswer(true);
-            String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
-
-                if (!listRep.isEmpty()) {
-                    //--> this function is called right after a question : we should create a new Replica for the response
-                    Replica reponse = new Replica();
-                    reponse.setValue(texte);
-                    reponse.setTime(time);
-                    long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
-                    DecimalFormat df = new DecimalFormat("#,###");
-                    String formattedTime= df.format(responseTime);
-                    reponse.setType(KEY_RESPONSE);
-                    reponse.setDuration(formattedTime + " ms");
-
-                    listRep.add(reponse);
-                    Session session = new Session(new ArrayList<>(listRep));
-                    buddyGPTApplication.getListSession().add(session);
-                    listRep.clear();
-                    listRepGlobale.add(reponse);
-                    Replica[] mDataset = listRepGlobale.toArray(new Replica[0]);
-                    adapter.setData(mDataset);
-                    scroll();
-                }
-                else{
-                    //---> this function is called after finishing pronouncing a phrase from the response : we should add the new phrase to the already existing Replica
-                    Replica lastReplica = listRepGlobale.get(listRepGlobale.size() - 1);
-                    if (lastReplica.getType().equals(KEY_RESPONSE)) {
-
-                        if(responseFromTeamGPT != null){
-                            if(!responseFromTeamGPT .isError)lastReplica.setValue(lastReplica.getValue() + texte);
-                        }
-                        else lastReplica.setValue(texte);
-
-                    }
-                    Replica[] mDataset = listRepGlobale.toArray(new Replica[0]);
-                    adapter.setData(mDataset);
-                    scroll();
-                }
-
-
+            handleResponseSpeak(texte);
+        } else if (type.equals("timeOutExpired")) {
             buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
-        }
-        else if (type.equals("timeOutExpired")){
-            buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL,type);
         }
     }
 
+    private void handleResponseSpeak(String texte) {
+        buddyGPTApplication.setAlreadyGetAnswer(true);
+        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+
+        if (!listRep.isEmpty()) {
+            createNewResponseReplica(texte, time);
+        } else {
+            updateExistingResponseReplica(texte);
+        }
+
+        buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, "nothealysa");
+    }
+
+    private void createNewResponseReplica(String texte, String time) {
+        Replica reponse = new Replica();
+        reponse.setValue(texte);
+        reponse.setTime(time);
+        reponse.setType(KEY_RESPONSE);
+        reponse.setDuration(formatResponseTime());
+
+        listRep.add(reponse);
+        Session session = new Session(new ArrayList<>(listRep));
+        buddyGPTApplication.getListSession().add(session);
+        listRep.clear();
+        listRepGlobale.add(reponse);
+
+        updateAdapterData();
+    }
+
+    private void updateExistingResponseReplica(String texte) {
+        Replica lastReplica = listRepGlobale.get(listRepGlobale.size() - 1);
+        if (lastReplica.getType().equals(KEY_RESPONSE)) {
+            if (responseFromTeamGPT != null && !responseFromTeamGPT.isError) {
+                lastReplica.setValue(lastReplica.getValue() + texte);
+            } else {
+                lastReplica.setValue(texte);
+            }
+        }
+        updateAdapterData();
+    }
+
+    private String formatResponseTime() {
+        long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
+        DecimalFormat df = new DecimalFormat("#,###");
+        return df.format(responseTime) + " ms";
+    }
+
+    private void updateAdapterData() {
+        Replica[] mDataset = listRepGlobale.toArray(new Replica[0]);
+        adapter.setData(mDataset);
+        scroll();
+    }
 
     /**
      *   -------------------------------  Gestion d'affichage des barres du systemUI  ----------------------------------------------
