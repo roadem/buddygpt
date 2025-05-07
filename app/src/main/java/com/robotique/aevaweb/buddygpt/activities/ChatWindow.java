@@ -24,7 +24,6 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,8 +34,6 @@ import com.bfr.buddy.utils.events.EventItem;
 import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
 import com.bfr.buddysdk.BuddyActivity;
 import com.bfr.buddysdk.BuddySDK;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.adapters.ReplicaListAdapter;
@@ -72,13 +69,13 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private static final String SESSION_TYPE = "Session";
     private static final String INVALID_DEVICE_ID = "INVALID_TEAMGPT_DEVICE_ID";
     private static final String INVALID_KEY = "INVALID_TEAMGPT_KEY";
-    private static final String TeamGPT_Key = "TeamGPT_Key";
+    private static final String TeamGPT_KEY = "TeamGPT_Key";
     private static final String ANDROID_STT = "Android";
     private static final String CERENCE_STT = "Cerence";
     private static final String NEUTRAL = "neutral";
-    private static final String Selected_Chatbot = "SelectedChatbot";
+    private static final String HOUR_PATTERN = "HH:mm:ss";
+    private static final String SELECTED_CHATBOT = "SelectedChatbot";
     private BuddyGPTApplication buddyGPTApplication;
-    private View decorView;
     private Random random = new Random();
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private boolean isListeningFreeSpeech = false;
@@ -114,7 +111,6 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private Handler handlerTTSError = new Handler();
     private Runnable runnableTTSError;
     private String configFile ="BuddyGPT.properties";
-// todo
     private boolean isClickedBtnCloseChat=false;
     String[] newSessionText = new String[1];
     String[] responseText = new String[1];
@@ -131,6 +127,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         buddyGPTApplication = (BuddyGPTApplication) getApplicationContext();
         buddyGPTApplication.setInitSharedpreferences(false);
         buddyGPTApplication.hideSystemUI(this);
+        View decorView;
         decorView = getWindow().getDecorView();
         decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
             if (visibility == 0) {
@@ -170,7 +167,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         onSdkReadyIsAlreadyCalledOnce = false;
         isWaitingForResponse = false;
         startlisten=true;
-        listRep=new ArrayList<Replica>();
+        listRep=new ArrayList<>();
         buddyGPTApplication.stopTTS();
         try {
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
@@ -429,7 +426,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     private boolean isInvalidTeamGPTDeviceId() {
         return buddyGPTApplication.getparam(INVALID_DEVICE_ID).equalsIgnoreCase("TRUE")
-                && !buddyGPTApplication.getparam(TeamGPT_Key).equalsIgnoreCase("");
+                && !buddyGPTApplication.getparam(TeamGPT_KEY).equalsIgnoreCase("");
     }
 
     private void notifyInvalidTeamGPTDeviceId() {
@@ -439,7 +436,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     private boolean isInvalidTeamGPTKey() {
         return buddyGPTApplication.getparam(INVALID_KEY).equalsIgnoreCase("TRUE")
-                && !buddyGPTApplication.getparam(TeamGPT_Key).equalsIgnoreCase("");
+                && !buddyGPTApplication.getparam(TeamGPT_KEY).equalsIgnoreCase("");
     }
 
     private void notifyInvalidTeamGPTKey() {
@@ -448,7 +445,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     }
 
     private boolean isTeamGPTKeyEmpty() {
-        return buddyGPTApplication.getparam(TeamGPT_Key).equalsIgnoreCase("");
+        return buddyGPTApplication.getparam(TeamGPT_KEY).equalsIgnoreCase("");
     }
 
     private void handleEmptyTeamGPTKey() {
@@ -714,10 +711,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private String buildEmailContent(String[] newSessionText, String[] responseText, String[] qstText) {
         String firstLine;
         Log.i(TAG, "buildEmailContent: "+newSessionText[0]+"******"+responseText[0]+"******"+qstText[0]+"******");
-        if (!buddyGPTApplication.getparam(Selected_Chatbot).equalsIgnoreCase("") ||
+        if (!buddyGPTApplication.getparam(SELECTED_CHATBOT).equalsIgnoreCase("") ||
                 !buddyGPTApplication.getparam("NomCompte").equalsIgnoreCase("")) {
             firstLine = buddyGPTApplication.getparam("NomCompte") + " " +
-                    buddyGPTApplication.getparam(Selected_Chatbot) + " " +
+                    buddyGPTApplication.getparam(SELECTED_CHATBOT) + " " +
                     buddyGPTApplication.getModel() + "<br>";
         } else {
             firstLine = "_<br>";
@@ -774,30 +771,58 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     public void update(String message) throws IOException {
         if (message == null) return;
 
-        if (message.contains("CANCEL_RESPONSE_TIMEOUT")) handleCancelResponseTimeout();
-        else if (message.contains("MODE_STREAM_SPEAK;SPLIT;")) handleModeStreamSpeak(message);
-        else if (message.contains("STTQuestion_success")) handleSTTQuestionSuccess(message);
-        else if (message.contains("TTS_success")) handleTTSSuccess();
-        else if (message.contains("TTS_error") || message.contains("TTS_exception")) handleTTSError(message);
-        else if (message.contains("CHATBOTS_RETURN")) handleChatbotsReturn(message);
-        else if (message.contains("conversationFinished google assistant responce")) handleConversationFinished();
-        else if (message.contains("main destroy")) handleMainDestroy();
-        else if (message.contains("getResponseF;SPLIT;chatbot;SPLIT;response google complete")) handleGoogleResponseComplete();
-        else if (message.contains("playStoredResponse")) handlePlayStoredResponse();
-        else if (message.contains("makeBuddyFaceNeutral")) handleMakeBuddyFaceNeutral();
-        else if (message.contains("mailSend")) handleMailSend();
-        else if (message.contains("Session_ID_Changed")) handleSessionIDChanged();
-        else if (message.contains(INVALID_KEY)) handleInvalidKey();
-        else if (message.contains(INVALID_DEVICE_ID)) handleInvalidDeviceID();
-        else if (message.contains("Session_ID_ERROR")) handleSessionIDError();
-        else if (message.contains("ErrorSending")) handleErrorSending();
-        else if (message.contains("changeDetected")) handleChangeDetected();
-        else if (message.contains("restartListeningHotword")) handleRestartListeningHotword();
-        else if (message.contains("end of cycle")) handleEndOfCycle();
-        else if (message.contains("restartNewCycle")) handleRestartNewCycle();
-        else if (message.contains("Obtain audio transcription after the listening time has elapsed")) handleAudioTranscription(message);
+        if (message.contains("CANCEL_RESPONSE_TIMEOUT")) {
+            handleCancelResponseTimeout();
+        } else if (message.contains("MODE_STREAM_SPEAK;SPLIT;")) {
+            handleModeStreamSpeak(message);
+        } else if (message.contains("STTQuestion_success")) {
+            handleSTTQuestionSuccess(message);
+        } else if (message.contains("TTS_")) {
+            handleTTSMessage(message);
+        } else if (message.contains("CHATBOTS_RETURN")) {
+            handleChatbotsReturn(message);
+        } else if (message.contains("conversationFinished google assistant responce")) {
+            handleConversationFinished();
+        } else if (message.contains("main destroy")) {
+            handleMainDestroy();
+        } else if (message.contains("getResponseF;SPLIT;chatbot;SPLIT;response google complete")) {
+            handleGoogleResponseComplete();
+        } else if (message.contains("playStoredResponse")) {
+            handlePlayStoredResponse();
+        } else if (message.contains("makeBuddyFaceNeutral")) {
+            handleMakeBuddyFaceNeutral();
+        } else if (message.contains("mailSend")) {
+            handleMailSend();
+        } else if (message.contains("Session_ID_Changed")) {
+            handleSessionIDChanged();
+        } else if (message.contains("Session_ID_ERROR")) {
+            handleSessionIDError();
+        } else if (message.contains("ErrorSending")) {
+            handleErrorSending();
+        } else if (message.contains("changeDetected")) {
+            handleChangeDetected();
+        } else if (message.contains("restartListeningHotword")) {
+            handleRestartListeningHotword();
+        } else if (message.contains("end of cycle")) {
+            handleEndOfCycle();
+        } else if (message.contains("restartNewCycle")) {
+            handleRestartNewCycle();
+        } else if (message.contains("Obtain audio transcription after the listening time has elapsed")) {
+            handleAudioTranscription(message);
+        } else if (message.contains(INVALID_KEY)) {
+            handleInvalidKey();
+        } else if (message.contains(INVALID_DEVICE_ID)) {
+            handleInvalidDeviceID();
+        }
     }
 
+    private void handleTTSMessage(String message) {
+        if (message.contains("TTS_success")) {
+            handleTTSSuccess();
+        } else if (message.contains("TTS_error") || message.contains("TTS_exception")) {
+            handleTTSError(message);
+        }
+    }
     private void handleCancelResponseTimeout() {
         if (responseTimeout != null) responseTimeout.cancel();
     }
@@ -815,7 +840,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             isWaitingForResponse = true;
             stopListeningFreeSpeech();
 
-            String detectedSTTMessage = message.split(";")[1].replaceAll("' ", "'");
+            String detectedSTTMessage = message.split(";")[1].replace("' ", "'");
             addQuestionToChat(detectedSTTMessage);
             sendPutRequest(detectedSTTMessage);
             startResponseTimeout();
@@ -823,7 +848,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     }
 
     private void addQuestionToChat(String detectedSTTMessage) {
-        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+        String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
         Replica question = new Replica(KEY_QUESTION, time, detectedSTTMessage);
         listRep.add(question);
         listRepGlobale.add(question);
@@ -843,7 +868,9 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 buddyGPTApplication.setAnswerHasExceededTimeOut(false);
                 responseTimeout = new CountDownTimer(getResponseTimeoutDuration(), 1000) {
                     @Override
-                    public void onTick(long l) {}
+                    public void onTick(long l) {
+                        //Specific actions needed on every tick
+                    }
 
                     @Override
                     public void onFinish() {
@@ -922,7 +949,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     private void handleTTSErrorFailure(String text) {
         int delayTime = calculateDelayTime(text);
-        handlerTTSError.postDelayed(() -> handleTTSErrorSuccess(), delayTime);
+        handlerTTSError.postDelayed(this::handleTTSErrorSuccess, delayTime);
     }
 
     private int calculateDelayTime(String text) {
@@ -943,7 +970,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     }
 
     private void addTranslatedQuestionToChat(String value) {
-        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+        String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
         Replica question = new Replica("Question traduction", time, value);
         listRep.add(question);
         listRepGlobale.add(question);
@@ -996,7 +1023,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     }
 
     private void handleSessionIDChanged() {
-        Replica session = new Replica(SESSION_TYPE, null, buddyGPTApplication.getparam("SelectedChatbot") + " - " + buddyGPTApplication.getModel());
+        Replica session = new Replica(SESSION_TYPE, null, buddyGPTApplication.getparam(SELECTED_CHATBOT) + " - " + buddyGPTApplication.getModel());
         listRepGlobale.add(session);
         updateChat();
     }
@@ -1201,7 +1228,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     private void handleResponseSpeak(String texte) {
         buddyGPTApplication.setAlreadyGetAnswer(true);
-        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+        String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
 
         if (!listRep.isEmpty()) {
             createNewResponseReplica(texte, time);
