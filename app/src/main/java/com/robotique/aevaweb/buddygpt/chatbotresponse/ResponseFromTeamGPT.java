@@ -367,7 +367,7 @@ public class ResponseFromTeamGPT{
                 errorMessage = buddyGPTApplication.getString(R.string.chatBot_ERROR_en);
                 break;
         }
-        buddyGPTApplication.notifyObservers("CHATBOTS_RETURN;SPLIT;speak;SPLIT;" + errorMessage + ";SPLIT;" + numberOfQuestion + ";SPLIT;onError");
+        buddyGPTApplication.notifyObservers("MODE_STREAM_SPEAK;SPLIT;" + errorMessage );
     }
 
 

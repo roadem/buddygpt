@@ -1368,39 +1368,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 });
             }
 
-            else if (message.contains("CHATBOTS_RETURN")) {
-                runOnUiThread(() ->{
-                    String action = message.split(";SPLIT;")[1];
-                    Log.i(TAG,"action : "+action);
-                    String value = message.split(";SPLIT;")[2];
-                    Log.i(TAG,"value : "+value);
-                    if (action.equals("speak")) {
-                        if (message.split(";SPLIT;").length>3){
-                            int numberOfQuestion = Integer.parseInt(message.split(";SPLIT;")[3]);
-                            if(numberOfQuestion== buddyGPTApplication.getQuestionNumber()) {
-                                if(message.split(";SPLIT;").length>4 ){
-                                    if (message.split(";SPLIT;")[4].equals("onError")){
-                                        buddyGPTApplication.setMessageError(true);
-                                        if (!buddyGPTApplication.isOpenaialreadySwitchEmotion()) {
-                                            BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
-                                        }
-                                    }
-                                }
-                                if (!buddyGPTApplication.isTimeoutExpired()) {
-                                    speak(value, "nothealysa");
-                                } else {
-                                    buddyGPTApplication.setStoredResponse(value);
-                                }
-                            }
-                        }
-                    }
-                    else if (action.equals("INVITATION")) {
-                        Log.d(TAG_TRACKING, "ChatGPT Invitation: " + value);
-                        speak(value, "INVITATION");
-                    }
-                });
-            }
-
             else if (message.contains("properties file done")) {
                 buddyGPTApplication.setNotYet(false);
                 getData();

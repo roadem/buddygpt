@@ -387,7 +387,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.languageSelectedEnglishTranslator = languageSelectedEnglishTranslator;
     }
 
-    public Boolean getInitSharedpreferences() {
+    public boolean getInitSharedpreferences() {
         return initSharedpreferences;
     }
 
