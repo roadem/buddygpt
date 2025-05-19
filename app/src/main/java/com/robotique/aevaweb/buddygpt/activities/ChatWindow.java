@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.text.Editable;
+import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -122,49 +123,21 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private Handler handlerPauseTime = new Handler();
     private Runnable runnablePauseTime;
 
+    //-----------------------------Cycle de vie de l'activité--------------------
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat_window);
+        Log.d(TAG, " --- onCreate() ---");
 
-        Log.d(TAG," --- onCreate() ---");
-
-        buddyGPTApplication = (BuddyGPTApplication) getApplicationContext();
-        buddyGPTApplication.setInitSharedpreferences(false);
-        buddyGPTApplication.hideSystemUI(this);
-        View decorView;
-        decorView = getWindow().getDecorView();
-        decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
-            if (visibility == 0) {
-                decorView.setSystemUiVisibility(buddyGPTApplication.hideSystemUI(ChatWindow.this));
-            }
-        });
-        if(responseFromTeamGPT != null){
-            responseFromTeamGPT.reset();
-        }
-        responseFromTeamGPT=new ResponseFromTeamGPT(buddyGPTApplication);
-        //init views
-        popupAddMail = findViewById(R.id.popup_add_mail);
-        parentChat = findViewById( R.id.parent_chat );
-        microBtn = findViewById( R.id.micro_btn );
-        sendBtn = findViewById( R.id.send_btn );
-        sendBtn2 = findViewById( R.id.send_btn2 );
-        btnClearConversation = findViewById( R.id.clear_btn );
-        scrollView=findViewById(R.id.scrollview);
-        lytCloseMenuChat=findViewById(R.id.lyt_close_menu_chat);
-        recyclerView=findViewById(R.id.chatRecyclerView);
-        editTextEmail = findViewById(R.id.editTextEmail);
-        textEmail = findViewById(R.id.popup_add_mail_textView);
-        popupAddMailContent = findViewById(R.id.popup_add_mail_linearLayout);
-        setAddMailDestinationText();
-
-        //----------------OnClick Listeners---------------------
-        microBtn.setOnClickListener(v -> onClickMicro());
-        sendBtn.setOnClickListener(v -> onClickSend());
-        sendBtn2.setOnClickListener(v -> onClickSendFromPopup());
-        btnClearConversation.setOnClickListener(v -> onClickClearConversation());
-        lytCloseMenuChat.setOnClickListener(v -> btnCloseChat());
+        initializeApplication();
+        configureSystemUI();
+        initializeResponseHandler();
+        initializeViews();
+        setupClickListeners();
     }
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -175,39 +148,56 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     @Override
     protected void onPause() {
         super.onPause();
-        if (responseTimeout!=null) responseTimeout.cancel();
-        if(handlerTTSError!=null && runnableTTSError!=null){
+
+        // Annule le timer de délai de réponse s'il est actif
+        if (responseTimeout != null) responseTimeout.cancel();
+
+        // Supprime les callbacks liés aux erreurs TTS s'ils existent
+        if (handlerTTSError != null && runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
-            handlerTTSError.removeCallbacksAndMessages(null);
+            handlerTTSError.removeCallbacksAndMessages(null); // Supprime tous les messages restants
         }
+
+        // Réinitialise l’état de démarrage du SDK et l'attente de réponse
         onSdkReadyIsAlreadyCalledOnce = false;
         isWaitingForResponse = false;
-        startlisten=true;
-        listRep=new ArrayList<>();
+
+        // Réinitialise l'état d'écoute vocale et vide la liste des réponses
+        startlisten = true;
+        listRep = new ArrayList<>();
+
+        // Arrête la synthèse vocale (TTS)
         buddyGPTApplication.stopTTS();
+
+        // Tente de remettre l'expression faciale du robot à un état neutre
         try {
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+        } catch (Exception e) {
+            Log.e(TAG, BUDDY_SDK_EXCEPTION + e);
         }
-        catch (Exception e){
-            Log.e(TAG,BUDDY_SDK_EXCEPTION+e);
-        }
+
+        // Arrête l'écoute vocale (reconnaissance libre)
         stopListeningFreeSpeech();
+
+        // Retire cette activité des observateurs de l'application
         buddyGPTApplication.removeObserver(this);
     }
+
     @Override
     protected void onDestroy() {
-
-        if (!buddyGPTApplication.getInitSharedpreferences()){
-            buddyGPTApplication.setparam("firstLaunch","true");
+        // Vérifie si les préférences initiales ne sont pas définies
+        if (!buddyGPTApplication.getInitSharedpreferences()) {
+            buddyGPTApplication.setparam("firstLaunch", "true");
             buddyGPTApplication.notifyObservers("ChatDestroy");
-
         }
-
             if(buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing()) buddyGPTApplication.getDialog().dismiss();
 
-        Log.d(TAG," --- onDestroy() ---");
+        Log.d(TAG, " --- onDestroy() ---");
+
+        // Appel à la méthode parent pour libérer les ressources système
         super.onDestroy();
     }
+
     /**
      * ------------------ Register to the SDK callbacks ---------------------
      */
@@ -235,94 +225,6 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     public void onEvent(EventItem iEvent) {
         Log.w(TAG, "onEvent : "+iEvent.toString());
     }
-    /**
-     * Initialisations
-     */
-    private void init(){
-
-        click=1;
-
-
-        settingClass = new Setting();
-        settingClass.setDuration(buddyGPTApplication.getparam("listening_duration"));
-        settingClass.setAttempt(buddyGPTApplication.getparam("listening_attempt"));
-        settingClass.setLangue(buddyGPTApplication.getLangue().getNom());
-        settingClass.setVolume(buddyGPTApplication.getparam("speak_volume"));
-        settingClass.setSwitchVisibility(buddyGPTApplication.getparam("switch_visibility"));
-        refreshSTTLangue();
-
-        popupAddMail.setOnClickListener(v -> {
-            // Vérifier si le popup_add_mail est visible et si le clic est en dehors de celui-ci
-            if (popupAddMail.getVisibility() == View.VISIBLE) {
-                MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, 0, 0);
-                if (!isViewInsideBounds(popupAddMailContent, (int) event.getRawX(), (int) event.getRawY())) {
-                    // Si le clic est en dehors, rendre le popup invisible
-                    popupAddMail.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-        popupAddMailContent.setOnClickListener(v -> {
-            // Ne rien faire pour empêcher la propagation du clic aux éléments enfants du popup
-        });
-
-
-        adapter = new ReplicaListAdapter(buddyGPTApplication,initDataset());
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
-        editTextEmail.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
-
-
-        editTextEmail.setText(buddyGPTApplication.getparam(MAIL_DESTINATION_KEY));
-
-
-        editTextEmail.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-                // Method left empty intentionally because no specific action is needed for this update.
-            }
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-
-                buddyGPTApplication.setparam(MAIL_DESTINATION_KEY,charSequence.toString());
-            }
-            @Override
-            public void afterTextChanged(Editable editable) {
-                // Method left empty intentionally because no specific action is needed for this update.
-            }
-        });
-
-        editTextEmail.setOnFocusChangeListener((v,hasFocus) -> {
-            if (hasFocus) {
-                View decorView = getWindow().getDecorView();
-                decorView.setSystemUiVisibility(
-                        View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
-                                | View.SYSTEM_UI_FLAG_FULLSCREEN);
-                // color black + opacity 50%
-            } else {
-                buddyGPTApplication.hideSystemUI(ChatWindow.this);
-                if(editTextEmail.getText().toString().trim().isEmpty()){
-                    buddyGPTApplication.setparam(MAIL_DESTINATION_KEY,buddyGPTApplication.getparam("Email"));
-                    editTextEmail.setText(buddyGPTApplication.getparam(MAIL_DESTINATION_KEY));
-                }
-            }
-        });
-
-        scroll();
-
-    }
-    // Vérifie si les coordonnées de l'événement sont à l'intérieur de la vue spécifiée
-    private boolean isViewInsideBounds(View view, int x, int y) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        int viewX = location[0];
-        int viewY = location[1];
-        return !(x < viewX || x > viewX + view.getWidth() || y < viewY || y > viewY + view.getHeight());
-    }
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -339,56 +241,218 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         }
         return super.dispatchTouchEvent( event );
     }
-    private void refreshSTTLangue() {
+
+    // -------------------------------------Initialisation---------------------------------------
+
+    private void initializeApplication() {
+        buddyGPTApplication = (BuddyGPTApplication) getApplicationContext();
+        buddyGPTApplication.setInitSharedpreferences(false);
+    }
+
+    private void configureSystemUI() {
+        int uiFlags = buddyGPTApplication.hideSystemUI(this);
+        View decorView = getWindow().getDecorView();
+        decorView.setSystemUiVisibility(uiFlags);
+        decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
+            if (visibility == View.SYSTEM_UI_FLAG_VISIBLE) {
+                decorView.setSystemUiVisibility(uiFlags);
+            }
+        });
+    }
+
+    private void initializeResponseHandler() {
+        if (responseFromTeamGPT != null) {
+            responseFromTeamGPT = null; // libère explicitement avant recréation (évite reset inutile)
+        }
+        responseFromTeamGPT = new ResponseFromTeamGPT(buddyGPTApplication);
+    }
+
+    private void initializeViews() {
+        popupAddMail = findViewById(R.id.popup_add_mail);
+        parentChat = findViewById(R.id.parent_chat);
+        microBtn = findViewById(R.id.micro_btn);
+        sendBtn = findViewById(R.id.send_btn);
+        sendBtn2 = findViewById(R.id.send_btn2);
+        btnClearConversation = findViewById(R.id.clear_btn);
+        scrollView = findViewById(R.id.scrollview);
+        lytCloseMenuChat = findViewById(R.id.lyt_close_menu_chat);
+        recyclerView = findViewById(R.id.chatRecyclerView);
+        editTextEmail = findViewById(R.id.editTextEmail);
+        textEmail = findViewById(R.id.popup_add_mail_textView);
+        popupAddMailContent = findViewById(R.id.popup_add_mail_linearLayout);
+        setAddMailDestinationText();
+    }
+
+    private void setupClickListeners() {
+        microBtn.setOnClickListener(v -> onClickMicro());
+        sendBtn.setOnClickListener(v -> onClickSend());
+        sendBtn2.setOnClickListener(v -> onClickSendFromPopup());
+        btnClearConversation.setOnClickListener(v -> onClickClearConversation());
+        lytCloseMenuChat.setOnClickListener(v -> btnCloseChat());
+    }
+
+    private void init() {
+        click = 1;
+
+        // Initialisation des paramètres utilisateur
+        initSettings();
+
+        // Gestion des popups d'ajout d'email
+        initPopupHandlers();
+
+        // Initialisation du champ email
+        initEmailField();
+
+        // Initialisation de la RecyclerView
+        adapter = new ReplicaListAdapter(buddyGPTApplication, initDataset());
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        recyclerView.setAdapter(adapter);
+
+        // Activation du scroll automatique
+        scroll();
+    }
+
+    /** Initialise les paramètres depuis le stockage local. */
+    private void initSettings() {
+        settingClass = new Setting();
+        settingClass.setDuration(buddyGPTApplication.getparam("listening_duration"));
+        settingClass.setAttempt(buddyGPTApplication.getparam("listening_attempt"));
+        settingClass.setLangue(buddyGPTApplication.getLangue().getNom());
+        settingClass.setVolume(buddyGPTApplication.getparam("speak_volume"));
+        settingClass.setSwitchVisibility(buddyGPTApplication.getparam("switch_visibility"));
         buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(),this);
     }
+
+    /** Gère l'affichage et la fermeture du popup d'ajout d'email. */
+    private void initPopupHandlers() {
+        popupAddMail.setOnClickListener(v -> {
+            if (popupAddMail.getVisibility() == View.VISIBLE) {
+                popupAddMail.setVisibility(View.INVISIBLE); // simplification
+            }
+        });
+
+        popupAddMailContent.setOnClickListener(v -> {
+            // Empêche la propagation du clic
+        });
+    }
+
+    /** Initialise le champ de saisie de l'email et ses écouteurs. */
+    private void initEmailField() {
+        editTextEmail.setImeOptions(EditorInfo.IME_FLAG_NO_FULLSCREEN);
+        editTextEmail.setText(buddyGPTApplication.getparam(MAIL_DESTINATION_KEY));
+
+        editTextEmail.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
+                buddyGPTApplication.setparam(MAIL_DESTINATION_KEY, charSequence.toString());
+            }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
+            @Override public void afterTextChanged(Editable s) { }
+        });
+
+        editTextEmail.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                enableImmersiveMode();
+            } else {
+                buddyGPTApplication.hideSystemUI(ChatWindow.this);
+                if (editTextEmail.getText().toString().trim().isEmpty()) {
+                    String email = buddyGPTApplication.getparam("Email");
+                    buddyGPTApplication.setparam(MAIL_DESTINATION_KEY, email);
+                    editTextEmail.setText(email);
+                }
+            }
+        });
+    }
+
     /**
-     * Récupération des questions/réponses
+     *  Active le mode immersif (plein écran sans barre système).
+     */
+    private void enableImmersiveMode() {
+        getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                        | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+        );
+    }
+
+    /**
+     * Récupération des questions/réponses depuis les préférences partagées au format JSON.
+     * Transforme chaque paire question/réponse en objet Replica et les ajoute à listRepGlobale.
+     *
+     * @return Tableau de Replica contenant toutes les entrées extraites.
      */
     private Replica[] initDataset() {
-        // Initialiser la liste des répliques
 
-
-        // Charger les données JSON depuis les ressources
+        // Récupérer la chaîne JSON des messages
         String jsonString = buddyGPTApplication.getparam("messages");
 
-        Log.i(TAG, "initDataset: messages "+jsonString);
+        if (TextUtils.isEmpty(jsonString)) {
+            Log.w(TAG, "initDataset: chaîne JSON vide ou nulle.");
+            return new Replica[0]; // Retourner un tableau vide en cas de données absentes
+        }
+
         try {
-            // Analyser le JSON
             JSONArray messagesArray = new JSONArray(jsonString);
 
             for (int i = 0; i < messagesArray.length(); i++) {
                 JSONObject messageObject = messagesArray.getJSONObject(i);
-
                 Replica replica = new Replica();
-                if (messageObject.has(KEY_QUESTION) ) {
+
+                // Gestion du type QUESTION
+                if (messageObject.has(KEY_QUESTION)) {
                     replica.setType(KEY_QUESTION);
                     replica.setValue(messageObject.getString(KEY_QUESTION));
                 }
-                if (messageObject.has(KEY_RESPONSE) ) {
-                    replica.setType(KEY_RESPONSE);
-                    replica.setValue(messageObject.getString(KEY_RESPONSE).split(SPLITER)[0]);
-                    replica.setDuration(messageObject.getString(KEY_RESPONSE).split(SPLITER)[1]);
+
+                // Gestion du type RESPONSE
+                if (messageObject.has(KEY_RESPONSE)) {
+                    String[] responseParts = messageObject.getString(KEY_RESPONSE).split(SPLITER);
+                    if (responseParts.length >= 2) {
+                        replica.setType(KEY_RESPONSE);
+                        replica.setValue(responseParts[0]);
+                        replica.setDuration(responseParts[1]);
+                    } else {
+                        Log.w(TAG, "initDataset: format de réponse inattendu à l'index " + i);
+                    }
                 }
-                if (messageObject.has(SESSION_TYPE) ){
+
+                // Gestion du type SESSION_TYPE
+                if (messageObject.has(SESSION_TYPE)) {
                     replica.setType(SESSION_TYPE);
                     replica.setValue(messageObject.getString(SESSION_TYPE));
                 }
-                    // Ajouter les questions et réponses comme des objets Replica
+
+                // Ajouter la réplique à la liste globale
                 listRepGlobale.add(replica);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
-            // Gérer les erreurs de parsing JSON
+            Log.e(TAG, "Erreur lors du parsing JSON dans initDataset()", e);
+            return new Replica[0]; // Éviter de continuer avec des données corrompues
         }
 
-        // Convertir la liste en tableau
-        Replica[] mDataset = new Replica[listRepGlobale.size()];
-        mDataset = listRepGlobale.toArray(mDataset);
-
-        // Retourner le dataset
-        return mDataset;
+        // Convertir la liste en tableau et retourner
+        return listRepGlobale.toArray(new Replica[0]);
     }
+// -------------------------------Gestion des événements UI--------------------------
+
+    /**
+     * Initialisation des composants de l'activité : paramètres, interface, écouteurs.
+     */
+
+    // Vérifie si les coordonnées de l'événement sont à l'intérieur de la vue spécifiée
+    private boolean isViewInsideBounds(View view, int x, int y) {
+        int[] location = new int[2];
+        view.getLocationOnScreen(location);
+        int viewX = location[0];
+        int viewY = location[1];
+        return !(x < viewX || x > viewX + view.getWidth() || y < viewY || y > viewY + view.getHeight());
+    }
+
+
+
 
 
     /**
@@ -664,6 +728,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             }
 
     }
+
+    //----------------------Gestion du chat et mail--------------------------
+
+
     public void writeMail(OnMailReadyListener listener) {
         String langue = buddyGPTApplication.getLangue().getNom();
 
@@ -775,7 +843,8 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             intent.putExtra("fromChatWindow", "true");
             startActivity(intent);
             finish();
-            overridePendingTransition(0, 0);}
+            overridePendingTransition(0, 0);
+        }
 
     }
 
