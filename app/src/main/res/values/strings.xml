@@ -197,23 +197,6 @@
     <string name="mlkit_model_is_downloading_de">Das Sprachmodell von ML Kit wird gerade heruntergeladen. Bitte warten Sie.</string>
 
 
-    <!-- Menu BlueMic -->
-
-    <string name="menu_option_bluemic">BLUE MIC</string>
-    <!--french-->
-    <string name="connected_service_bluemic_fr">BuddyGPT est connecté au BlueMic Service</string>
-    <string name="disconnected_service_bluemic_fr">BuddyGPT est déconnecté du BlueMic Service</string>
-    <!--english-->
-    <string name="connected_service_bluemic_en">BuddyGPT is connected to BlueMic Service</string>
-    <string name="disconnected_service_bluemic_en">BuddyGPT is disconnected from BlueMic Service</string>
-    <!-- spanish -->
-    <string name="connected_service_bluemic_es">BuddyGPT está conectado al servicio BlueMic</string>
-    <string name="disconnected_service_bluemic_es">BuddyGPT está desconectado del servicio BlueMic</string>
-    <!-- allemand -->
-    <string name="connected_service_bluemic_de">BuddyGPT ist mit dem BlueMic-Dienst verbunden</string>
-    <string name="disconnected_service_bluemic_de">BuddyGPT ist vom BlueMic-Dienst getrennt</string>
-
-
     <!-- Toast config file -->
 
     <!--french-->

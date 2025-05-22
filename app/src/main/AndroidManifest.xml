@@ -29,10 +29,7 @@
         android:supportsRtl="true"
         android:theme="@style/BuddyTheme"
         android:usesCleartextTraffic="true">
-        <activity
-            android:name="com.robotique.aevaweb.buddygpt.activities.BuddyGPTBlueMicActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"/>
+
         <activity
             android:name="com.robotique.aevaweb.buddygpt.activities.SettingsActivity"
             android:exported="false"

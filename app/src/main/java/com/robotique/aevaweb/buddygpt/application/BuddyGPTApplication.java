@@ -123,7 +123,6 @@ import okio.Buffer;
 
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";
-    private static final String TAG_BLUEMIC_STREAMING = "BuddyGPT_BlueMic_Streaming";
     private static final String TAG_STREAM = "MODE_STREAM";
     private static final String TAG_STREAM_USAGE = "MODE_STREAM_USAGE";
     private int listeningDuration;
@@ -923,7 +922,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         //initModeStreamSetting();
         //initCommandeSetting();
       //  initBIDisplay();
-       // initTracking();
+        initTracking();
        // Log.e("MRAA", "init google api");
 //        if (!alreadyCalled) {
 //            Log.e("MRAA", "init google api out if");
@@ -1461,24 +1460,24 @@ public class BuddyGPTApplication extends BuddyApplication {
                 setparam("Tracking_Camera_Display", "true");
             }
         }
-
-        //Tracking head
-        if (getparam("Tracking_Head").equals("")) {
-            if (getParamFromFile("TRACKING_Head", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Head", "false");
-            } else {
-                setparam("Tracking_Head", "true");
-            }
-        }
-
-        //Tracking body
-        if (getparam("Tracking_Body").equals("")) {
-            if (getParamFromFile("TRACKING_Body", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Body", "false");
-            } else {
-                setparam("Tracking_Body", "true");
-            }
-        }
+//
+//        //Tracking head
+//        if (getparam("Tracking_Head").equals("")) {
+//            if (getParamFromFile("TRACKING_Head", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
+//                setparam("Tracking_Head", "false");
+//            } else {
+//                setparam("Tracking_Head", "true");
+//            }
+//        }
+//
+//        //Tracking body
+//        if (getparam("Tracking_Body").equals("")) {
+//            if (getParamFromFile("TRACKING_Body", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
+//                setparam("Tracking_Body", "false");
+//            } else {
+//                setparam("Tracking_Body", "true");
+//            }
+//        }
 
         //Tracking auto listen
         if (getparam("Tracking_Auto_Listen").equals("")) {
@@ -1488,15 +1487,15 @@ public class BuddyGPTApplication extends BuddyApplication {
                 setparam("Tracking_Auto_Listen", "true");
             }
         }
-
-        //Tracking invitation
-        if (getparam("Tracking_Invitation").equals("")) {
-            if (getParamFromFile("TRACKING_Welcome", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Invitation", "false");
-            } else {
-                setparam("Tracking_Invitation", "true");
-            }
-        }
+//
+//        //Tracking invitation
+//        if (getparam("Tracking_Invitation").equals("")) {
+//            if (getParamFromFile("TRACKING_Welcome", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
+//                setparam("Tracking_Invitation", "false");
+//            } else {
+//                setparam("Tracking_Invitation", "true");
+//            }
+//        }
 
         //Tracking invitation chatGpt
 //        if (getparam("Tracking_Invitation_ChatGpt").equals("")) {

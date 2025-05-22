@@ -14,7 +14,7 @@ import java.util.Arrays;
 public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 5; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 7; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -200,7 +200,7 @@ public class ConfigurationFile {
             setProperty("Language_detection","Yes");
 //            setProperty("Stimulis","No");
 //            //setProperty("Commands", "No");
-//            setProperty("Tracking","No");
+            setProperty("Tracking","No");
 
             props.addPropertyComment("Number_of_words","");
             props.addPropertyComment("Number_of_words","Minimum number of words in the response for activating language detection");
@@ -241,9 +241,6 @@ public class ConfigurationFile {
             setProperty("mail.smtp.host", "in-v3.mailjet.com");
             setProperty("mail.smtp.port", "587");
 
-//            props.addPropertyComment("BlueMic_Disponibility", "");
-//            props.addPropertyComment("BlueMic_Disponibility", "BlueMic Availability (Yes/No)");
-//            setProperty("BlueMic_Disponibility","No");
 //
 //            props.addPropertyComment("emotion_Temperature", "");
 //            props.addPropertyComment("emotion_Temperature", "openAI settings for emotion detection");
@@ -447,26 +444,26 @@ public class ConfigurationFile {
 //
 //
 //            //-------------------------- Tracking ---------------------------
-//            props.addPropertyComment("TRACKING_Camera","");
-//            props.addPropertyComment("TRACKING_Camera", "Tracking parameters");
-//            props.addPropertyComment("TRACKING_Camera", "Enabling tracking with/without the camera, head, or body.");
-//            setProperty("TRACKING_Camera","No");
+            props.addPropertyComment("TRACKING_Camera","");
+            props.addPropertyComment("TRACKING_Camera", "Tracking parameters");
+            props.addPropertyComment("TRACKING_Camera", "Enabling tracking with/without the camera.");
+            setProperty("TRACKING_Camera","No");
 //            setProperty("TRACKING_Head","No");
 //            setProperty("TRACKING_Body","No");
-//
-//            props.addPropertyComment("TRACKING_watch","");
-//            props.addPropertyComment("TRACKING_watch", "Tracking is performed as soon as the robot detects that the target is looking at it.");
-//            setProperty("TRACKING_watch","Yes");
+
+            props.addPropertyComment("TRACKING_watch","");
+            props.addPropertyComment("TRACKING_watch", "Tracking is performed as soon as the robot detects that the target is looking at it.");
+            setProperty("TRACKING_watch","Yes");
 //            props.addPropertyComment("TRACKING_delay_nowatch", "The time delay in seconds for re-tracking and re-centering the gaze and head when the person is no longer looking at it depends on the specific operation of the tracking system being used.");
 //            setProperty("TRACKING_delay_nowatch","10");
 //            props.addPropertyComment("TRACKING_delay_notrack", "The time delay in seconds for re-tracking and re-centering the gaze and head after losing sight of the tracked person depends on the specific settings and capabilities of the tracking system in use.");
 //            setProperty("TRACKING_delay_notrack","30");
-//            props.addPropertyComment("TRACKING_listening", "Start listening when someone watchs");
-//            setProperty("TRACKING_listening","Yes");
-//            props.addPropertyComment("TRACKING_delay_startlisten", "Delay in seconds for listening when someone watchs");
-//            setProperty("TRACKING_delay_startlisten","2");
-//            props.addPropertyComment("TRACKING_delay_stoplisten", "Delay in seconds to stop listening when no one watchs");
-//            setProperty("TRACKING_delay_stoplisten","3");
+            props.addPropertyComment("TRACKING_listening", "Start listening when someone watchs");
+            setProperty("TRACKING_listening","Yes");
+            props.addPropertyComment("TRACKING_delay_startlisten", "Delay in seconds for listening when someone watchs");
+            setProperty("TRACKING_delay_startlisten","2");
+            props.addPropertyComment("TRACKING_delay_stoplisten", "Delay in seconds to stop listening when no one watchs");
+            setProperty("TRACKING_delay_stoplisten","3");
 //            props.addPropertyComment("TRACKING_regard_center", "Time to refocus the pupils of the eyes if the person being monitored no longer looks towards the robot");
 //            setProperty("TRACKING_regard_center","30");
 //            props.addPropertyComment("TRACKING_timeout", "Time in seconds to close BuddyGPT if no person is tracked within this duration ");

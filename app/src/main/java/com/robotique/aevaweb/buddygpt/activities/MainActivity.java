@@ -355,7 +355,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                             buddyGPTApplication.startListeningHotwor(MainActivity.this);
                         }
                         isReTrack = false;
-                        //initTracking();
+                        initTracking();
                     }
                 }
             }
@@ -644,20 +644,20 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         handlerCheckPersonDetection.removeCallbacksAndMessages(null);
         if(poseTracking != null) poseTracking.stopMovingAndCancelRunnables();
         if(backgroundExecutor != null) backgroundExecutor.shutdownNow();
-//        try{
-//            if(!BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || !BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
-//                BuddySDK.USB.enableWheels(false, iUsbCommadRspTracking);
-//            }
-//            if(!BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
-//                BuddySDK.USB.enableYesMove(false, iUsbCommadRspTracking);
-//            }
-//            if(!BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
-//                BuddySDK.USB.enableNoMove(false, iUsbCommadRspTracking);
-//            }
-//        }
-//        catch (Exception e){
-//            e.printStackTrace();
-//        }
+        try{
+            if(!BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || !BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
+                BuddySDK.USB.enableWheels(false, iUsbCommadRspTracking);
+            }
+            if(!BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
+                BuddySDK.USB.enableYesMove(false, iUsbCommadRspTracking);
+            }
+            if(!BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
+                BuddySDK.USB.enableNoMove(false, iUsbCommadRspTracking);
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
         super.onDestroy();
     }
 
@@ -733,12 +733,12 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 //        }
 //    };
 
-//    private final IUsbCommadRsp iUsbCommadRspTracking = new IUsbCommadRsp.Stub(){
-//        @Override
-//        public void onSuccess(String s) throws RemoteException {}
-//        @Override
-//        public void onFailed(String s) throws RemoteException {}
-//    };
+    private final IUsbCommadRsp iUsbCommadRspTracking = new IUsbCommadRsp.Stub(){
+        @Override
+        public void onSuccess(String s) throws RemoteException {}
+        @Override
+        public void onFailed(String s) throws RemoteException {}
+    };
 
     private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
         @Override
@@ -1676,7 +1676,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     public void run() {
                         if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
                             isReTrack = true;
-                            //initTracking();
+                            initTracking();
                         }
                     }
                 });
@@ -2576,33 +2576,33 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     };
 
-//    private void initTracking(){
-//        Log.d(TAG_TRACKING, "initTracking(isReTrack="+isReTrack+")");
+    private void initTracking(){
+        Log.d(TAG_TRACKING, "initTracking(isReTrack="+isReTrack+")");
 //
-//        if(!isFirstLaunch && !isReTrack){
-//            try{
-//                if(BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
-//                    BuddySDK.USB.enableWheels(true, iUsbCommadRspTracking);
-//                }
-//                if(BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
-//                    BuddySDK.USB.enableYesMove(true, iUsbCommadRspTracking);
-//                }
-//                if(BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
-//                    BuddySDK.USB.enableNoMove(true, iUsbCommadRspTracking);
-//                }
-//            }
-//            catch (Exception e){
-//                e.printStackTrace();
-//            }
-//        }
-//
-//        if(!isReTrack){
-//            //récupération des paramètres TRACKING du fichier de config:
-//            TRACKING_WATCH = buddyGPTApplication.getParamFromFile("TRACKING_watch", "BuddyGPT.properties");
+        if(!isFirstLaunch && !isReTrack){
+            try{
+                if(BuddySDK.Actuators.getLeftWheelStatus().toUpperCase().contains("DISABLE") || BuddySDK.Actuators.getRightWheelStatus().toUpperCase().contains("DISABLE")) {
+                    BuddySDK.USB.enableWheels(true, iUsbCommadRspTracking);
+                }
+                if(BuddySDK.Actuators.getYesStatus().toUpperCase().contains("DISABLE")) {
+                    BuddySDK.USB.enableYesMove(true, iUsbCommadRspTracking);
+                }
+                if(BuddySDK.Actuators.getNoStatus().toUpperCase().contains("DISABLE")) {
+                    BuddySDK.USB.enableNoMove(true, iUsbCommadRspTracking);
+                }
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        if(!isReTrack){
+            //récupération des paramètres TRACKING du fichier de config:
+            TRACKING_WATCH = buddyGPTApplication.getParamFromFile("TRACKING_watch", "BuddyGPT.properties");
 //            TRACKING_DELAY_NO_WATCH = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_nowatch", "BuddyGPT.properties"));
 //            TRACKING_DELAY_NO_TRACK = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_notrack", "BuddyGPT.properties"));
-//            TRACKING_DELAY_START_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_startlisten", "BuddyGPT.properties"));
-//            TRACKING_DELAY_STOP_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_stoplisten", "BuddyGPT.properties"));
+            TRACKING_DELAY_START_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_startlisten", "BuddyGPT.properties"));
+            TRACKING_DELAY_STOP_LISTEN = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_stoplisten", "BuddyGPT.properties"));
 //            TRACKING_REGARD_CENTER = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_regard_center", "BuddyGPT.properties"));
 //            TRACKING_DELAY_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_delay_welcome", "BuddyGPT.properties"));
 //            TRACKING_DURATION_WELCOME = Integer.parseInt(buddyGPTApplication.getParamFromFile("TRACKING_duration_welcome", "BuddyGPT.properties"));
@@ -2620,17 +2620,17 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 //                TRACKING_TIMEOUT=0;
 //            }
 //
-//        }
-//
-//        if(isFirstLaunch && !isReTrack && Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
+        }
+
+        if(isFirstLaunch && !isReTrack ){
 //            sendInvitationPending = true;
-//            isFirstInvitaion = true;
-//            startTracking();
-//        }
-//        else {
-//            startTracking();
-//        }
-//    }
+            isFirstInvitaion = true;
+            startTracking();
+        }
+        else {
+            startTracking();
+        }
+    }
 
     private void startTracking(){
         Log.d(TAG_TRACKING, "startTracking(isReTrack="+isReTrack+")");
@@ -2835,7 +2835,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 poseTracking.lookAtCenter();
                 poseTracking.centerHead();
                 isReTrack = true;
-             //   initTracking();
+                initTracking();
             }
         });
     }

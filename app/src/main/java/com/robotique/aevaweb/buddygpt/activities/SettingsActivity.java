@@ -76,8 +76,8 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private SttSpinnerAdapter sttSpinnerAdapter;
     private TtsSpinnerAdapter ttsSpinnerAdapter;
     private LinearLayout menu_option_tracking_camera_display_lyt;
-    private LinearLayout menu_option_tracking_head_lyt;
-    private LinearLayout menu_option_tracking_body_lyt;
+//    private LinearLayout menu_option_tracking_head_lyt;
+//    private LinearLayout menu_option_tracking_body_lyt;
     private LinearLayout menu_option_tracking_auto_listen_lyt;
     private LinearLayout menu_option_tracking_invitation_lyt;
 
@@ -143,11 +143,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     //private Switch switchModeStream;
 //    private Switch switchCommande;
 //    private Switch switchBIDisplay;
-//    private Switch switchTrackingActivation;
-//    private Switch switchTrackingCameraDisplay;
-//    private Switch switchTrackingHead;
-//    private Switch switchTrackingBody;
-//    private Switch switchTrackingAutoListen;
+    private Switch switchTrackingActivation;
+    private Switch switchTrackingCameraDisplay;
+    private Switch switchTrackingHead;
+    private Switch switchTrackingBody;
+    private Switch switchTrackingAutoListen;
 //    private Switch switchTrackingInvitation;
 
     private String french= "Français";
@@ -263,24 +263,24 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         noNetwork = findViewById(R.id.noNetwork);
         downloadingBar = findViewById(R.id.progressBar_MLKitDownload);
 
-//        menu_option_tracking_camera_display_lyt = findViewById(R.id.menu_option_tracking_camera_display_lyt);
+        menu_option_tracking_camera_display_lyt = findViewById(R.id.menu_option_tracking_camera_display_lyt);
 //        menu_option_tracking_head_lyt = findViewById(R.id.menu_option_tracking_head_lyt);
 //        menu_option_tracking_body_lyt = findViewById(R.id.menu_option_tracking_body_lyt);
-//        menu_option_tracking_auto_listen_lyt = findViewById(R.id.menu_option_tracking_auto_listen_lyt);
+        menu_option_tracking_auto_listen_lyt = findViewById(R.id.menu_option_tracking_auto_listen_lyt);
 //        menu_option_tracking_invitation_lyt = findViewById(R.id.menu_option_tracking_invitation_lyt);
 //        //menu_option_tracking_invitation_chatGpt_lyt = findViewById(R.id.menu_option_tracking_invitation_chatGpt_lyt);
-//        menu_option_tracking_activation_textView = findViewById(R.id.menu_option_tracking_activation_textView);
-//        menu_option_tracking_camera_display_textView = findViewById(R.id.menu_option_tracking_camera_display_textView);
+        menu_option_tracking_activation_textView = findViewById(R.id.menu_option_tracking_activation_textView);
+        menu_option_tracking_camera_display_textView = findViewById(R.id.menu_option_tracking_camera_display_textView);
 //        menu_option_tracking_head_textView = findViewById(R.id.menu_option_tracking_head_textView);
 //        menu_option_tracking_body_textView = findViewById(R.id.menu_option_tracking_body_textView);
-//        menu_option_tracking_auto_listen_textView = findViewById(R.id.menu_option_tracking_auto_listen_textView);
+        menu_option_tracking_auto_listen_textView = findViewById(R.id.menu_option_tracking_auto_listen_textView);
 //        menu_option_tracking_invitation_textView = findViewById(R.id.menu_option_tracking_invitation_textView);
 //        //menu_option_tracking_invitation_chatGpt_textView = findViewById(R.id.menu_option_tracking_invitation_chatGpt_textView);
-//        switchTrackingActivation = findViewById(R.id.switchTrackingActivation);
-//        switchTrackingCameraDisplay = findViewById(R.id.switchTrackingCameraDisplay);
+        switchTrackingActivation = findViewById(R.id.switchTrackingActivation);
+        switchTrackingCameraDisplay = findViewById(R.id.switchTrackingCameraDisplay);
 //        switchTrackingHead = findViewById(R.id.switchTrackingHead);
 //        switchTrackingBody = findViewById(R.id.switchTrackingBody);
-//        switchTrackingAutoListen = findViewById(R.id.switchTrackingAutoListen);
+        switchTrackingAutoListen = findViewById(R.id.switchTrackingAutoListen);
 //        switchTrackingInvitation = findViewById(R.id.switchTrackingInvitation);
         //switchTrackingInvitationChatGpt = findViewById(R.id.switchTrackingInvitationChatGpt);
         //dollar_icon = findViewById(R.id.dollar_icon);
@@ -294,16 +294,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         wifiBroadCastReceiver.forceCheckConnexState(getApplicationContext());
 
 
-        //ImageView blue_mic_lyt = findViewById(R.id.blue_mic_lyt);
-
-       // String blueMic_Disponibility = buddyGPTApplication.getParamFromFile("BlueMic_Disponibility", "BuddyGPT.properties");
-
-//        if(blueMic_Disponibility != null && blueMic_Disponibility.trim().equalsIgnoreCase("Yes")){
-//            blue_mic_lyt.setVisibility(View.VISIBLE);
-//        }
-//        else{
-//            blue_mic_lyt.setVisibility(View.INVISIBLE);
-//        }
 
 
         /**
@@ -481,7 +471,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         /**
          * Gestion Tracking
          */
-        //handlerTracking();
+        handlerTracking();
 
         popupLanguageList.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -516,10 +506,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         //Tracking activation
         if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
             menu_option_tracking_camera_display_lyt.setVisibility(View.VISIBLE);
-            menu_option_tracking_head_lyt.setVisibility(View.VISIBLE);
-            menu_option_tracking_body_lyt.setVisibility(View.VISIBLE);
+//            menu_option_tracking_head_lyt.setVisibility(View.VISIBLE);
+//            menu_option_tracking_body_lyt.setVisibility(View.VISIBLE);
             menu_option_tracking_auto_listen_lyt.setVisibility(View.VISIBLE);
-            menu_option_tracking_invitation_lyt.setVisibility(View.VISIBLE);
+           // menu_option_tracking_invitation_lyt.setVisibility(View.VISIBLE);
            // if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
 //                menu_option_tracking_invitation_chatGpt_lyt.setVisibility(View.VISIBLE);
 //            }
@@ -529,20 +519,20 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         }
         else{
             menu_option_tracking_camera_display_lyt.setVisibility(View.GONE);
-            menu_option_tracking_head_lyt.setVisibility(View.GONE);
-            menu_option_tracking_body_lyt.setVisibility(View.GONE);
+//            menu_option_tracking_head_lyt.setVisibility(View.GONE);
+//            menu_option_tracking_body_lyt.setVisibility(View.GONE);
             menu_option_tracking_auto_listen_lyt.setVisibility(View.GONE);
-            menu_option_tracking_invitation_lyt.setVisibility(View.GONE);
+            //menu_option_tracking_invitation_lyt.setVisibility(View.GONE);
            // menu_option_tracking_invitation_chatGpt_lyt.setVisibility(View.GONE);
         }
-//        switchTrackingActivation.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation")));
-//        switchTrackingActivation.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
-//            buddyGPTApplication.setparam("Tracking_Activation",String.valueOf(b));
-//            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
-//                menu_option_tracking_camera_display_lyt.setVisibility(View.VISIBLE);
+        switchTrackingActivation.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation")));
+        switchTrackingActivation.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
+            buddyGPTApplication.setparam("Tracking_Activation",String.valueOf(b));
+            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
+                menu_option_tracking_camera_display_lyt.setVisibility(View.VISIBLE);
 //                menu_option_tracking_head_lyt.setVisibility(View.VISIBLE);
 //                menu_option_tracking_body_lyt.setVisibility(View.VISIBLE);
-//                menu_option_tracking_auto_listen_lyt.setVisibility(View.VISIBLE);
+                menu_option_tracking_auto_listen_lyt.setVisibility(View.VISIBLE);
 ////                menu_option_tracking_invitation_lyt.setVisibility(View.VISIBLE);
 ////                if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
 ////                    menu_option_tracking_invitation_chatGpt_lyt.setVisibility(View.VISIBLE);
@@ -550,23 +540,23 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 ////                else{
 ////                    menu_option_tracking_invitation_chatGpt_lyt.setVisibility(View.GONE);
 ////                }
-//            }
-//            else{
-//                menu_option_tracking_camera_display_lyt.setVisibility(View.GONE);
+            }
+            else{
+                menu_option_tracking_camera_display_lyt.setVisibility(View.GONE);
 //                menu_option_tracking_head_lyt.setVisibility(View.GONE);
 //                menu_option_tracking_body_lyt.setVisibility(View.GONE);
-//                menu_option_tracking_auto_listen_lyt.setVisibility(View.GONE);
+                menu_option_tracking_auto_listen_lyt.setVisibility(View.GONE);
 //                menu_option_tracking_invitation_lyt.setVisibility(View.GONE);
 //               // menu_option_tracking_invitation_chatGpt_lyt.setVisibility(View.GONE);
-//            }
-//        });
-//
+            }
+        });
+
 //        //Tracking camera display
-//        switchTrackingCameraDisplay.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Camera_Display")));
-//        switchTrackingCameraDisplay.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
-//            buddyGPTApplication.setparam("Tracking_Camera_Display",String.valueOf(b));
-//        });
-//
+        switchTrackingCameraDisplay.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Camera_Display")));
+        switchTrackingCameraDisplay.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
+            buddyGPTApplication.setparam("Tracking_Camera_Display",String.valueOf(b));
+        });
+
 //        //Tracking head
 //        switchTrackingHead.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Head")));
 //        switchTrackingHead.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
@@ -578,13 +568,13 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
 //        switchTrackingBody.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
 //            buddyGPTApplication.setparam("Tracking_Body",String.valueOf(b));
 //        });
-//
-//        //Tracking auto listen
-//        switchTrackingAutoListen.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen")));
-//        switchTrackingAutoListen.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
-//            buddyGPTApplication.setparam("Tracking_Auto_Listen",String.valueOf(b));
-//        });
-//
+
+        //Tracking auto listen
+        switchTrackingAutoListen.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen")));
+        switchTrackingAutoListen.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
+            buddyGPTApplication.setparam("Tracking_Auto_Listen",String.valueOf(b));
+        });
+
 //        //Tracking invitation
 //        switchTrackingInvitation.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation")));
 //        switchTrackingInvitation.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
@@ -1119,11 +1109,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             menu_apiKey_textView.setText(R.string.menu_api_key_en);
             menu_name_textView.setText(R.string.menu_name_en);
             menu_header_textView.setText(R.string.menu_header_en);
-//            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_en);
-//            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_en);
+            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_en);
+            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_en);
 //            menu_option_tracking_head_textView.setText(R.string.menu_option_tracking_head_en);
 //            menu_option_tracking_body_textView.setText(R.string.menu_option_tracking_body_en);
-//            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_en);
+            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_en);
 //            menu_option_tracking_invitation_textView.setText(R.string.menu_option_tracking_invitation_en);
 
                 menu_header_editText.setText(buddyGPTApplication.getparam(header));
@@ -1147,11 +1137,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             menu_name_textView.setText(R.string.menu_name_fr);
             menu_header_textView.setText(R.string.menu_header_fr);
 
-//            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_fr);
-//            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_fr);
+            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_fr);
+            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_fr);
 //            menu_option_tracking_head_textView.setText(R.string.menu_option_tracking_head_fr);
 //            menu_option_tracking_body_textView.setText(R.string.menu_option_tracking_body_fr);
-//            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_fr);
+            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_fr);
 //            menu_option_tracking_invitation_textView.setText(R.string.menu_option_tracking_invitation_fr);
             //menu_option_tracking_invitation_chatGpt_textView.setText(R.string.menu_option_tracking_invitation_chatGpt_fr);
 
@@ -1181,11 +1171,11 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 translateAndSetTextView(0,menu_header_editText,buddyGPTApplication.getparam(header));
 //                translateAndSetTextView(R.string.menu_option_listening_duration_hint_en,menu_option_listening_duration_editText,"");
 //                translateAndSetTextView(R.string.menu_option_listening_attempt_hint_en,menu_option_listening_attempt_editText,"");
-//                translateAndSetTextView(R.string.menu_option_tracking_activation_en,menu_option_tracking_activation_textView,"");
-//                translateAndSetTextView(R.string.menu_option_tracking_camera_display_en,menu_option_tracking_camera_display_textView,"");
+                translateAndSetTextView(R.string.menu_option_tracking_activation_en,menu_option_tracking_activation_textView,"");
+                translateAndSetTextView(R.string.menu_option_tracking_camera_display_en,menu_option_tracking_camera_display_textView,"");
 //                translateAndSetTextView(R.string.menu_option_tracking_head_en,menu_option_tracking_head_textView,"");
 //                translateAndSetTextView(R.string.menu_option_tracking_body_en,menu_option_tracking_body_textView,"");
-//                translateAndSetTextView(R.string.menu_option_tracking_auto_listen_en,menu_option_tracking_auto_listen_textView,"");
+                translateAndSetTextView(R.string.menu_option_tracking_auto_listen_en,menu_option_tracking_auto_listen_textView,"");
 //                translateAndSetTextView(R.string.menu_option_tracking_invitation_en,menu_option_tracking_invitation_textView,"");
                 //translateAndSetTextView(R.string.menu_option_tracking_invitation_chatGpt_en,menu_option_tracking_invitation_chatGpt_textView,"");
 
