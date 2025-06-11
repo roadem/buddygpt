@@ -2,7 +2,6 @@ package com.robotique.aevaweb.buddygpt.utilis;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -21,10 +20,8 @@ public class LoggingInterceptor implements Interceptor {
     private final Gson gson;
     private final String logDirectory;
     private final SimpleDateFormat dateFormat;
-    private BuddyGPTApplication buddyGPTApplication;
 
-    public LoggingInterceptor(BuddyGPTApplication buddyGPTApplication, String logDirectory) {
-        this.buddyGPTApplication = buddyGPTApplication;
+    public LoggingInterceptor(String logDirectory) {
         this.logDirectory = logDirectory;
         gson = new GsonBuilder().setPrettyPrinting().create();
         dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
@@ -38,7 +35,7 @@ public class LoggingInterceptor implements Interceptor {
         long startTime = System.nanoTime();
 
         // Create log file
-        File logFile = createLogFile(request.url().toString());
+        File logFile = createLogFile();
         boolean overwriteFile = shouldOverwriteFile(logFile);
         try (FileWriter writer = new FileWriter(logFile, !overwriteFile)) {
             // Log request information
@@ -76,7 +73,7 @@ public class LoggingInterceptor implements Interceptor {
             writer.append("\n\n\n****************************************************************************************************\n\n\n");
 
             writer.flush();
-            writer.close();
+
 
             return response;
         }
@@ -91,7 +88,7 @@ private String formatJson(String json) {
         }
     }
 
-    private File createLogFile(String url) throws IOException {
+    private File createLogFile() {
         File directory = new File(logDirectory);
         if (!directory.exists()) {
             directory.mkdirs();

@@ -67,6 +67,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private static final String KEY_QUESTION = "Question";
     private static final String KEY_RESPONSE = "Response";
     private static final String SPLITER = ";SPLIT;";
+    private static final String NOTHEALYSA = "nothealysa";
     private static final String SESSION_TYPE = "Session";
     private static final String INVALID_DEVICE_ID = "INVALID_TEAMGPT_DEVICE_ID";
     private static final String INVALID_KEY = "INVALID_TEAMGPT_KEY";
@@ -83,7 +84,6 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private boolean isWaitingForResponse = false;
 
 
-    private Setting settingClass;
     private ArrayList<Replica> listRep=new ArrayList<>();
     private ArrayList<Replica> listRepGlobale=new ArrayList<>();
     private ReplicaListAdapter adapter;
@@ -314,6 +314,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     /** Initialise les paramètres depuis le stockage local. */
     private void initSettings() {
+        Setting settingClass;
         settingClass = new Setting();
         settingClass.setDuration(buddyGPTApplication.getparam("listening_duration"));
         settingClass.setAttempt(buddyGPTApplication.getparam("listening_attempt"));
@@ -346,8 +347,12 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
                 buddyGPTApplication.setparam(MAIL_DESTINATION_KEY, charSequence.toString());
             }
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) { }
-            @Override public void afterTextChanged(Editable s) { }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // Nothing to do
+                }
+            @Override public void afterTextChanged(Editable s) {
+                //nothing to do
+            }
         });
 
         editTextEmail.setOnFocusChangeListener((v, hasFocus) -> {
@@ -442,14 +447,6 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
      * Initialisation des composants de l'activité : paramètres, interface, écouteurs.
      */
 
-    // Vérifie si les coordonnées de l'événement sont à l'intérieur de la vue spécifiée
-    private boolean isViewInsideBounds(View view, int x, int y) {
-        int[] location = new int[2];
-        view.getLocationOnScreen(location);
-        int viewX = location[0];
-        int viewY = location[1];
-        return !(x < viewX || x > viewX + view.getWidth() || y < viewY || y > viewY + view.getHeight());
-    }
 
 
 
@@ -719,11 +716,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                 }
                 else{
                     buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(buddyGPTApplication.getString(R.string.add_mail_toast_en))
-                            .addOnSuccessListener(translatedText -> {
-                            Toast.makeText(buddyGPTApplication, translatedText, Toast.LENGTH_LONG).show();
-                    }).addOnFailureListener(e -> {
-                            Log.e(TAG,"translatedText exception __onClickSendFromPopup__ "+e);
-                    });
+                            .addOnSuccessListener(translatedText -> Toast.makeText(buddyGPTApplication, translatedText, Toast.LENGTH_LONG).show()).addOnFailureListener(e -> Log.e(TAG,"translatedText exception __onClickSendFromPopup__ "+e));
                 }
             }
 
@@ -794,7 +787,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
     private String buildEmailContent(String[] newSessionText, String[] responseText, String[] qstText) {
         String firstLine;
-        Log.i(TAG, "buildEmailContent: "+newSessionText[0]+"******"+responseText[0]+"******"+qstText[0]+"******");
+        Log.i(TAG, "buildEmailContent: "+newSessionText[0]+" - "+responseText[0]+" - "+qstText[0]);
         if (!buddyGPTApplication.getparam(SELECTED_CHATBOT).equalsIgnoreCase("") ||
                 !buddyGPTApplication.getparam("NomCompte").equalsIgnoreCase("")) {
             firstLine = buddyGPTApplication.getparam("NomCompte") + " " +
@@ -852,18 +845,17 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
      * ------------------------------------------ Gestion de notifications --------------------------
      */
 
-    public void update(String message) throws IOException {
+    public void update(String message) {
         if(message != null){
 
-            if (message.contains("CANCEL_RESPONSE_TIMEOUT")) {
-                if (responseTimeout != null) responseTimeout.cancel();
-            }
+            if (message.contains("CANCEL_RESPONSE_TIMEOUT") && responseTimeout != null) responseTimeout.cancel();
+
 
             if (message.contains("MODE_STREAM_SPEAK;SPLIT;")) {
                 runOnUiThread(() -> {
-                    if (message.split(";SPLIT;").length > 1) {
-                        String phraseToPronounce = message.split(";SPLIT;")[1];
-                        speak(phraseToPronounce, "nothealysa");
+                    if (message.split(SPLITER).length > 1) {
+                        String phraseToPronounce = message.split(SPLITER)[1];
+                        speak(phraseToPronounce, NOTHEALYSA);
                     }
                 });
             }
@@ -875,10 +867,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
 
                     stopListeningFreeSpeech();
 
-                    String detectedSTTMessage = message.split(";")[1].replaceAll("' ","'");
+                    String detectedSTTMessage = message.split(";")[1].replace("' ","'");
 
                     buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getCurrentQuestionNubmer() + 1);
-                    String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+                    String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
                     Replica question = new Replica();
                     question.setType(KEY_QUESTION);
                     question.setTime(time);
@@ -923,6 +915,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                             responseTimeout = new CountDownTimer((long) Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) * 1000, 1000) {
                                 @Override
                                 public void onTick(long l) {
+                                    // on tick code
                                 }
 
                                 @Override
@@ -999,7 +992,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                             int delayTime = (textLength / 20) * 1000; // 1 second for every 20 characters
                             if (buddyGPTApplication.getparam("TTS").equalsIgnoreCase("ReadSpeaker") &&
                                     (buddyGPTApplication.getCurrentLanguage().equals("en") || buddyGPTApplication.getCurrentLanguage().equals("fr")) &&
-                                    buddyGPTApplication.getUsingReadSpeaker()) {
+                                    Boolean.TRUE.equals(buddyGPTApplication.getUsingReadSpeaker())) {
                                 delayTime = 0;
                             }
                             handlerTTSError.postDelayed(runnableTTSError = () -> runOnUiThread(() -> {
@@ -1039,11 +1032,10 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             }
             else if (message.contains("mailSend")) {
                 runOnUiThread(() -> {
-                    if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
-                        if (!buddyGPTApplication.getParamFromFile("Message_mail_send_en", configFile).trim().isEmpty()) {
+                    if (buddyGPTApplication.getLangue().getNom().equals(langueEn) && !buddyGPTApplication.getParamFromFile("Message_mail_send_en", configFile).trim().isEmpty()) {
                             speak(buddyGPTApplication.getParamFromFile("Message_mail_send_en", configFile), "mailSent");
                         }
-                    }
+
                 });
             }
         }
@@ -1063,9 +1055,9 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         Log.d(TAG," --- startListeningFreeSpeech("+duration+") ---");
 
 
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android")){
+        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)){
             buddyGPTApplication.startListeningQuestion(this);
-        }else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")){
+        }else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)){
             if (buddyGPTApplication.getCurrentLanguage().equals("fr") || buddyGPTApplication.getCurrentLanguage().equals("en")){
                 buddyGPTApplication.startListeningCerence(this);
             }
@@ -1085,7 +1077,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             @Override
             public void onFinish() {
 
-                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android") || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")){
+                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT) || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)){
                     Log.i(TAG, "timerEcoute onFinish");
                     stopListeningFreeSpeech();
                     click=1;
@@ -1178,7 +1170,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         Log.d(TAG, " --- speak(" + texte + ") ---");
         if (responseTimeout != null) responseTimeout.cancel();
 
-        if (type.equals("nothealysa") || type.equals("storedResponse")) {
+        if (type.equals(NOTHEALYSA) || type.equals("storedResponse")) {
             handleResponseSpeak(texte);
         } else if (type.equals("timeOutExpired")) {
             buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
@@ -1195,7 +1187,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
             updateExistingResponseReplica(texte);
         }
 
-        buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, "nothealysa");
+        buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);
     }
 
     private void createNewResponseReplica(String texte, String time) {

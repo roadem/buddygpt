@@ -115,63 +115,18 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private RelativeLayout view_face;
     private RelativeLayout launch_view;
     private RelativeLayout reGroup;
-    private RelativeLayout preViewViewLyt;
-    private RelativeLayout photo_timer_bg_rlyt;
-    private RelativeLayout photo_timer_rlyt;
-    private FrameLayout preview_container;
-    private OverlayView overlay;
-    private PreviewView previewView;
-    private PreviewView previewViewphoto;
-    private TextView photo_timer_txtView;
     private TextView buddy_texte_qst;
     private TextView buddy_texte_resp;
     private ImageView noNetwork;
     private ProgressBar downloadingBar;
-    private ImageView photo_timer_imgview;
-    private ImageView bi_imageView;
-    private PlayerView bi_videoView;
 
 
-    private double TRACKING_WELCOME_TEMPERATURE;
 
-    private long lastVisibleTime = 0L;          // Track the time when person was last seen
-    private long lastVisibleTime_saved = 0L;    // Track the time when person was last seen and do not reset it when re-track (useful for invitation check)
-    private long firstVisibleTime = 0L;         // Track the time when person started being visible
-    private long visibleDuration = 0L;          // How long a person remained visible
-    private long lastLookingAtCameraTime = 0L;  // Track the time when the person last looked at the camera
-    private long totalTimeLookingAtCamera = 0L; // Total time spent looking at the camera
-    private long startLookingAtCameraTime = 0L; // Track the start time of the current interval when the person is looking directly at the camera
-
-    private Float[] res = {(float) 0, (float) 0, (float) 0, (float) 0, (float) 0, (float) 0, (float) 0, (float) 0, (float) 0, (float) 0,(float) 0, (float) 0, (float) 0};
-    private float initLang=190F;
-    private float degx,degy,x0,x2,x5,y0,y5,y2,lang,dLeft,eog,Eod, dRight;
-
-    private final int path= R.string.path;
-    private final int pathLog=R.string.pathConfig;
-    private final int cameraFacing = CameraSelector.LENS_FACING_BACK;
-    private int TRACKING_DELAY_NO_WATCH;
-    private int TRACKING_DELAY_NO_TRACK;
-    private int TRACKING_DELAY_START_LISTEN;
-    private int TRACKING_DELAY_STOP_LISTEN;
-    private int TRACKING_REGARD_CENTER;
-    private int TRACKING_DELAY_WELCOME;
-    private int TRACKING_DURATION_WELCOME;
-    private int TRACKING_WELCOME_MAX_TOKEN;
-    private int TRACKING_TIMEOUT;
-
-    private String TRACKING_WELCOME_FR;
-    private String TRACKING_WELCOME_EN;
-    private String TRACKING_WELCOME_PROMPT_FR;
-    private String TRACKING_WELCOME_PROMPT_EN;
-    private String TRACKING_WELCOME_MODEL;
-    private String TRACKING_WATCH;
-    private String directionRegardNez= "";
     private final String langueFr = "Français";
     private final String langueEn = "Anglais";
     private final String langueEs = "Espagnol";
     private final String langueDe = "Allemand";
     
-    private final String openAIKey = "openAI_API_Key";
     private String infoToast = "";
 
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
@@ -180,9 +135,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private boolean englishIsDownloaded = false;
     private boolean frenchIsDownloaded = false;
     private boolean languageToenglishIsDownloaded = false;
-    private final boolean isCMDLangue = false;
     private boolean isSpeaking = false;
-    private Boolean gptSend=false;
     private boolean isFirstLaunch = true; // Used to init TeamGPT params only once
     private boolean regarde_camera=false;
     private boolean direction=false;
@@ -211,8 +164,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private ProcessCameraProvider cameraProvider;
     private Preview preview;
     private ImageAnalysis imageAnalyzer;
-    private Camera camera;
-    private ImageCapture imageCapture;
     private String initOrMajOrNone="";
 
     private IMLKitDownloadCallback imlKitDownloadCallback = new IMLKitDownloadCallback() {
@@ -404,7 +355,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private Runnable runnablePauseTime;
     private Handler handler = new Handler();
     private Runnable runnable;
-    private boolean isGetParametersCalled=false;
 
     /**
      * ------------------ App LifeCycle ---------------------
@@ -439,13 +389,13 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         view_face = findViewById(R.id.view_face);
         launch_view = findViewById(R.id.launch_view);
         noNetwork = findViewById(R.id.noNetwork);
-        bi_videoView = findViewById(R.id.bi_videoView);
-        bi_imageView = findViewById(R.id.bi_imageView);
+//        bi_videoView = findViewById(R.id.bi_videoView);
+//        bi_imageView = findViewById(R.id.bi_imageView);
         downloadingBar = findViewById(R.id.progressBar_MLKitDownload);
-        preview_container = findViewById(R.id.preview_container);
+//        preview_container = findViewById(R.id.preview_container);
         reGroup = findViewById(R.id.reGroup);
-        overlay = findViewById(R.id.overlay);
-        previewView = findViewById(R.id.view_finder);
+//        overlay = findViewById(R.id.overlay);
+//        previewView = findViewById(R.id.view_finder);
 //        photo_timer_bg_rlyt= findViewById(R.id.photo_timer_bg_rlyt);
 //        photo_timer_rlyt = findViewById(R.id.photo_timer_rlyt);
 //        photo_timer_imgview = findViewById(R.id.photo_timer_imgview);
@@ -1174,7 +1124,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     lyt_open_menu_settings.setVisibility(View.VISIBLE);
                     lyt_open_menu_chat.setVisibility(View.VISIBLE);
                     isSpeaking =false;
-                    if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
+                   // if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
                 });
                 if(handler!=null && runnable!=null){
                     handler.removeCallbacks(runnable);
@@ -2330,208 +2280,208 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         });
     }
 
-
-    /**
-     * ----------------------------------------- Tracking ---------------------------------------
-     */
-
-    private IInvitationCallback iInvitationCallback;
-    public interface IInvitationCallback {
-        void onEnd(String s);
-    }
-
-    private enum StateTrackingListening {
-        NONE,
-        PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT,
-        PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT,
-        PERSON_IS_NOT_VISIBLE_TIMEOUT
-    }
-    private StateTrackingListening currentTrackingListeningState = StateTrackingListening.NONE;
-
-    private enum StateTrackingWelcome {
-        NONE,
-        PERSON_IS_NOT_VISIBLE_TIMEOUT,
-        PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT
-    }
-    private StateTrackingWelcome currentTrackingWelcomeState = StateTrackingWelcome.NONE;
-
-    private final Handler handlerCheckPersonDetection = new Handler();
-    private final Runnable runnableCheckPersonDetection = new Runnable() {
-        public void run() {
-
-            long currentTime = System.currentTimeMillis();
-
-            if(isPersonDetected){
-                if(!personIsVisible){
-                    firstVisibleTime = currentTime;  // Update the time when person started being visible
-                }
-                personIsVisible =true;
-                lastVisibleTime = currentTime;  // Update the time when person was last seen
-                lastVisibleTime_saved = currentTime;  // Update the time when person was last seen
-                if (regarde_camera) {
-                    lastLookingAtCameraTime = currentTime;  // Update the time when the person last looked at the camera
-
-                    // If starting to look at the camera, set the start time
-                    if (startLookingAtCameraTime == 0L) {
-                        startLookingAtCameraTime = currentTime;
-                        totalTimeLookingAtCamera = 0L; // Reset total time when starting to look at the camera
-                    }
-                    else {
-                        // Calculate the interval time looking at the camera
-                        totalTimeLookingAtCamera += currentTime - startLookingAtCameraTime;
-                        // Update the start time for the next interval calculation
-                        startLookingAtCameraTime = currentTime;
-                    }
-                }
-                else {
-                    // Reset the start time if not looking at the camera
-                    startLookingAtCameraTime = 0L;
-                    totalTimeLookingAtCamera = 0L;
-                }
-            }
-            else{
-                if(personIsVisible){
-                    visibleDuration = currentTime - firstVisibleTime;
-                    Log.e(TAG_TRACKING, "Person was detected for " + visibleDuration + " milliseconds");
-                }
-                personIsVisible =false;
-                totalTimeLookingAtCamera = 0L;
-                startLookingAtCameraTime = 0L;
-            }
-
-
-            //#region arrêt et lancement d'écoute
-            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen")) && !isSpeaking){
-                /**
-                 *  Lorsque personne ne regarde la camera pendant (TRACKING_DELAY_STOP_LISTEN secondes) il arrête d’écouter y compris les hotwords.
-                 *  Si une personne regarde la caméra pendant (TRACKING_DELAY_START_LISTEN secondes), il se met à l’écoute sans attendre un hotword.
-                 */
-                if (isPersonDetected) {
-                    if (regarde_camera) {
-                        Log.w(TAG_TRACKING_DEBUG, "A person is visible again and is looking directly at the CAMERA");
-                        if (totalTimeLookingAtCamera  >= TRACKING_DELAY_START_LISTEN * 1000L) {
-                            if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT) {
-                                currentTrackingListeningState = StateTrackingListening.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT;
-                                Log.w(TAG_TRACKING, "A person has been looking directly at the camera for TRACKING_DELAY_START_LISTEN="+TRACKING_DELAY_START_LISTEN+" seconds (or more) --> start listening");
-                                if (!isFirstInvitaion && Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
-                                    startListeningQuestion();
-                                }
-                                else if (!Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
-                                    startListeningQuestion();
-                                }
-                                Log.w(TAG_TRACKING, "isFirstInvitaion= "+isFirstInvitaion);
-                            }
-                        }
-                    }
-                    else {
-                        Log.w(TAG_TRACKING_DEBUG, "A person is visible again BUT is not looking at the CAMERA");
-                        if (currentTime - lastLookingAtCameraTime >= TRACKING_DELAY_STOP_LISTEN * 1000L) {
-                            if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT) {
-                                currentTrackingListeningState = StateTrackingListening.PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT;
-                                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_DELAY_STOP_LISTEN="+TRACKING_DELAY_STOP_LISTEN+" seconds (or more) --> stop listening");
-                                stopListeningEverything();
-                            }
-                        }
-                    }
-                }
-                else if (currentTime - lastVisibleTime >= TRACKING_DELAY_STOP_LISTEN * 1000L) {
-                    Log.w(TAG_TRACKING_DEBUG, "No person is visible");
-                    if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_NOT_VISIBLE_TIMEOUT) {
-                        currentTrackingListeningState = StateTrackingListening.PERSON_IS_NOT_VISIBLE_TIMEOUT;
-                        Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_STOP_LISTEN="+TRACKING_DELAY_STOP_LISTEN+" seconds (or more) --> stop listening");
-                        stopListeningEverything();
-                    }
-                }
-            }
-            //#endregion arrêt et lancement d'écoute
-
-
-            //#region Invitation
-            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
-                /**
-                 * S’il n’a pas vu de personnes depuis (TRACKING_DELAY_WELCOME minutes)
-                 * et qu’il détecte qu'une personne le regarde pendant (TRACKING_DURATION_WELCOME secondes),
-                 * alors il prononce une invitation
-                 */
-                if (!isPersonDetected && currentTime - lastVisibleTime_saved >= TRACKING_DELAY_WELCOME * 60L * 1000L) {
-                    if (currentTrackingWelcomeState != StateTrackingWelcome.PERSON_IS_NOT_VISIBLE_TIMEOUT) {
-                        currentTrackingWelcomeState = StateTrackingWelcome.PERSON_IS_NOT_VISIBLE_TIMEOUT;
-                        Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_WELCOME="+TRACKING_DELAY_WELCOME+" minutes (or more)");
-                        sendInvitationPending = true;
-                    }
-                }
-                if (sendInvitationPending && isPersonDetected && regarde_camera) {
-                    if (totalTimeLookingAtCamera >= TRACKING_DURATION_WELCOME * 1000L) {
-                        if (currentTrackingWelcomeState != StateTrackingWelcome.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT) {
-                            currentTrackingWelcomeState = StateTrackingWelcome.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT;
-                            Log.w(TAG_TRACKING, "A person has been looking directly at the camera for TRACKING_DURATION_WELCOME="+TRACKING_DURATION_WELCOME+" seconds (or more) --> Invitation");
-                            sendInvitationPending = false;
-                            if(!buddyGPTApplication.isAlreadyChatting()){
-                                stopListeningFreeSpeech();
-                                buddyGPTApplication.setStartRecording(false);
-                                buddyGPTApplication.setSpeaking(false);
-                                try {
-                                    BuddySDK.UI.stopListenAnimation();
-                                } catch (Exception e) {
-                                    Log.e(TAG, "BuddySDK Exception  " + e);
-                                }
-//                                invitation(null);
-                                if (isFirstLaunch && isFirstInvitaion) {
-                                    isFirstInvitaion = false;
-                                }
-                                    invitation(new IInvitationCallback() {
-                                        @Override
-                                        public void onEnd(String s) {
-                                            Log.e(TAG_TRACKING, "Invitation onEnd Callback : "+s);
-                                            iInvitationCallback = null;
-                                            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen"))){
-                                                startListeningQuestion();
-                                            }
-                                            else{
-                                                buddyGPTApplication.setAlreadyChatting(false);
-                                                buddyGPTApplication.startListeningHotwor(MainActivity.this);
-                                            }
-
-                                        }
-                                    });
-
-                            }
-                            else{
-                                Log.w(TAG_TRACKING, "Do not say invitation because the person is already chatting");
-                            }
-                        }
-                    }
-                }
-            }
-            //#endregion Invitation
-
-
-            //#region re-tracking, re-centering gaze and head
-            if (isPersonDetected && !regarde_camera && currentTime - lastLookingAtCameraTime >= TRACKING_DELAY_NO_WATCH * 1000L) {
-                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_DELAY_NO_WATCH=" + TRACKING_DELAY_NO_WATCH + " seconds --> re-tracking + re-centering the gaze and head");
-                re_track_and_center_head_and_gaze();
-            }
-            else if (!isPersonDetected && currentTime - lastVisibleTime >= TRACKING_DELAY_NO_TRACK * 1000L) {
-                Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_NO_TRACK=" + TRACKING_DELAY_NO_TRACK + " seconds --> re-tracking + re-centering the gaze and head");
-                re_track_and_center_head_and_gaze();
-            }
-
-            if (isPersonDetected && !regarde_camera && currentTime - lastLookingAtCameraTime >= TRACKING_REGARD_CENTER * 1000L) {
-                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_REGARD_CENTER=" + TRACKING_REGARD_CENTER + " seconds --> refocus the pupils");
-                poseTracking.lookAtCenter();
-            }
-            //#endregion re-tracking, re-centering gaze and head
-
-            //#region Timer to exit the application
-            if ( TRACKING_TIMEOUT!=0 && !isPersonDetected && currentTime - lastVisibleTime_saved >= TRACKING_TIMEOUT * 1000L){
-                finishAffinity();
-                System.exit(0);
-            }
-
-            //#endregion Timer to exit the application
-
-        }
-    };
+//
+//    /**
+//     * ----------------------------------------- Tracking ---------------------------------------
+//     */
+//
+//    private IInvitationCallback iInvitationCallback;
+//    public interface IInvitationCallback {
+//        void onEnd(String s);
+//    }
+//
+//    private enum StateTrackingListening {
+//        NONE,
+//        PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT,
+//        PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT,
+//        PERSON_IS_NOT_VISIBLE_TIMEOUT
+//    }
+//    private StateTrackingListening currentTrackingListeningState = StateTrackingListening.NONE;
+//
+//    private enum StateTrackingWelcome {
+//        NONE,
+//        PERSON_IS_NOT_VISIBLE_TIMEOUT,
+//        PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT
+//    }
+//    private StateTrackingWelcome currentTrackingWelcomeState = StateTrackingWelcome.NONE;
+//
+//    private final Handler handlerCheckPersonDetection = new Handler();
+//    private final Runnable runnableCheckPersonDetection = new Runnable() {
+//        public void run() {
+//
+//            long currentTime = System.currentTimeMillis();
+//
+//            if(isPersonDetected){
+//                if(!personIsVisible){
+//                    firstVisibleTime = currentTime;  // Update the time when person started being visible
+//                }
+//                personIsVisible =true;
+//                lastVisibleTime = currentTime;  // Update the time when person was last seen
+//                lastVisibleTime_saved = currentTime;  // Update the time when person was last seen
+//                if (regarde_camera) {
+//                    lastLookingAtCameraTime = currentTime;  // Update the time when the person last looked at the camera
+//
+//                    // If starting to look at the camera, set the start time
+//                    if (startLookingAtCameraTime == 0L) {
+//                        startLookingAtCameraTime = currentTime;
+//                        totalTimeLookingAtCamera = 0L; // Reset total time when starting to look at the camera
+//                    }
+//                    else {
+//                        // Calculate the interval time looking at the camera
+//                        totalTimeLookingAtCamera += currentTime - startLookingAtCameraTime;
+//                        // Update the start time for the next interval calculation
+//                        startLookingAtCameraTime = currentTime;
+//                    }
+//                }
+//                else {
+//                    // Reset the start time if not looking at the camera
+//                    startLookingAtCameraTime = 0L;
+//                    totalTimeLookingAtCamera = 0L;
+//                }
+//            }
+//            else{
+//                if(personIsVisible){
+//                    visibleDuration = currentTime - firstVisibleTime;
+//                    Log.e(TAG_TRACKING, "Person was detected for " + visibleDuration + " milliseconds");
+//                }
+//                personIsVisible =false;
+//                totalTimeLookingAtCamera = 0L;
+//                startLookingAtCameraTime = 0L;
+//            }
+//
+//
+//            //#region arrêt et lancement d'écoute
+//            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen")) && !isSpeaking){
+//                /**
+//                 *  Lorsque personne ne regarde la camera pendant (TRACKING_DELAY_STOP_LISTEN secondes) il arrête d’écouter y compris les hotwords.
+//                 *  Si une personne regarde la caméra pendant (TRACKING_DELAY_START_LISTEN secondes), il se met à l’écoute sans attendre un hotword.
+//                 */
+//                if (isPersonDetected) {
+//                    if (regarde_camera) {
+//                        Log.w(TAG_TRACKING_DEBUG, "A person is visible again and is looking directly at the CAMERA");
+//                        if (totalTimeLookingAtCamera  >= TRACKING_DELAY_START_LISTEN * 1000L) {
+//                            if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT) {
+//                                currentTrackingListeningState = StateTrackingListening.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT;
+//                                Log.w(TAG_TRACKING, "A person has been looking directly at the camera for TRACKING_DELAY_START_LISTEN="+TRACKING_DELAY_START_LISTEN+" seconds (or more) --> start listening");
+//                                if (!isFirstInvitaion && Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
+//                                    startListeningQuestion();
+//                                }
+//                                else if (!Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
+//                                    startListeningQuestion();
+//                                }
+//                                Log.w(TAG_TRACKING, "isFirstInvitaion= "+isFirstInvitaion);
+//                            }
+//                        }
+//                    }
+//                    else {
+//                        Log.w(TAG_TRACKING_DEBUG, "A person is visible again BUT is not looking at the CAMERA");
+//                        if (currentTime - lastLookingAtCameraTime >= TRACKING_DELAY_STOP_LISTEN * 1000L) {
+//                            if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT) {
+//                                currentTrackingListeningState = StateTrackingListening.PERSON_IS_VISIBLE_BUT_IS_NOT_LOOKING_AT_CAMERA_TIMEOUT;
+//                                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_DELAY_STOP_LISTEN="+TRACKING_DELAY_STOP_LISTEN+" seconds (or more) --> stop listening");
+//                                stopListeningEverything();
+//                            }
+//                        }
+//                    }
+//                }
+//                else if (currentTime - lastVisibleTime >= TRACKING_DELAY_STOP_LISTEN * 1000L) {
+//                    Log.w(TAG_TRACKING_DEBUG, "No person is visible");
+//                    if (currentTrackingListeningState != StateTrackingListening.PERSON_IS_NOT_VISIBLE_TIMEOUT) {
+//                        currentTrackingListeningState = StateTrackingListening.PERSON_IS_NOT_VISIBLE_TIMEOUT;
+//                        Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_STOP_LISTEN="+TRACKING_DELAY_STOP_LISTEN+" seconds (or more) --> stop listening");
+//                        stopListeningEverything();
+//                    }
+//                }
+//            }
+//            //#endregion arrêt et lancement d'écoute
+//
+//
+//            //#region Invitation
+//            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Invitation"))){
+//                /**
+//                 * S’il n’a pas vu de personnes depuis (TRACKING_DELAY_WELCOME minutes)
+//                 * et qu’il détecte qu'une personne le regarde pendant (TRACKING_DURATION_WELCOME secondes),
+//                 * alors il prononce une invitation
+//                 */
+//                if (!isPersonDetected && currentTime - lastVisibleTime_saved >= TRACKING_DELAY_WELCOME * 60L * 1000L) {
+//                    if (currentTrackingWelcomeState != StateTrackingWelcome.PERSON_IS_NOT_VISIBLE_TIMEOUT) {
+//                        currentTrackingWelcomeState = StateTrackingWelcome.PERSON_IS_NOT_VISIBLE_TIMEOUT;
+//                        Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_WELCOME="+TRACKING_DELAY_WELCOME+" minutes (or more)");
+//                        sendInvitationPending = true;
+//                    }
+//                }
+//                if (sendInvitationPending && isPersonDetected && regarde_camera) {
+//                    if (totalTimeLookingAtCamera >= TRACKING_DURATION_WELCOME * 1000L) {
+//                        if (currentTrackingWelcomeState != StateTrackingWelcome.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT) {
+//                            currentTrackingWelcomeState = StateTrackingWelcome.PERSON_IS_VISIBLE_AND_IS_LOOKING_AT_CAMERA_TIMEOUT;
+//                            Log.w(TAG_TRACKING, "A person has been looking directly at the camera for TRACKING_DURATION_WELCOME="+TRACKING_DURATION_WELCOME+" seconds (or more) --> Invitation");
+//                            sendInvitationPending = false;
+//                            if(!buddyGPTApplication.isAlreadyChatting()){
+//                                stopListeningFreeSpeech();
+//                                buddyGPTApplication.setStartRecording(false);
+//                                buddyGPTApplication.setSpeaking(false);
+//                                try {
+//                                    BuddySDK.UI.stopListenAnimation();
+//                                } catch (Exception e) {
+//                                    Log.e(TAG, "BuddySDK Exception  " + e);
+//                                }
+////                                invitation(null);
+//                                if (isFirstLaunch && isFirstInvitaion) {
+//                                    isFirstInvitaion = false;
+//                                }
+//                                    invitation(new IInvitationCallback() {
+//                                        @Override
+//                                        public void onEnd(String s) {
+//                                            Log.e(TAG_TRACKING, "Invitation onEnd Callback : "+s);
+//                                            iInvitationCallback = null;
+//                                            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen"))){
+//                                                startListeningQuestion();
+//                                            }
+//                                            else{
+//                                                buddyGPTApplication.setAlreadyChatting(false);
+//                                                buddyGPTApplication.startListeningHotwor(MainActivity.this);
+//                                            }
+//
+//                                        }
+//                                    });
+//
+//                            }
+//                            else{
+//                                Log.w(TAG_TRACKING, "Do not say invitation because the person is already chatting");
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//            //#endregion Invitation
+//
+//
+//            //#region re-tracking, re-centering gaze and head
+//            if (isPersonDetected && !regarde_camera && currentTime - lastLookingAtCameraTime >= TRACKING_DELAY_NO_WATCH * 1000L) {
+//                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_DELAY_NO_WATCH=" + TRACKING_DELAY_NO_WATCH + " seconds --> re-tracking + re-centering the gaze and head");
+//                re_track_and_center_head_and_gaze();
+//            }
+//            else if (!isPersonDetected && currentTime - lastVisibleTime >= TRACKING_DELAY_NO_TRACK * 1000L) {
+//                Log.w(TAG_TRACKING, "No person has been visible for TRACKING_DELAY_NO_TRACK=" + TRACKING_DELAY_NO_TRACK + " seconds --> re-tracking + re-centering the gaze and head");
+//                re_track_and_center_head_and_gaze();
+//            }
+//
+//            if (isPersonDetected && !regarde_camera && currentTime - lastLookingAtCameraTime >= TRACKING_REGARD_CENTER * 1000L) {
+//                Log.w(TAG_TRACKING, "No person has been looking directly at the camera for TRACKING_REGARD_CENTER=" + TRACKING_REGARD_CENTER + " seconds --> refocus the pupils");
+//                poseTracking.lookAtCenter();
+//            }
+//            //#endregion re-tracking, re-centering gaze and head
+//
+//            //#region Timer to exit the application
+//            if ( TRACKING_TIMEOUT!=0 && !isPersonDetected && currentTime - lastVisibleTime_saved >= TRACKING_TIMEOUT * 1000L){
+//                finishAffinity();
+//                System.exit(0);
+//            }
+//
+//            //#endregion Timer to exit the application
+//
+//        }
+//    };
 
 //    private void initTracking(){
 //        Log.d(TAG_TRACKING, "initTracking(isReTrack="+isReTrack+")");
@@ -2606,172 +2556,172 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         setUpCamera();
     }
 
-    private void setUpCamera() {
-        Log.i(TAG_TRACKING,"setUpCamera(isReTrack="+isReTrack+")");
-        isTrackingAlreadyInitialised = false;
-        previewView.post(() -> {
-            try {
-                cameraProvider = ProcessCameraProvider.getInstance(this).get();
-                preview = new Preview.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                        .build();
-                imageAnalyzer = new ImageAnalysis.Builder()
-                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
-                        .build();
-                imageAnalyzer.setAnalyzer(backgroundExecutor, this::detectPose);
-                cameraProvider.unbindAll();
-                preview.setSurfaceProvider(previewView.getSurfaceProvider());
-                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer);
-                Log.i(TAG, "Camera bound successfully");
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // Re-interrupt the thread
-                Log.e(TAG, "Camera binding interrupted", e);
-            } catch (Exception e) {
-                Log.e(TAG, "Camera binding failed", e);
-            }
-        });
-        backgroundExecutor.execute(() -> {
-            Context context = this;
-            poseLandmarkerHelper = new PoseLandmarkerHelper(
-                    context,
-                    RunningMode.LIVE_STREAM,
-                    PoseLandmarkerHelper.DEFAULT_POSE_DETECTION_CONFIDENCE,
-                    PoseLandmarkerHelper.DEFAULT_POSE_TRACKING_CONFIDENCE,
-                    PoseLandmarkerHelper.DEFAULT_POSE_PRESENCE_CONFIDENCE,
-                    PoseLandmarkerHelper.DELEGATE_CPU,
-                    PoseLandmarkerHelper.MODEL_POSE_LANDMARKER_FULL,
-                    new PoseLandmarkerHelper.LandmarkerListener() {
-                        @Override
-                        public void onError(String error, int errorCode) {}
-                        @Override
-                        public void onResults(PoseLandmarkerHelper.ResultBundle resultBundle) {
-
-                            if(!isTrackingAlreadyInitialised){
-                                isTrackingAlreadyInitialised = true;
-                                //initialisations
-                                lastVisibleTime = System.currentTimeMillis();
-                                if(!isReTrack) lastVisibleTime_saved = System.currentTimeMillis(); //do not reset it when re-track (useful for invitation check)
-                                firstVisibleTime = System.currentTimeMillis();
-                                lastLookingAtCameraTime = System.currentTimeMillis();
-                                visibleDuration = 0;
-                                isPersonDetected = false;
-                                personIsVisible = false;
-                                isProcessingReTrack = false;
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Camera_Display"))) {
-                                            reGroup.setTranslationY(0);
-
-                                        } else {
-                                            reGroup.setTranslationY(1000);
-                                        }
-                                    }
-                                });
-                            }
-
-                            if(!isProcessingReTrack){
-
-                                if(dLeft < initLang){
-                                    regarde_camera =  direction && deFace && directionRegardNez.equals("CAMERA");
-                                }
-                                else {
-                                    regarde_camera =   deFace && directionRegardNez.equals("CAMERA");
-                                }
-
-                                PoseLandmarkerResult poseLandmarkerResult = resultBundle.results.get(0);
-                                isPersonDetected = PoseLandmarkerHelper.extractLandmarks(poseLandmarkerResult);
-
-                                //Log.i(TAG_TRACKING_DEBUG, "regarde_camera : "+regarde_camera);
-                                //Log.i(TAG_TRACKING_DEBUG, "direction : "+direction);
-                                //Log.i(TAG_TRACKING_DEBUG, "deFace : "+deFace);
-                                //Log.i(TAG_TRACKING_DEBUG, "directionRegardNez : "+directionRegardNez);
-                                //Log.i(TAG_TRACKING_DEBUG, "isPersonDetected : "+ isPersonDetected);
-
-                                res = poseTracking.suivi(poseLandmarkerResult);
-                                eog = res[0];
-                                Eod = res[1];
-                                degx = res[2];
-                                degy = res[3];
-                                x0 = res[4];
-                                x2 = res[5];
-                                x5 = res[6];
-                                y0 = res[7];
-                                y2 = res[8];
-                                y5 = res[9];
-                                lang = res[12];
-                                dLeft = res[10];
-                                dRight = res[11];
-
-                                if (isPersonDetected != wasPersonDetected) {
-                                    if (!isPersonDetected) {
-                                        poseTracking.stopMovingAndCancelRunnables();
-                                    }
-                                    // Update the previous state
-                                    wasPersonDetected = isPersonDetected;
-                                }
-
-                                if(isPersonDetected){
-                                    poseTracking.look_at(degx, degy);
-
-                                    if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")) || Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Head"))) {
-                                        if (TRACKING_WATCH.trim().equalsIgnoreCase("Yes")) {
-                                            if (regarde_camera) {
-                                                poseTracking.Rotation(degx, Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")));
-                                            }
-                                        }
-                                        else {
-                                            poseTracking.Rotation(degx, Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")));
-                                        }
-                                    }
-
-                                    if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Head"))) {
-                                        if (TRACKING_WATCH.trim().equalsIgnoreCase("Yes")) {
-                                            if (regarde_camera) {
-                                                poseTracking.yesTracking(degy);
-                                            }
-                                        } else {
-                                            poseTracking.yesTracking(degy);
-                                        }
-                                    }
-                                }
-
-                                directionRegardNez = poseTracking.directionVisage(x2, y2, x5, y5, x0, y0, lang);
-
-                                deFace = (x2 - x5) > 0;
-                                if (eog > Eod * 2) {
-                                    direction = false;
-                                }
-                                else {
-                                    direction = !(eog * 1.5 < Eod);
-                                }
-
-                                runOnUiThread(() -> {
-                                    if (overlay != null) {
-                                        overlay.setResults(resultBundle.results.get(0), resultBundle.inputImageHeight, resultBundle.inputImageWidth, RunningMode.LIVE_STREAM);
-                                        overlay.setNbrLandmarks(poseTracking.getLandmarksCamera(poseLandmarkerResult));
-                                    }
-                                });
-
-                                handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
-                                handlerCheckPersonDetection.removeCallbacksAndMessages(null);
-                                handlerCheckPersonDetection.post(runnableCheckPersonDetection);
-                            }
-                            else{
-                                runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        reGroup.setTranslationY(0);
-                                    }
-                                });
-                            }
-                        }
-                    }
-            );
-        });
-    }
+//    private void setUpCamera() {
+//        Log.i(TAG_TRACKING,"setUpCamera(isReTrack="+isReTrack+")");
+//        isTrackingAlreadyInitialised = false;
+//        previewView.post(() -> {
+//            try {
+//                cameraProvider = ProcessCameraProvider.getInstance(this).get();
+//                preview = new Preview.Builder()
+//                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+//                        .build();
+//                imageAnalyzer = new ImageAnalysis.Builder()
+//                        .setTargetAspectRatio(AspectRatio.RATIO_4_3)
+//                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+//                        .setOutputImageFormat(ImageAnalysis.OUTPUT_IMAGE_FORMAT_RGBA_8888)
+//                        .build();
+//                imageAnalyzer.setAnalyzer(backgroundExecutor, this::detectPose);
+//                cameraProvider.unbindAll();
+//                preview.setSurfaceProvider(previewView.getSurfaceProvider());
+//                camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalyzer);
+//                Log.i(TAG, "Camera bound successfully");
+//            } catch (InterruptedException e) {
+//                Thread.currentThread().interrupt(); // Re-interrupt the thread
+//                Log.e(TAG, "Camera binding interrupted", e);
+//            } catch (Exception e) {
+//                Log.e(TAG, "Camera binding failed", e);
+//            }
+//        });
+//        backgroundExecutor.execute(() -> {
+//            Context context = this;
+//            poseLandmarkerHelper = new PoseLandmarkerHelper(
+//                    context,
+//                    RunningMode.LIVE_STREAM,
+//                    PoseLandmarkerHelper.DEFAULT_POSE_DETECTION_CONFIDENCE,
+//                    PoseLandmarkerHelper.DEFAULT_POSE_TRACKING_CONFIDENCE,
+//                    PoseLandmarkerHelper.DEFAULT_POSE_PRESENCE_CONFIDENCE,
+//                    PoseLandmarkerHelper.DELEGATE_CPU,
+//                    PoseLandmarkerHelper.MODEL_POSE_LANDMARKER_FULL,
+//                    new PoseLandmarkerHelper.LandmarkerListener() {
+//                        @Override
+//                        public void onError(String error, int errorCode) {}
+//                        @Override
+//                        public void onResults(PoseLandmarkerHelper.ResultBundle resultBundle) {
+//
+//                            if(!isTrackingAlreadyInitialised){
+//                                isTrackingAlreadyInitialised = true;
+//                                //initialisations
+//                                lastVisibleTime = System.currentTimeMillis();
+//                                if(!isReTrack) lastVisibleTime_saved = System.currentTimeMillis(); //do not reset it when re-track (useful for invitation check)
+//                                firstVisibleTime = System.currentTimeMillis();
+//                                lastLookingAtCameraTime = System.currentTimeMillis();
+//                                visibleDuration = 0;
+//                                isPersonDetected = false;
+//                                personIsVisible = false;
+//                                isProcessingReTrack = false;
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Camera_Display"))) {
+//                                            reGroup.setTranslationY(0);
+//
+//                                        } else {
+//                                            reGroup.setTranslationY(1000);
+//                                        }
+//                                    }
+//                                });
+//                            }
+//
+//                            if(!isProcessingReTrack){
+//
+//                                if(dLeft < initLang){
+//                                    regarde_camera =  direction && deFace && directionRegardNez.equals("CAMERA");
+//                                }
+//                                else {
+//                                    regarde_camera =   deFace && directionRegardNez.equals("CAMERA");
+//                                }
+//
+//                                PoseLandmarkerResult poseLandmarkerResult = resultBundle.results.get(0);
+//                                isPersonDetected = PoseLandmarkerHelper.extractLandmarks(poseLandmarkerResult);
+//
+//                                //Log.i(TAG_TRACKING_DEBUG, "regarde_camera : "+regarde_camera);
+//                                //Log.i(TAG_TRACKING_DEBUG, "direction : "+direction);
+//                                //Log.i(TAG_TRACKING_DEBUG, "deFace : "+deFace);
+//                                //Log.i(TAG_TRACKING_DEBUG, "directionRegardNez : "+directionRegardNez);
+//                                //Log.i(TAG_TRACKING_DEBUG, "isPersonDetected : "+ isPersonDetected);
+//
+//                                res = poseTracking.suivi(poseLandmarkerResult);
+//                                eog = res[0];
+//                                Eod = res[1];
+//                                degx = res[2];
+//                                degy = res[3];
+//                                x0 = res[4];
+//                                x2 = res[5];
+//                                x5 = res[6];
+//                                y0 = res[7];
+//                                y2 = res[8];
+//                                y5 = res[9];
+//                                lang = res[12];
+//                                dLeft = res[10];
+//                                dRight = res[11];
+//
+//                                if (isPersonDetected != wasPersonDetected) {
+//                                    if (!isPersonDetected) {
+//                                        poseTracking.stopMovingAndCancelRunnables();
+//                                    }
+//                                    // Update the previous state
+//                                    wasPersonDetected = isPersonDetected;
+//                                }
+//
+//                                if(isPersonDetected){
+//                                    poseTracking.look_at(degx, degy);
+//
+//                                    if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")) || Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Head"))) {
+//                                        if (TRACKING_WATCH.trim().equalsIgnoreCase("Yes")) {
+//                                            if (regarde_camera) {
+//                                                poseTracking.Rotation(degx, Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")));
+//                                            }
+//                                        }
+//                                        else {
+//                                            poseTracking.Rotation(degx, Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Body")));
+//                                        }
+//                                    }
+//
+//                                    if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Head"))) {
+//                                        if (TRACKING_WATCH.trim().equalsIgnoreCase("Yes")) {
+//                                            if (regarde_camera) {
+//                                                poseTracking.yesTracking(degy);
+//                                            }
+//                                        } else {
+//                                            poseTracking.yesTracking(degy);
+//                                        }
+//                                    }
+//                                }
+//
+//                                directionRegardNez = poseTracking.directionVisage(x2, y2, x5, y5, x0, y0, lang);
+//
+//                                deFace = (x2 - x5) > 0;
+//                                if (eog > Eod * 2) {
+//                                    direction = false;
+//                                }
+//                                else {
+//                                    direction = !(eog * 1.5 < Eod);
+//                                }
+//
+//                                runOnUiThread(() -> {
+//                                    if (overlay != null) {
+//                                        overlay.setResults(resultBundle.results.get(0), resultBundle.inputImageHeight, resultBundle.inputImageWidth, RunningMode.LIVE_STREAM);
+//                                        overlay.setNbrLandmarks(poseTracking.getLandmarksCamera(poseLandmarkerResult));
+//                                    }
+//                                });
+//
+//                                handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
+//                                handlerCheckPersonDetection.removeCallbacksAndMessages(null);
+//                                handlerCheckPersonDetection.post(runnableCheckPersonDetection);
+//                            }
+//                            else{
+//                                runOnUiThread(new Runnable() {
+//                                    @Override
+//                                    public void run() {
+//                                        reGroup.setTranslationY(0);
+//                                    }
+//                                });
+//                            }
+//                        }
+//                    }
+//            );
+//        });
+//    }
     private void detectPose(ImageProxy imageProxy) {
         poseLandmarkerHelper.detectLiveStream(imageProxy);
     }
@@ -2782,7 +2732,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                stopTracking();
+               // stopTracking();
                 poseTracking.lookAtCenter();
                 poseTracking.centerHead();
                 isReTrack = true;
@@ -2791,13 +2741,13 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         });
     }
 
-    private void stopTracking(){
-        reGroup.setTranslationY(1000);
-        cameraProvider.unbindAll();
-        handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
-        handlerCheckPersonDetection.removeCallbacksAndMessages(null);
-        poseTracking.stopMovingAndCancelRunnables();
-    }
+//    private void stopTracking(){
+//        reGroup.setTranslationY(1000);
+//        cameraProvider.unbindAll();
+//        handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
+//        handlerCheckPersonDetection.removeCallbacksAndMessages(null);
+//        poseTracking.stopMovingAndCancelRunnables();
+//    }
 
     private void startListeningQuestion(){
         Log.d(TAG_TRACKING, "startListeningQuestion()");
@@ -2806,7 +2756,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             public void run() {
                 try {
                     isSpeaking =false;
-                    if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
+                  //  if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
                     if(handler!=null && runnable!=null){
                         handler.removeCallbacks(runnable);
                         handler.removeCallbacksAndMessages(null);
@@ -2837,144 +2787,144 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         });
     }
 
-    private void stopListeningEverything(){
-        Log.d(TAG_TRACKING, "stopListeningEverything()");
-        runOnUiThread( new Runnable() {
-            @Override
-            public void run() {
-                try{
-                    isSpeaking =false;
-                    if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
-                    if(handler!=null && runnable!=null){
-                        handler.removeCallbacks(runnable);
-                        handler.removeCallbacksAndMessages(null);
-                    }
-                    if (responseTimeout!=null) responseTimeout.cancel();
-                    if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
-                        buddyGPTApplication.getResponseFromTeamGPT().reset();
-                    if(handlerTTSError!=null && runnableTTSError!=null){
-                        handlerTTSError.removeCallbacks(runnableTTSError);
-                        handlerTTSError.removeCallbacksAndMessages(null);
-                    }
-                    if (buddyGPTApplication.getSpeaking() && !mlKitIsDownloading) {
-                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
-                                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
-                                || !buddyGPTApplication.getAppIsListeningToTheQuestion()) {
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                            buddyGPTApplication.setStartRecording(false);
-                            buddyGPTApplication.setSpeaking(false);
-                            buddyGPTApplication.setActivityClosed(true);
-                            isListeningFreeSpeech = false;
-                            buddyGPTApplication.stopTTS();
-                            buddyGPTApplication.setStoredResponse("");
-                            if (buddy_texte_qst_lyt != null && buddy_texte_resp_lyt != null && buddy_texte_qst != null && buddy_texte_resp != null) {
-                                buddy_texte_qst_lyt.setVisibility(View.INVISIBLE);
-                                buddy_texte_resp_lyt.setVisibility(View.INVISIBLE);
-                                buddy_texte_qst.setMovementMethod(null);
-                                buddy_texte_resp.setMovementMethod(null);
-                            }
-                            lyt_open_menu_settings.setVisibility(View.VISIBLE);
-                            lyt_open_menu_chat.setVisibility(View.VISIBLE);
-                            try {
-                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                            } catch (Exception e) {
-                                Log.e(TAG, "BuddySDK Exception  " + e);
-                            }
-                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-                            stopListeningFreeSpeech();
-                            try {
-                                BuddySDK.UI.stopListenAnimation();
-                            } catch (Exception e) {
-                                Log.e(TAG, "BuddySDK Exception  " + e);
-                            }
-                        }
-                        else{
-                            buddyGPTApplication.setLed("Neutral");
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                            try {
-                                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                                BuddySDK.UI.stopListenAnimation();
-                            } catch (Exception e) {
-                                Log.e(TAG, "BuddySDK Exception  " + e);
-                            }
-                            BuddySDK.UI.stopListenAnimation();
-                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-                            buddyGPTApplication.traitementAudio(false);
-                        }
-                    }
-                }
-                catch (Exception e){
-                    Log.e(TAG,"Exception  "+e);
-                    e.printStackTrace();
-                }
-            }
-        } );
-    }
+//    private void stopListeningEverything(){
+//        Log.d(TAG_TRACKING, "stopListeningEverything()");
+//        runOnUiThread( new Runnable() {
+//            @Override
+//            public void run() {
+//                try{
+//                    isSpeaking =false;
+//                    if(iInvitationCallback != null) iInvitationCallback.onEnd("INVITATION_END");
+//                    if(handler!=null && runnable!=null){
+//                        handler.removeCallbacks(runnable);
+//                        handler.removeCallbacksAndMessages(null);
+//                    }
+//                    if (responseTimeout!=null) responseTimeout.cancel();
+//                    if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
+//                        buddyGPTApplication.getResponseFromTeamGPT().reset();
+//                    if(handlerTTSError!=null && runnableTTSError!=null){
+//                        handlerTTSError.removeCallbacks(runnableTTSError);
+//                        handlerTTSError.removeCallbacksAndMessages(null);
+//                    }
+//                    if (buddyGPTApplication.getSpeaking() && !mlKitIsDownloading) {
+//                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
+//                                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
+//                                || !buddyGPTApplication.getAppIsListeningToTheQuestion()) {
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                            buddyGPTApplication.setStartRecording(false);
+//                            buddyGPTApplication.setSpeaking(false);
+//                            buddyGPTApplication.setActivityClosed(true);
+//                            isListeningFreeSpeech = false;
+//                            buddyGPTApplication.stopTTS();
+//                            buddyGPTApplication.setStoredResponse("");
+//                            if (buddy_texte_qst_lyt != null && buddy_texte_resp_lyt != null && buddy_texte_qst != null && buddy_texte_resp != null) {
+//                                buddy_texte_qst_lyt.setVisibility(View.INVISIBLE);
+//                                buddy_texte_resp_lyt.setVisibility(View.INVISIBLE);
+//                                buddy_texte_qst.setMovementMethod(null);
+//                                buddy_texte_resp.setMovementMethod(null);
+//                            }
+//                            lyt_open_menu_settings.setVisibility(View.VISIBLE);
+//                            lyt_open_menu_chat.setVisibility(View.VISIBLE);
+//                            try {
+//                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+//                            } catch (Exception e) {
+//                                Log.e(TAG, "BuddySDK Exception  " + e);
+//                            }
+//                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+//                            stopListeningFreeSpeech();
+//                            try {
+//                                BuddySDK.UI.stopListenAnimation();
+//                            } catch (Exception e) {
+//                                Log.e(TAG, "BuddySDK Exception  " + e);
+//                            }
+//                        }
+//                        else{
+//                            buddyGPTApplication.setLed("Neutral");
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                            try {
+//                                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+//                                BuddySDK.UI.stopListenAnimation();
+//                            } catch (Exception e) {
+//                                Log.e(TAG, "BuddySDK Exception  " + e);
+//                            }
+//                            BuddySDK.UI.stopListenAnimation();
+//                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+//                            buddyGPTApplication.traitementAudio(false);
+//                        }
+//                    }
+//                }
+//                catch (Exception e){
+//                    Log.e(TAG,"Exception  "+e);
+//                    e.printStackTrace();
+//                }
+//            }
+//        } );
+//    }
 
-    private void invitation(IInvitationCallback iInvitationCallback){
-        Log.d(TAG_TRACKING, "invitation()");
-        this.iInvitationCallback = iInvitationCallback;
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-
-                    //Get invitation from config File
-                    if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
-                        if(TRACKING_WELCOME_EN != null && !TRACKING_WELCOME_EN.isEmpty()){
-                            String[] englishInvitations = TRACKING_WELCOME_EN.substring(1, TRACKING_WELCOME_EN.length() - 1).split("/");
-                            String randomInvitationEN = englishInvitations[random.nextInt(englishInvitations.length)];
-                            Log.d(TAG_TRACKING, "Random English Invitation: " + randomInvitationEN);
-                            buddyGPTApplication.setActivityClosed(false);
-                            speak(randomInvitationEN, "INVITATION");
-                        }
-                        else {
-                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain English Invitation");
-                        }
-                    }
-                    else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
-                        if(TRACKING_WELCOME_FR != null && !TRACKING_WELCOME_FR.isEmpty()){
-                            String[] frenchInvitations = TRACKING_WELCOME_FR.substring(1, TRACKING_WELCOME_FR.length() - 1).split("/");
-                            String randomInvitationFR = frenchInvitations[random.nextInt(frenchInvitations.length)];
-                            Log.d(TAG_TRACKING, "Random French Invitation: " + randomInvitationFR);
-                            buddyGPTApplication.setActivityClosed(false);
-                            speak(randomInvitationFR, "INVITATION");
-                        }
-                        else {
-                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain French Invitation");
-                        }
-                    }
-                    else {
-                        if(TRACKING_WELCOME_EN != null && !TRACKING_WELCOME_EN.isEmpty()){
-                            String[] englishInvitations = TRACKING_WELCOME_EN.substring(1, TRACKING_WELCOME_EN.length() - 1).split("/");
-                            String randomInvitationEN = englishInvitations[random.nextInt(englishInvitations.length)];
-                            buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(randomInvitationEN)
-                                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                                        @Override
-                                        public void onSuccess(String translatedText) {
-                                            Log.d(TAG_TRACKING, "Translated Invitation: " + translatedText);
-                                            buddyGPTApplication.setActivityClosed(false);
-                                            speak(translatedText, "INVITATION");
-                                        }
-                                    })
-                                    .addOnFailureListener(new OnFailureListener() {
-                                        @Override
-                                        public void onFailure(@NonNull Exception e) {
-                                            Log.d(TAG_TRACKING, "Translation failed, using English Invitation: " + randomInvitationEN);
-                                            buddyGPTApplication.setActivityClosed(false);
-                                            speak(randomInvitationEN, "INVITATION");
-                                        }
-                                    });
-                        }
-                        else {
-                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain English Invitation");
-                        }
-                    }
-
-            }
-        });
-    }
-
+//    private void invitation(IInvitationCallback iInvitationCallback){
+//        Log.d(TAG_TRACKING, "invitation()");
+//        this.iInvitationCallback = iInvitationCallback;
+//        runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                    //Get invitation from config File
+//                    if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
+//                        if(TRACKING_WELCOME_EN != null && !TRACKING_WELCOME_EN.isEmpty()){
+//                            String[] englishInvitations = TRACKING_WELCOME_EN.substring(1, TRACKING_WELCOME_EN.length() - 1).split("/");
+//                            String randomInvitationEN = englishInvitations[random.nextInt(englishInvitations.length)];
+//                            Log.d(TAG_TRACKING, "Random English Invitation: " + randomInvitationEN);
+//                            buddyGPTApplication.setActivityClosed(false);
+//                            speak(randomInvitationEN, "INVITATION");
+//                        }
+//                        else {
+//                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain English Invitation");
+//                        }
+//                    }
+//                    else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
+//                        if(TRACKING_WELCOME_FR != null && !TRACKING_WELCOME_FR.isEmpty()){
+//                            String[] frenchInvitations = TRACKING_WELCOME_FR.substring(1, TRACKING_WELCOME_FR.length() - 1).split("/");
+//                            String randomInvitationFR = frenchInvitations[random.nextInt(frenchInvitations.length)];
+//                            Log.d(TAG_TRACKING, "Random French Invitation: " + randomInvitationFR);
+//                            buddyGPTApplication.setActivityClosed(false);
+//                            speak(randomInvitationFR, "INVITATION");
+//                        }
+//                        else {
+//                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain French Invitation");
+//                        }
+//                    }
+//                    else {
+//                        if(TRACKING_WELCOME_EN != null && !TRACKING_WELCOME_EN.isEmpty()){
+//                            String[] englishInvitations = TRACKING_WELCOME_EN.substring(1, TRACKING_WELCOME_EN.length() - 1).split("/");
+//                            String randomInvitationEN = englishInvitations[random.nextInt(englishInvitations.length)];
+//                            buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(randomInvitationEN)
+//                                    .addOnSuccessListener(new OnSuccessListener<String>() {
+//                                        @Override
+//                                        public void onSuccess(String translatedText) {
+//                                            Log.d(TAG_TRACKING, "Translated Invitation: " + translatedText);
+//                                            buddyGPTApplication.setActivityClosed(false);
+//                                            speak(translatedText, "INVITATION");
+//                                        }
+//                                    })
+//                                    .addOnFailureListener(new OnFailureListener() {
+//                                        @Override
+//                                        public void onFailure(@NonNull Exception e) {
+//                                            Log.d(TAG_TRACKING, "Translation failed, using English Invitation: " + randomInvitationEN);
+//                                            buddyGPTApplication.setActivityClosed(false);
+//                                            speak(randomInvitationEN, "INVITATION");
+//                                        }
+//                                    });
+//                        }
+//                        else {
+//                            if(iInvitationCallback != null) iInvitationCallback.onEnd("ConfigFile do not contain English Invitation");
+//                        }
+//                    }
+//
+//            }
+//        });
+//    }
+//
 
     /**
      *   -------------------------------  Gestion des permissions  ---------------------------------------------------------------
