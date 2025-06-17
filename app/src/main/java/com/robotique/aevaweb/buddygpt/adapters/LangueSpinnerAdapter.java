@@ -119,20 +119,12 @@ public class LangueSpinnerAdapter extends BaseAdapter {
         }else {
             Log.e("MRA","nameToDisplay else"+nameToDisplay);
             buddyGPTApplication.getFrenchLanguageSelectedTranslator().translate(nameToDisplay)
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            Log.e("MRA","nameToDisplay else translatedText"+translatedText);
-                            translatedLanguageName = translatedText;
-                            updateView(rowView,textViewItemName);
-                        }
+                    .addOnSuccessListener(translatedText -> {
+                        Log.e("MRA","nameToDisplay else translatedText"+translatedText);
+                        translatedLanguageName = translatedText;
+                        updateView(rowView,textViewItemName);
                     })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.e("MRA", "translatedText exception  " + e);
-                        }
-                    });
+                    .addOnFailureListener(e -> Log.e("MRA", "translatedText exception  " + e));
 
         }
         return rowView;
@@ -162,20 +154,12 @@ public class LangueSpinnerAdapter extends BaseAdapter {
         TextView textViewItemName = (TextView) rowView.findViewById(this.itemNameId);
         String nameToDisplay=langue.getNom();
         buddyGPTApplication.getFrenchLanguageSelectedTranslator().translate(nameToDisplay)
-                .addOnSuccessListener(new OnSuccessListener<String>() {
-                    @Override
-                    public void onSuccess(String translatedText) {
-                        Log.e("MRA","nameToDisplay else translatedText"+translatedText);
-                        translatedLanguageName = translatedText;
-                        updateDropDownView(rowView,textViewItemName,langue);
-                    }
+                .addOnSuccessListener(translatedText -> {
+                    Log.e("MRA","nameToDisplay else translatedText"+translatedText);
+                    translatedLanguageName = translatedText;
+                    updateDropDownView(rowView,textViewItemName,langue);
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("MRA", "translatedText exception  " + e);
-                    }
-                });
+                .addOnFailureListener(e -> Log.e("MRA", "translatedText exception  " + e));
 
         return rowView;
     }

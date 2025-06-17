@@ -1,5 +1,7 @@
 package com.robotique.aevaweb.buddygpt.application;
 
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -24,6 +26,7 @@ import android.os.Looper;
 import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -68,14 +71,12 @@ import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
 import com.ibm.icu.text.BreakIterator;
 import com.knuddels.jtokkit.Encodings;
-import com.knuddels.jtokkit.api.Encoding;
 import com.knuddels.jtokkit.api.EncodingRegistry;
 import com.konovalov.vad.Vad;
 import com.konovalov.vad.VadConfig;
 import com.konovalov.vad.VadListener;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
-import com.robotique.aevaweb.buddygpt.models.History;
 import com.robotique.aevaweb.buddygpt.models.Langue;
 import com.robotique.aevaweb.buddygpt.models.Replica;
 import com.robotique.aevaweb.buddygpt.models.Session;
@@ -90,7 +91,6 @@ import com.robotique.aevaweb.buddygpt.utilis.SettingsContentObserver;
 import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleApiListener;
 import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleC;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -106,45 +106,32 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 import java.util.StringTokenizer;
 
 import darren.googlecloudtts.model.VoicesList;
 import darren.googlecloudtts.parameter.AudioConfig;
 import darren.googlecloudtts.parameter.AudioEncoding;
 import darren.googlecloudtts.parameter.VoiceSelectionParams;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import okio.Buffer;
 
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";
-    private static final String TAG_BLUEMIC_STREAMING = "BuddyGPT_BlueMic_Streaming";
-    private static final String TAG_STREAM = "MODE_STREAM";
-    private static final String TAG_STREAM_USAGE = "MODE_STREAM_USAGE";
+
     private int listeningDuration;
     private int listeningAttempt;
     private int speakSpeed;
     private int speakVolume;
-    public int max;
+    int max;
     private Replica question;
-
     private ResponseFromTeamGPT responseFromTeamGPT;
     private Replica reponse;
     private Setting setting;
     private Boolean fileCreate=true;
     private Session session;
     private ArrayList<Session> listSession=new ArrayList<>();
-    private History history;
     private String switchdetectLanguage;
     private String switchModeStream;
     private String switchCommande;
     private String switchVisibility;
-    private String switchBIDisplay;
     private String switchEmotion;
     private Uri fileup;
     private Boolean isSpeaking = false;
@@ -153,7 +140,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private int textSizeBullesPX;
     private boolean activityClosed =false;
     private Boolean startRecording=false;
-    private Boolean usingEmotions=false;
     private ConnectivityManager cm;
     private int questionNumber = 0;
     private int currentQuestionNubmer = 0;
@@ -164,62 +150,51 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String storedResponse = "";
     private Boolean buddyFaceisTired = false;
     private int bestTextSize = 0;
-    private TextToSpeech tts_android;
+    private TextToSpeech ttsAndroid;
     private Boolean shouldPlayEmotion = false;
     private String currentEmotion = "";
     private Boolean messageError = false;
     private Langue langue;
 
-    private List<Replica> listRepGlobale = new ArrayList<>();
-    private String french = "Français";
-    private String english = "Anglais";
-    private String spanish = "Espagnol";
-    private String deutsch = "Allemand";
-    private String listeningDurationPseudo = "listening_duration";
-    private String listeningAttemptPseudo = "listening_attempt";
-    private String speakVolumePseudo ="speak_volume";
-    private String visibilityString = "switch_visibility";
-    private String emotionString = "switch_emotion";
-    private String detectionLanguageString = "Detection_de_langue";
-    private String modeStreamString = "Mode_Stream";
-    private String commandeString = "Commands";
+    private static final String listeningDurationPseudo = "listening_duration";
+    private static final String listeningAttemptPseudo = "listening_attempt";
+    private static final String speakVolumePseudo ="speak_volume";
+    private static final String visibilityString = "switch_visibility";
+    private static final String emotionString = "switch_emotion";
+    private static final String detectionLanguageString = "Detection_de_langue";
 
     private Dialog dialog;
-    private String configurationFilePseudo = "BuddyGPT.properties";
+    private static final String configurationFilePseudo = "BuddyGPT.properties";
     private File fileupdate;
-    private String langueFr = "Français";
-    private String langueEn = "Anglais";
-    private String langueEs = "Espagnol";
-    private String langueDe = "Allemand";
+    private static final String langueFr = "Français";
+    private static final String langueEn = "Anglais";
+    private static final String langueEs = "Espagnol";
+    private static final String langueDe = "Allemand";
 
     private  int currentIndexText = 0;
 
     private  boolean allTextPronoucedSuccess = true;
-    private String[] texteToSpeakSplitted;
-    public boolean Stop_TTS_ReadSpeaker = false;
+
+    boolean stopTTSReadSpeaker = false;
 
     Runnable runnableListeningHotword;
-    private Handler handlerListeningHotword =new Handler();
-    private Handler handler2 = new Handler();
+    private final Handler handlerListeningHotword =new Handler();
+    private final Handler handler2 = new Handler();
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final Intent speechRecognizerIntent2 = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-    android.speech.SpeechRecognizer speechRecognizer;
+    SpeechRecognizer speechRecognizer;
     private STTTask freeSpeechSttTask;
 
 
 
-    private String header = "header";
-    private String entete = "entete";
-    private String cabecera = "Cabecera";
-    private String kopfzeile = "Kopfzeile";
-    private String openAIKey = "openAI_API_Key";
-    private String langueInconfigurationFilePseudo = "Language";
+    private static final String header = "header";
+    private static final String entete = "entete";
+    private static final String cabecera = "Cabecera";
+    private static final String kopfzeile = "Kopfzeile";
     private Boolean initSharedpreferences = true;
     private Translator englishLanguageSelectedTranslator;
     private Translator frenchLanguageSelectedTranslator;
     private Translator languageSelectedEnglishTranslator;
-    private TranslatorOptions options;
-    private TranslatorOptions options1;
     private String translatedList="";
     private String languageDetected ="";
     private Boolean usingReadSpeaker;
@@ -231,36 +206,32 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final int SAMPLE_RATE = 8000; // Exemple : 8 kHz
     private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(
-            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
 
     private AudioRecord audioRecord;
     private boolean isRecording = false;
     private String currentState = "";
 
-    private Boolean endRecordingWhisperAudio = false;
     private Boolean stopProcessus = false;
     private Boolean alReadyHadSpoke=false;
     private Activity activityTemp;
 
     private long responseTime = 0;
     private Boolean answerHasExceededTimeOut =false;
-    private TranscribeTask transcribeTask;
     private Thread thread;
     private Thread thread1;
     private Float previousVolume = Float.valueOf(0);
     private boolean streamMode = false;
     private EncodingRegistry registry;
     private Boolean appIsListeningToTheQuestion = false;
-    private String toast_stt_android_indispo;
-    private String toast_tts_android_indispo;
-    private String toast_tts_googleApi_indispo;
+    private String toastSttAndroidIndispo;
+    private String toastTtsAndroidIndispo;
+
     private TtsGoogleC googleCloudTTS;
     private VoicesList voiceList;
     private String chosenTTS = "";
-    public int remainingAttempts;
+    int remainingAttempts;
     private Boolean appIsCurrentlyDealingWithTheQuestion = false;
-    private Boolean BIExecution = false;
+    private Boolean bIExecution = false;
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
     private String imeiDevice;
     private String imeiRobot;
@@ -286,11 +257,11 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     public Boolean getBIExecution() {
-        return BIExecution;
+        return bIExecution;
     }
 
-    public void setBIExecution(Boolean BIExecution) {
-        this.BIExecution = BIExecution;
+    public void setBIExecution(Boolean bIExecution) {
+        this.bIExecution = bIExecution;
     }
 
     public Boolean getAppIsCurrentlyDealingWithTheQuestion() {
@@ -512,14 +483,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         listSession.clear();
     }
 
-    public History getHistory() {
-        return history;
-    }
-
-    public void setHistory(History history) {
-        this.history = history;
-    }
-
     public String getSwitchVisibility() {
         return switchVisibility;
     }
@@ -528,13 +491,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.switchVisibility = switchVisibility;
     }
 
-    public String getSwitchBIDisplay() {
-        return switchBIDisplay;
-    }
-
-    public void setSwitchBIDisplay(String switchBIDisplay) {
-        this.switchBIDisplay = switchBIDisplay;
-    }
 
     public int getCurrentIndexText() {
         return currentIndexText;
@@ -552,12 +508,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.allTextPronoucedSuccess = allTextPronoucedSuccess;
     }
 
-    public boolean isStop_TTS_ReadSpeaker() {
-        return Stop_TTS_ReadSpeaker;
+    public boolean isStopTTSReadSpeaker() {
+        return stopTTSReadSpeaker;
     }
 
-    public void setStop_TTS_ReadSpeaker(boolean stop_TTS_ReadSpeaker) {
-        Stop_TTS_ReadSpeaker = stop_TTS_ReadSpeaker;
+    public void setStopTTSReadSpeaker(boolean stopTTSReadSpeaker) {
+        this.stopTTSReadSpeaker = stopTTSReadSpeaker;
     }
 
     public boolean isAlreadyCalled() {
@@ -826,14 +782,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.langue = langue;
     }
 
-    public TextToSpeech getTts_android() {
-        return tts_android;
-    }
-
-    public void setTts_android(TextToSpeech tts_android) {
-        this.tts_android = tts_android;
-    }
-
     public TtsGoogleC getGoogleCloudTTS() {
         return googleCloudTTS;
     }
@@ -876,78 +824,35 @@ public class BuddyGPTApplication extends BuddyApplication {
         amanager.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
         SettingsContentObserver mSettingsContentObserver = new SettingsContentObserver(new Handler(), getApplicationContext());
         getContentResolver().registerContentObserver(
-                android.provider.Settings.System.CONTENT_URI, true,
+                Settings.System.CONTENT_URI, true,
                 mSettingsContentObserver);
 
 
-        speechRecognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
 
         //create a new EncodingRegistry to use JTokkit
         try {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    registry = Encodings.newDefaultEncodingRegistry();
-                }
-            }).start();
+            new Thread(() -> registry = Encodings.newDefaultEncodingRegistry()).start();
         } catch (Exception e) {
-            Log.e("MODE_STREAM_USAGE", "Exception when creating a new EncodingRegistry to use JTokkit : " + e);
+            Log.e("TAG_STREAM_USAGE", "Exception when creating a new EncodingRegistry to use JTokkit : " + e);
             e.printStackTrace();
         }
     }
 
-    public void init() throws IOException {
+    public void init() {
         Log.e("MRAA", "init");
         remainingAttempts = Integer.parseInt(getParamFromFile("Number_listens", configurationFilePseudo).trim()) - 1;
         if (getparam("firstLaunch").equals("")) {
             setparam("firstLaunch", "true");
         }
-
-
-//        //initialisation du mail du destinataire
-//        if (getparam("Mail_Destination").equals("")) {
-//            setparam("Mail_Destination", getParamFromFile("Mail_Destination", configurationFilePseudo));
-//        }
         initLanguageSetting();
         initListeningSettings();
-//        initProjectID();
-
         initSpeakVolumeSetting();
         initVisibilitySetting();
-//        initSTTSetting();
-        //initTTSSetting();
-//        initOpenAiSettings();
         initEmotionSetting();
         initLanguageDetectionSetting();
         initChatTextSize();
-        //initModeStreamSetting();
-        //initCommandeSetting();
-      //  initBIDisplay();
-       // initTracking();
-       // Log.e("MRAA", "init google api");
-//        if (!alreadyCalled) {
-//            Log.e("MRAA", "init google api out if");
-//            if (getparam("STT_chosen").equalsIgnoreCase("Google")) {
-//                Log.e("MRAA", "init google api inside if");
-//                alreadyCalled = true;
-//                releaseGoogleAPI();
-//                initGoogleAPI();
-//            }
-//        }
         notifyObservers("properties file done");
-    }
-
-    private static @NonNull String getFirstLaunch() {
-        return "firstLaunch";
-    }
-
-    private void initOpenAiSettings() {
-        double totalConsumption = 0;
-        String totalConsumptionSaved = getparam("Total_cons");
-        if (totalConsumptionSaved != null && !totalConsumptionSaved.isEmpty()) {
-            totalConsumption = Double.parseDouble(totalConsumptionSaved);
-        }
-        setparam("Total_cons", totalConsumption + "");
     }
 
     private void initListeningSettings() {
@@ -973,7 +878,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     public void initTeamGPTSettings() throws IOException {
-        //setparam("INVALID_TEAMGPT_KEY","FALSE");
         if(responseFromTeamGPT != null){
             responseFromTeamGPT.reset();
         }
@@ -1005,18 +909,8 @@ public class BuddyGPTApplication extends BuddyApplication {
                 else{
                     getEnglishLanguageSelectedTranslator()
                             .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    showToast(translatedText);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                                }
-                            });
+                            .addOnSuccessListener(this::showToast)
+                            .addOnFailureListener(e -> showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
                 }
             }
         }
@@ -1027,18 +921,17 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
         if (getparam("firstLaunch").equals("true")) {
-            //setparam("messages", "[]");
 
-            if (getparam(header).equals("")) {
+            if (getparam(header).isEmpty()) {
                 setparam(header, getParamFromFile(header, configurationFilePseudo));
             }
-            if (getparam(entete).equals("")) {
+            if (getparam(entete).isEmpty()) {
                 setparam(entete, getParamFromFile(entete, configurationFilePseudo));
             }
-            if (getparam(cabecera).equals("")) {
+            if (getparam(cabecera).isEmpty()) {
                 setparam(cabecera, getParamFromFile(cabecera, configurationFilePseudo));
             }
-            if (getparam(kopfzeile).equals("")) {
+            if (getparam(kopfzeile).isEmpty()) {
                 setparam(kopfzeile, getParamFromFile(kopfzeile, configurationFilePseudo));
             }
 
@@ -1114,112 +1007,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         switchVisibility = getparam(visibilityString);
     }
 
-    private void initBIDisplay() {
-        if (getparam("Stimulis").equals("")) {
-            if (getParamFromFile("Stimulis", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Stimulis", "false");
-            } else {
-                setparam("Stimulis", "true");
-            }
-        }
-        switchBIDisplay = getparam("Stimulis");
-    }
-
-    private void initSTTSetting() {
-//        String can_change_stt = getParamFromFile("Change_STT", "BuddyGPT.properties");
-//        if (getparam("STT_chosen").equals("") || (can_change_stt == null || can_change_stt.trim().equalsIgnoreCase("No"))) {
-//            Log.e("MRAA", "initSTTSetting inside if");
-////            if (getParamFromFile("Speech_To_Text", "BuddyGPT.properties").trim().equalsIgnoreCase("SpeechRecognizer")) {
-////                setparam("STT_chosen", "Android");
-////            }
-////            else if (getParamFromFile("Speech_To_Text", "BuddyGPT.properties").trim().equalsIgnoreCase("ApiGoogle")) {
-////                setparam("STT_chosen", "Google");
-////            } else if (getParamFromFile("Speech_To_Text", "BuddyGPT.properties").trim().equalsIgnoreCase("Whisper")) {
-////                setparam("STT_chosen", "Whisper");
-////            }
-//            else if (getParamFromFile("Speech_To_Text", "BuddyGPT.properties").trim().equalsIgnoreCase("Cerence")) {
-//                setparam("STT_chosen", "Cerence");
-//            } else {
-//
-//                String[] listSTT = getParamFromFile("Speech_To_Text_List", "BuddyGPT.properties").split("/");
-//                if (listSTT.length > 0) {
-//                    if (listSTT[0].trim().equalsIgnoreCase("SpeechRecognizer")) {
-//                        setparam("STT_chosen", "Android");
-//                    } else if (listSTT[0].trim().equalsIgnoreCase("ApiGoogle")) {
-//                        setparam("STT_chosen", "Google");
-//                    } else if (listSTT[0].trim().equalsIgnoreCase("Whisper")) {
-//                        setparam("STT_chosen", "Whisper");
-//                    } else if (listSTT[0].trim().equalsIgnoreCase("Cerence")) {
-//                        setparam("STT_chosen", "Cerence");
-//                    } else setparam("STT_chosen", "Android");
-//                } else setparam("STT_chosen", "Android");
-//
-//
-//                if (getLangue().getNom().equals("Anglais")) {
-//                    showToast("Chosen STT is not found. Buddy will use " + getparam("STT_chosen"));
-//                }
-//                else if (getLangue().getNom().equals("Français")) {
-//                    showToast("Le STT choisi est introuvable. Buddy utilisera " + getparam("STT_chosen"));
-//                }
-////                else if (getLangue().getNom().equals("Espagnol")) {
-////                    showToast("No se encuentra el STT elegido. Buddy usará " + getparam("STT_chosen"));
-////                } else if (getLangue().getNom().equals("Allemand")) {
-////                    showToast("Ausgewählte STT wurde nicht gefunden. Buddy wird " + getparam("STT_chosen") + " verwenden");
-////                }
-//                else {
-//                    showToast("Chosen STT is not found. Buddy will use " + getparam("STT_chosen"));
-//                }
-//
-//            }
-//
-//
-//        }
-    }
-
-    private void initTTSSetting() {
-        Log.e("MRAA", "initTTSSetting");
-        String[] listTTS = {"ReadSpeaker", "Android"};
-        if (listTTS.length > 0) {
-            if (listTTS[0].trim().equalsIgnoreCase("ReadSpeaker")) {
-                chosenTTS = "ReadSpeaker";
-            } else if (listTTS[0].trim().equalsIgnoreCase("Android")) {
-                chosenTTS = "Android";
-            }
-//            else if (listTTS[0].trim().equalsIgnoreCase("ApiGoogle")) {
-//                chosenTTS = "ApiGoogle";
-//            }
-            else {
-                chosenTTS = "ReadSpeaker";
-
-                if (getLangue().getNom().equals("Anglais")) {
-                    showToast("Chosen TTS is not found. Buddy will use " + chosenTTS);
-                } else if (getLangue().getNom().equals("Français")) {
-                    showToast("Le TTS choisi est introuvable. Buddy utilisera " + chosenTTS);
-                } else if (getLangue().getNom().equals("Espagnol")) {
-                    showToast("No se encuentra el TTS elegido. Buddy usará " + chosenTTS);
-                } else if (getLangue().getNom().equals("Allemand")) {
-                    showToast("Ausgewählte TTS wurde nicht gefunden. Buddy wird " + chosenTTS + " verwenden");
-                } else {
-                    showToast("Chosen TTS is not found. Buddy will use " + chosenTTS);
-                }
-
-            }
-        } else {
-            chosenTTS = "ReadSpeaker";
-            if (getLangue().getNom().equals("Anglais")) {
-                showToast("Chosen TTS is not found. Buddy will use " + chosenTTS);
-            } else if (getLangue().getNom().equals("Français")) {
-                showToast("Le TTS choisi est introuvable. Buddy utilisera " + chosenTTS);
-            } else if (getLangue().getNom().equals("Espagnol")) {
-                showToast("No se encuentra el TTS elegido. Buddy usará " + chosenTTS);
-            } else if (getLangue().getNom().equals("Allemand")) {
-                showToast("Ausgewählte TTS wurde nicht gefunden. Buddy wird " + chosenTTS + " verwenden");
-            } else {
-                showToast("Chosen TTS is not found. Buddy will use " + chosenTTS);
-            }
-        }
-    }
-
     private void initLanguageSetting() {
 
         List<String> langueDisponible = getDisponibleLangue();
@@ -1243,15 +1030,12 @@ public class BuddyGPTApplication extends BuddyApplication {
                     languageCode = getFullLanguageCodeFromCountryCode(langueDisponible.get(i));
                 }
                 Boolean isChosen;
-                if (languageCode != null && getParamFromFile(langueInconfigurationFilePseudo, configurationFilePseudo).trim().equalsIgnoreCase(languageCode.split("-")[0])) {
-                    isChosen = true;
-                } else {
-                    isChosen = false;
-                }
-                Langue langue_utili = new Langue(i, langueDisponible.get(i - 1), isChosen, languageCode);
-                Gson json_langue_utili = new Gson();
-                String jsonString_langue_utili = json_langue_utili.toJson(langue_utili);
-                setparam(langueDisponible.get(i - 1), jsonString_langue_utili);
+                String langueInconfigurationFilePseudo = "Language";
+                isChosen = languageCode != null && getParamFromFile(langueInconfigurationFilePseudo, configurationFilePseudo).trim().equalsIgnoreCase(languageCode.split("-")[0]);
+                Langue languageuUtil = new Langue(i, langueDisponible.get(i - 1), isChosen, languageCode);
+                Gson jsonLangueUtili = new Gson();
+                String jsonStringLangueUtili = jsonLangueUtili.toJson(languageuUtil);
+                setparam(langueDisponible.get(i - 1), jsonStringLangueUtili);
             } else {
                 Langue langueTemp = new Gson().fromJson(getparam(langueDisponible.get(i - 1)), Langue.class);
                 langueTemp.setId(i);
@@ -1275,16 +1059,16 @@ public class BuddyGPTApplication extends BuddyApplication {
                 setparam(langueDisponible.get(i - 1), new Gson().toJson(langueTemp));
             }
             langues.add(new Gson().fromJson(getparam(langueDisponible.get(i - 1)), Langue.class));
-//            }
+
             i++;
         }
         if (langues.isEmpty()) {
-            Langue langue_francais = new Langue(1, "Français", true);
-            langue_francais.setLanguageCode("fr-FR");
-            Gson json_langue_francais = new Gson();
-            String jsonString_langue_francais = json_langue_francais.toJson(langue_francais);
-            setparam(french, jsonString_langue_francais);
-            langues.add(new Gson().fromJson(getparam(french), Langue.class));
+            Langue langueFrancais = new Langue(1, "Français", true);
+            langueFrancais.setLanguageCode("fr-FR");
+            Gson jsonLangueFrancais = new Gson();
+            String jsonStringLangueFrancais = jsonLangueFrancais.toJson(langueFrancais);
+            setparam(langueFr, jsonStringLangueFrancais);
+            langues.add(new Gson().fromJson(getparam(langueFr), Langue.class));
         }
         int iterationCount = 0;
         for (Langue language : langues) {
@@ -1326,6 +1110,8 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void downloadModel(IMLKitDownloadCallback imlKitDownloadCallback, String langue) {
+        TranslatorOptions options1;
+        TranslatorOptions options;
 
         options = new TranslatorOptions.Builder()
                 .setSourceLanguage(TranslateLanguage.ENGLISH)
@@ -1335,19 +1121,11 @@ public class BuddyGPTApplication extends BuddyApplication {
         DownloadConditions conditions = new DownloadConditions.Builder()
                 .build();
         englishLanguageSelectedTranslator.downloadModelIfNeeded(conditions)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        setEnglishLanguageSelectedTranslator(englishLanguageSelectedTranslator);
-                        imlKitDownloadCallback.onDownloadEnd(true, "english");
-                    }
+                .addOnSuccessListener(unused -> {
+                    setEnglishLanguageSelectedTranslator(englishLanguageSelectedTranslator);
+                    imlKitDownloadCallback.onDownloadEnd(true, "english");
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        imlKitDownloadCallback.onDownloadEnd(false, "english");
-                    }
-                });
+                .addOnFailureListener(e -> imlKitDownloadCallback.onDownloadEnd(false, "english"));
         options1 = new TranslatorOptions.Builder()
                 .setSourceLanguage(TranslateLanguage.FRENCH)
                 .setTargetLanguage(langue) // Remplacez par la langue choisie par l'utilisateur
@@ -1356,19 +1134,11 @@ public class BuddyGPTApplication extends BuddyApplication {
         DownloadConditions conditions1 = new DownloadConditions.Builder()
                 .build();
         frenchLanguageSelectedTranslator.downloadModelIfNeeded(conditions1)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        setFrenchLanguageSelectedTranslator(frenchLanguageSelectedTranslator);
-                        imlKitDownloadCallback.onDownloadEnd(true, "french");
-                    }
+                .addOnSuccessListener(unused -> {
+                    setFrenchLanguageSelectedTranslator(frenchLanguageSelectedTranslator);
+                    imlKitDownloadCallback.onDownloadEnd(true, "french");
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        imlKitDownloadCallback.onDownloadEnd(false, "french");
-                    }
-                });
+                .addOnFailureListener(e -> imlKitDownloadCallback.onDownloadEnd(false, "french"));
         options = new TranslatorOptions.Builder()
                 .setSourceLanguage(langue)
                 .setTargetLanguage(TranslateLanguage.ENGLISH) // Remplacez par la langue choisie par l'utilisateur
@@ -1377,19 +1147,11 @@ public class BuddyGPTApplication extends BuddyApplication {
         DownloadConditions conditions2 = new DownloadConditions.Builder()
                 .build();
         languageSelectedEnglishTranslator.downloadModelIfNeeded(conditions2)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void unused) {
-                        setLanguageSelectedEnglishTranslator(languageSelectedEnglishTranslator);
-                        imlKitDownloadCallback.onDownloadEnd(true, "languageToEnglish");
-                    }
+                .addOnSuccessListener(unused -> {
+                    setLanguageSelectedEnglishTranslator(languageSelectedEnglishTranslator);
+                    imlKitDownloadCallback.onDownloadEnd(true, "languageToEnglish");
                 })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        imlKitDownloadCallback.onDownloadEnd(false, "languageToEnglish");
-                    }
-                });
+                .addOnFailureListener(e -> imlKitDownloadCallback.onDownloadEnd(false, "languageToEnglish"));
 
     }
 
@@ -1424,89 +1186,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void setResponseFromTeamGPT(ResponseFromTeamGPT responseFromTeamGPT) {
         this.responseFromTeamGPT = responseFromTeamGPT;
     }
-    private void initCommandeSetting() {
-        if (getparam(commandeString).equals("")) {
-            if (getParamFromFile(commandeString, configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam(commandeString, "false");
-            } else {
-                setparam(commandeString, "true");
-            }
-        }
-        setparam("COMMAND_Model", getParamFromFile("COMMAND_Model", configurationFilePseudo));
-        setparam("COMMAND_Temperature", getParamFromFile("COMMAND_Temperature", configurationFilePseudo));
-        switchCommande = getparam(commandeString);
-    }
-
-    private void initTracking() {
-
-        //Tracking activation
-        if (getparam("Tracking_Activation").equals("")) {
-            if (getParamFromFile("Tracking", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Activation", "false");
-            } else {
-                setparam("Tracking_Activation", "true");
-            }
-        }
-
-        //Tracking camera display
-        if (getparam("Tracking_Camera_Display").equals("")) {
-            if (getParamFromFile("TRACKING_Camera", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Camera_Display", "false");
-            } else {
-                setparam("Tracking_Camera_Display", "true");
-            }
-        }
-
-        //Tracking head
-        if (getparam("Tracking_Head").equals("")) {
-            if (getParamFromFile("TRACKING_Head", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Head", "false");
-            } else {
-                setparam("Tracking_Head", "true");
-            }
-        }
-
-        //Tracking body
-        if (getparam("Tracking_Body").equals("")) {
-            if (getParamFromFile("TRACKING_Body", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Body", "false");
-            } else {
-                setparam("Tracking_Body", "true");
-            }
-        }
-
-        //Tracking auto listen
-        if (getparam("Tracking_Auto_Listen").equals("")) {
-            if (getParamFromFile("TRACKING_listening", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Auto_Listen", "false");
-            } else {
-                setparam("Tracking_Auto_Listen", "true");
-            }
-        }
-
-        //Tracking invitation
-        if (getparam("Tracking_Invitation").equals("")) {
-            if (getParamFromFile("TRACKING_Welcome", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                setparam("Tracking_Invitation", "false");
-            } else {
-                setparam("Tracking_Invitation", "true");
-            }
-        }
-
-        //Tracking invitation chatGpt
-//        if (getparam("Tracking_Invitation_ChatGpt").equals("")) {
-//            if (getParamFromFile("TRACKING_welcome_CHATGPT",configurationFilePseudo).trim().equalsIgnoreCase("No")){
-//                setparam("Tracking_Invitation_ChatGpt", "false");
-//            }
-//            else {
-//                setparam("Tracking_Invitation_ChatGpt", "true");
-//            }
-//        }
-    }
 
     public List<String> separator(String hotword) {
         StringTokenizer st = new StringTokenizer(hotword, "/", false);
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<>();
         while (st.hasMoreTokens()) {
             String result = st.nextToken();
             list.add(result.trim());
@@ -1541,28 +1224,18 @@ public class BuddyGPTApplication extends BuddyApplication {
         setAlreadyChatting(false);
 
         if (getCurrentLanguage().equals("en")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_en);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en);
         } else if (getCurrentLanguage().equals("fr")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_fr);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_fr);
         } else if (getCurrentLanguage().equals("de")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_de);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_de);
         } else if (getCurrentLanguage().equals("es")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_es);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_es);
         } else {
             getEnglishLanguageSelectedTranslator()
                     .translate(getString(R.string.toast_stt_android_indispo_en))
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            toast_stt_android_indispo = translatedText;
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_en);
-                        }
-                    });
+                    .addOnSuccessListener(translatedText -> toastSttAndroidIndispo = translatedText)
+                    .addOnFailureListener(e -> toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en));
         }
         activity.runOnUiThread(() -> {
 
@@ -1572,7 +1245,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 try {
                     speechRecognizer.startListening(speechRecognizerIntent2);
                     if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
-                        showToast(toast_stt_android_indispo);
+                        showToast(toastSttAndroidIndispo);
                     }
                     speechRecognizer.setRecognitionListener(new RecognitionListener() {
                         @Override
@@ -1650,8 +1323,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                         @Override
                         public void onResults(Bundle bundle) {
-                            ArrayList<String> data = bundle.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                            if (data != null && data.size() > 0) {
+                            ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                            if (data != null && !data.isEmpty()) {
                                 Log.e(TAG, "Hotword result  : " + data.get(0));
                                 checkTheHotword(data.get(0));
                             } else {
@@ -1663,8 +1336,8 @@ public class BuddyGPTApplication extends BuddyApplication {
                         @Override
                         public void onPartialResults(Bundle bundle) {
                             Log.e(TAG, "Hotword onPartialResults listening  : ");
-                            ArrayList<String> data = bundle.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                            if (data != null && data.size() > 0) {
+                            ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                            if (data != null && !data.isEmpty()) {
                                 Log.e(TAG, "Hotword result onPartialResults  : " + data.get(0));
                                 checkTheHotword(data.get(0));
                             } else {
@@ -1778,7 +1451,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void refresh(String langue, Activity activity) {
 
-        speechRecognizer = android.speech.SpeechRecognizer.createSpeechRecognizer(activity);
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(activity);
         if (getParamFromFile("Language_Specification_STT", configurationFilePseudo).trim().equalsIgnoreCase("Yes")) {
             if (getparam("STT").equalsIgnoreCase("Android")) {
                 speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
@@ -1786,14 +1459,13 @@ public class BuddyGPTApplication extends BuddyApplication {
                 speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, Integer.parseInt(getParamFromFile("Android_Speech_silence_length", configurationFilePseudo)) * 1000);
                 speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, langue);
             }
-            if (getparam("STT").equalsIgnoreCase("Cerence")) {
-                if (!langue.toLowerCase().contains("en") && !langue.toLowerCase().contains("fr")) {
+            if (getparam("STT").equalsIgnoreCase("Cerence") && !langue.toLowerCase().contains("en") && !langue.toLowerCase().contains("fr")) {
                     speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                     speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, Integer.parseInt(getParamFromFile("Android_Speech_minimum_length", configurationFilePseudo)) * 1000);
                     speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, Integer.parseInt(getParamFromFile("Android_Speech_silence_length", configurationFilePseudo)) * 1000);
                     speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, langue);
                 }
-            }
+
             if (!getLangue().getNom().equals(langueFr) && !getLangue().getNom().equals(langueEn)) {
                 speechRecognizerIntent2.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
                 speechRecognizerIntent2.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, Integer.parseInt(getParamFromFile("Android_Speech_minimum_length", configurationFilePseudo)) * 1000);
@@ -1813,12 +1485,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void startListeningQuestion(Activity activity) {
         Log.e(TAG, "startListeningFreeSpeechStt fonction start");
-        activity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                listeningAnimation();
-            }
-        });
+        activity.runOnUiThread(this::listeningAnimation);
         alreadyGetAnswer = false;
         questionNumber++;
         currentEmotion = "";
@@ -1826,34 +1493,24 @@ public class BuddyGPTApplication extends BuddyApplication {
         stopListening(activity);
 
         if (getCurrentLanguage().equals("en")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_en);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en);
         } else if (getCurrentLanguage().equals("fr")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_fr);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_fr);
         } else if (getCurrentLanguage().equals("de")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_de);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_de);
         } else if (getCurrentLanguage().equals("es")) {
-            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_es);
+            toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_es);
         } else {
             getEnglishLanguageSelectedTranslator()
                     .translate(getString(R.string.toast_stt_android_indispo_en))
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            toast_stt_android_indispo = translatedText;
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            toast_stt_android_indispo = getString(R.string.toast_stt_android_indispo_en);
-                        }
-                    });
+                    .addOnSuccessListener(translatedText -> toastSttAndroidIndispo = translatedText)
+                    .addOnFailureListener(e -> toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en));
         }
         activity.runOnUiThread(() -> {
             try {
                 speechRecognizer.startListening(speechRecognizerIntent);
                 if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
-                    showToast(toast_stt_android_indispo);
+                    showToast(toastSttAndroidIndispo);
                 }
                 speechRecognizer.setRecognitionListener(new RecognitionListener() {
                     @Override
@@ -1934,8 +1591,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                     @Override
                     public void onResults(Bundle bundle) {
-                        ArrayList<String> data = bundle.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
-                        if (data != null && data.size() > 0) {
+                        ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                        if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onResults  : " + data.get(0));
                             notifyObservers("STTQuestion_success;" + data.get(0));
                             BuddySDK.UI.stopListenAnimation();
@@ -1949,7 +1606,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     @Override
                     public void onPartialResults(Bundle bundle) {
                         Log.i(TAG, "onPartialResults listen");
-                        ArrayList<String> data = bundle.getStringArrayList(android.speech.SpeechRecognizer.RESULTS_RECOGNITION);
+                        ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onPartialResults  : " + data.get(0));
                             if(!data.get(0).trim().equals("")) {
@@ -1981,7 +1638,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void logErrorSTTAndroid(int code, String type, String message) {
-        String errorTXT = new Date().toString() + ", STTAndroidERROR,ERROR CODE= " + String.valueOf(code) + ", ERROR Body{ type= " + type + ", message= " + message + "}" + System.getProperty("line.separator");
+        String errorTXT = new Date() + ", STTAndroidERROR,ERROR CODE= " + code + ", ERROR Body{ type= " + type + ", message= " + message + "}" + System.getProperty("line.separator");
         File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
 
 
@@ -1998,165 +1655,9 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
 
-    public void startWhisperRecording(Activity activity){
-//        Log.e("MRA","startWhisperRecording");
-//        alReadyHadSpoke=false;
-//        activityTemp =activity;
-//        activity.runOnUiThread( new Runnable() {
-//            @Override
-//            public void run() {
-//                listeningAnimation();
-//            }
-//        });
-//        alreadyGetAnswer = false;
-//        questionNumber++;
-//        currentEmotion="";
-//        shouldPlayEmotion=false;
-//        stopListening(activity);
-//        if (isRecording) {
-//            Log.d(TAG_STREAMING, "Already recording");
-//            return;
-//        }
-//
-//        audioRecord = new AudioRecord(
-//                MediaRecorder.AudioSource.MIC,
-//                SAMPLE_RATE,
-//                CHANNEL_CONFIG,
-//                AUDIO_FORMAT,
-//                BUFFER_SIZE);
-//
-//        // Adjust the path and file name as needed
-//        String outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
-//
-//        if (audioRecord.getState() == AudioRecord.STATE_INITIALIZED) {
-//            audioRecord.startRecording();
-//            isRecording = true;
-//            currentState="";
-//            startVAD();
-//            processAudio(outputFile);
-//        } else {
-//            Log.e(TAG_STREAMING, "Failed to initialize AudioRecord");
-//        }
-    }
-
-    public void stopWhisperSTT(Boolean shouldRestartListening, Boolean shouldRestartNewCycle) {
-        try {
-            byte[] audioDataF = readAudioFile(); // Read the recorded audio data
-            // Annuler la tâche précédente si elle existe
-            if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
-                transcribeTask.cancel(true);
-            }
-            Log.e("MIDO","start dbfs calcul");
-            if (thread != null && thread.isAlive()) {
-                thread.interrupt();
-            }
-            thread =new Thread(() -> {
-                if (!Python.isStarted()) {
-                    Python.start(new AndroidPlatform(activityTemp));
-                }
-                Python py = Python.getInstance();
-                PyObject pyobj = py.getModule("calculDBFS");
-                try {
-                    PyObject reponse;
-                    JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
-
-                    // Appel de la fonction main avec le chemin du fichier audio
-                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
-
-                    //Mettre  le dernier fichier json envoyé à l’API
 
 
-
-                    Log.e("MIDO","result dBFS python "+reponse.toString());
-                    if (!reponse.toString().trim().equals("-inf")) {
-                        if (Float.parseFloat(reponse.toString()) >= Float.parseFloat(getParamFromFile("Seuil_dBFS", configurationFilePseudo))) {
-                            Log.d("MIDO", "volume est bien : " + Float.parseFloat(reponse.toString()));
-                            transcribeTask = new TranscribeTask();
-                            transcribeTask.execute(audioDataF); // Transcribe the audio
-                        } else {
-                            Log.d("MIDO", "volume est trop bas : " + Float.parseFloat(reponse.toString()));
-                            if (shouldRestartListening) {
-                            startWhisperRecording(activityTemp);
-                            } else {
-                                Log.e("ARR","stopWhisper restartNewCycle  shouldRestartNewCycle"+shouldRestartListening);
-                                if (shouldRestartNewCycle){
-                                    activityTemp.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            notifyObservers("restartNewCycle");
-                                        }
-                                    });
-                                }
-                                else {
-                                    activityTemp.runOnUiThread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            notifyObservers("restartListeningHotword");
-                                        }
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    else {
-                        if (shouldRestartListening) {
-                            startWhisperRecording(activityTemp);
-                        } else {
-                            if (shouldRestartNewCycle){
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notifyObservers("restartNewCycle");
-                                    }
-                                });
-                            }
-                            else {
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notifyObservers("restartListeningHotword");
-                                    }
-                                });
-                            }
-                        }
-                    }
-                    if (Thread.currentThread().isInterrupted()) {
-                        return; // Terminer le thread s'il a été interrompu
-                    }
-
-
-                } catch (PyException | JSONException p) {
-                    Log.e(TAG, "Exception "+p);
-                }
-
-            });
-            thread.start();
-        } catch (Exception e) {
-            Log.e("MRA", "Exception " + e);
-        }
-
-    }
-    private int getAudioDuration() {
-        try {
-
-            // Use MediaPlayer to get the duration
-            MediaPlayer mediaPlayer = new MediaPlayer();
-            mediaPlayer.setDataSource(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav");
-            mediaPlayer.prepare();
-            int duration = mediaPlayer.getDuration();
-
-            // Release the MediaPlayer resources
-            mediaPlayer.release();
-
-            return duration;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return 0;
-    }
-    private byte[] readAudioFile() throws IOException {
+    private void readAudioFile() throws IOException {
         // Convert PCM data to WAV format
         String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
         PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
@@ -2164,111 +1665,13 @@ public class BuddyGPTApplication extends BuddyApplication {
         Log.d("FilePath", "File path: " + outputFileWav);
         File audioFileWav = new File(outputFileWav);
         if (audioFileWav.exists()) {
-            return Files.readAllBytes(audioFileWav.toPath());
+            Files.readAllBytes(audioFileWav.toPath());
         } else {
             // Handle the case where the file does not exist
             Log.e("FileError", "The file does not exist at the specified path.");
-            return null;
         }
     }
 
-    //    private void writeAudioDataToFile() {
-//        String filePath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BuddyGPT/audioF.raw";
-//        File file = new File(filePath);
-//
-//        try {
-//            FileOutputStream os = new FileOutputStream(file);
-//            byte[] buffer = new byte[BUFFER_SIZE];
-//
-//            while (isRecording) {
-//                int read = audioRecord.read(buffer, 0, BUFFER_SIZE);
-//                if (read != AudioRecord.ERROR_INVALID_OPERATION) {
-//                    os.write(buffer, 0, read);
-//                }
-//            }
-//
-//            os.close();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        // Une fois l'enregistrement terminé, convertir le fichier audio brut en MP3
-//        convertToMp3(filePath);
-//    }
-//
-//    private void convertToMp3(String inputPath) {
-//        Log.e("MMMM","start convertToMp3");
-//        String outputPath = Environment.getExternalStorageDirectory().getAbsolutePath() + "/BuddyGPT/audioF.mp3";
-//
-//        String[] cmd = new String[]{"-b", "128", inputPath, outputPath};
-//
-//        try {
-//            Process process = Runtime.getRuntime().exec(cmd);
-//            process.waitFor();
-//        } catch (IOException | InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//
-//        // Supprimer le fichier audio brut (facultatif)
-//        File rawFile = new File(inputPath);
-//        if (rawFile.exists()) {
-//            rawFile.delete();
-//        }
-//        Log.e("MMMM","end convertToMp3");
-//        byte[] audioDataF;
-//        try {
-//            File audioFileF = new File("/storage/emulated/0/BuddyGPT/audioF.mp3");
-//            audioDataF = Files.readAllBytes(audioFileF.toPath());
-//
-//            new TranscribeTask().execute(audioDataF);
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
-    public String transcribe(byte[] audioData) throws IOException {
-        Log.e("MMMM","start TRanscribe");
-        String language =new Gson().fromJson(getparam(getLangue().getNom()), Langue.class).getLanguageCode().split("-")[0];
-        if (getParamFromFile("Language_Specification_STT",configurationFilePseudo).trim().equalsIgnoreCase("No")){
-            language="";
-        }
-        OkHttpClient client = new OkHttpClient();
-        RequestBody requestBody = new MultipartBody.Builder()
-                .setType(MultipartBody.FORM)
-                .addFormDataPart("model", getParamFromFile("Whisper_model",configurationFilePseudo).trim())
-                .addFormDataPart("file", "GPTAudio.mp3",
-                        RequestBody.create(MediaType.parse("audio/mp3"), audioData))
-                .addFormDataPart("language",language)
-                .addFormDataPart("prompt",getParamFromFile("Whisper_prompt",configurationFilePseudo).trim())
-                .build();
-
-        Request request = new Request.Builder()
-                .url("https://api.openai.com/v1/audio/transcriptions")
-                .header("Authorization", "Bearer " + getparam("openAI_API_Key"))
-                .post(requestBody)
-                .build();
-
-        try (Response response = client.newCall(request).execute()) {
-            if (response.isSuccessful()) {
-                Log.i("MRA", "Calling Whisper API is successful");
-
-                double durationInMinutes = (double) getAudioDuration() / (60 * 1000);
-                Log.i("MYA", "Calling Whisper API is successful1------"+durationInMinutes);
-
-                Gson gson = new Gson();
-                String responseBody = response.body().string();
-                TranscriptionResult result = gson.fromJson(responseBody, TranscriptionResult.class);
-                return result.text;
-
-            } else {
-                Log.i("MRA", "Calling Whisper API is failed");
-                throw new IOException("Unexpected response code: " + response.code());
-            }
-        }
-        catch (Exception e){
-            throw new IOException("Unexpected response code: " + e.toString());
-        }
-    }
 
     public String getImeiRobot() {
         return imeiRobot;
@@ -2277,127 +1680,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.imeiRobot=imeiRobot;
     }
 
-    private static class TranscriptionResult {
-        public String text;
-    }
-
-    private class TranscribeTask extends AsyncTask<byte[], Void, String> {
-        String question = "";
-        @Override
-        protected String doInBackground(byte[]... audioData) {
-            try {
-                //duration = System.currentTimeMillis();
-                Log.e("MRA","doInBackground stopProcessus---------- "+stopProcessus);
-                if (!stopProcessus) {
-                    Log.e("MRA","doInBackground stopProcessus if---------- "+stopProcessus);
-                    question =transcribe(audioData[0]);
-                    Log.e("MRA","doInBackground stopProcessus question---------- "+question);
-                    if (!question.trim().contains("Thank you") && !question.equals("")) {
-                        if (!stopProcessus) {
-                            if (activityTemp!=null){
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        Log.e("MRA","envoie traitement de la question");
-                                        notifyObservers("STTQuestion_success;"+question);
-                                        BuddySDK.UI.stopListenAnimation();
-                                        setLed("neutral");
-                                    }
-                                });
-                            }
-
-                        }
-
-                    } else {
-                        if (!endRecordingWhisperAudio) {
-                            if (activityTemp!=null){
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        startWhisperRecording(activityTemp);
-                                    }
-                                });
-                            }
-
-
-
-                        }
-                    }
-                }
-                return question;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        @Override
-        protected void onPostExecute(String transcription) {
-            if (transcription != null) {
-                // endTime = System.currentTimeMillis(); // Record the end time
-                Log.i("MRA", "------it took: ms");
-            } else {
-                // Gestion des erreurs
-
-            }
-        }
-    }
-
-    /*
-     * VAD library only accepts 16-bit mono PCM audio stream and can work with the next Sample Rates and Frame Sizes :
-     *
-     *  Valid Sample Rate     Valid Frame Size
-     *      8000Hz              80, 160, 240
-     *      16000Hz             160, 320, 480
-     *      32000Hz             320, 640, 960
-     *      48000Hz             480, 960, 1440
-     *
-     * the number of bytes received by the BlueMic is by default 40 (AUDIO_PACKAGE_SIZE=40).
-     * in order to be able to pass the audio stream to the VAD function with a SampleRate of 8000Hz
-     * we have to find a way to modify the number of processed bytes to 80 bytes (AUDIO_PACKAGE_SIZE=80)
-     *
-     * we are going to build a new shorts[80] which is the combination of two shorts[40] received from the BlueMic.
-     *
-     * Algo:
-     * I store each new short[40] in a circularBuffer and wait for the next short[40] to be received.
-     * Once received, I combine the two in a short[80] and send it in the callback : onNewAudioData
-     */
-    private final VadListener vadListener = new VadListener() {
-        @Override
-        public void onSpeechDetected() {
-            Log.d(TAG_STREAMING, "Speech detected!");
-            // Votre code lorsque la parole est détectée
-            if (!currentState.equals("SPEECH")) {
-                currentState = "SPEECH";
-                alReadyHadSpoke=true;
-                if (!getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("")
-                        && !getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("0")
-                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("")
-                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("0")
-                ){
-                    handler2.postDelayed(periodicTask,(long) Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000 );
-                }
-            }
-        }
-
-        @Override
-        public void onNoiseDetected() {
-            Log.d(TAG_STREAMING, "Noise detected!");
-            // Votre code lorsque du bruit est détecté
-            if (!currentState.equals("NOISE")) {
-                currentState = "NOISE";
-                if(alReadyHadSpoke){
-                    alReadyHadSpoke=false;
-                    stopProcessus =false;
-
-                    stopRecording();
-
-                }
-
-            }
-        }
-
-    };
     Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
@@ -2417,25 +1699,25 @@ public class BuddyGPTApplication extends BuddyApplication {
                 Python py = Python.getInstance();
                 PyObject pyobj = py.getModule("calculDBFS");
                 try {
-                    PyObject reponse;
+                    PyObject pyObject;
                     JSONObject parameters = new JSONObject();
                     parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
-                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
+                    pyObject = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
                     //Mettre  le dernier fichier json envoyé à l’API
-                    Log.e("MRAE", "test comparaison flot--------------- " + reponse.toString());
-                    Log.e("MRAE", "result dBFS python--------------- " + reponse.toString());
+                    Log.e("MRAE", "test comparaison flot--------------- " + pyObject.toString());
+                    Log.e("MRAE", "result dBFS python--------------- " + pyObject.toString());
                     Log.e("MRAE", "previousVolume--------------- " + previousVolume);
                     Log.e("MRAE", "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
-                    if (!reponse.toString().trim().equals("-inf")){
+                    if (!pyObject.toString().trim().equals("-inf")){
                         if (previousVolume == 0) {
                             Log.e("MRAE", "result dBFS if--------------- ");
                             previousVolume = Float.parseFloat(reponse.toString());
                         } else {
-                            if (Float.parseFloat(reponse.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
-                                traitementAudio(false);
+                            if (Float.parseFloat(pyObject.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
+                                traitementAudio();
                                 previousVolume = Float.valueOf(0);
                                 Log.e("MRAE", "result dBFS else if--------------- ");
 
@@ -2447,7 +1729,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     }
 
                     if (Thread.currentThread().isInterrupted()) {
-                        return; // Terminer le thread s'il a été interrompu
+                        // Terminer le thread s'il a été interrompu
                     }
 
 
@@ -2483,63 +1765,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    private void startVAD() {
-        int silenceTime;
-        if (!getParamFromFile("Silence_time",configurationFilePseudo).trim().equals("")){
-            try {
-                silenceTime= Integer.parseInt(getParamFromFile("Silence_time",configurationFilePseudo).trim()) *1000;
-            }
-            catch (Exception e){
-                silenceTime = 500;
-            }
-        }
-        else{
-            silenceTime = 500;
-        }
-        // Configure and start VAD
-        vad = new Vad(VadConfig.newBuilder()
-                .setSampleRate(VadConfig.SampleRate.SAMPLE_RATE_8K)
-                .setFrameSize(VadConfig.FrameSize.FRAME_SIZE_80)
-                .setMode(VadConfig.Mode.VERY_AGGRESSIVE)
-                .setSilenceDurationMillis(silenceTime)
-                .setVoiceDurationMillis(500)
-                .build());
-        vad.start();
-    }
 
-    private void processAudio(String outputFile) {
-        new Thread(() -> {
-            short[] buffer = new short[BUFFER_SIZE / 2]; // Divided by 2 because each short is 2 bytes
-            try {
-                FileOutputStream fos = new FileOutputStream(outputFile);
-                while (isRecording) {
-                    int numRead = audioRecord.read(buffer, 0, buffer.length);
-                    if (numRead > 0) {
-                        vad.addContinuousSpeechListener(buffer, vadListener);
-                        fos.write(shortArrayToByteArray(buffer), 0, numRead * 2); // * 2 because each short is 2 bytes
-                    }
-                }
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                Log.e(TAG,"processAudioFinally");
-//                stopWhisperSTT(); // Stop recording and process the remaining audio
-            }
-        }).start();
-    }
-
-    // Convertir un tableau de shorts en un tableau de bytes (pour le buffer combiné)
-    private byte[] shortArrayToByteArray(short[] shortArray) {
-        int length = shortArray.length;
-        byte[] byteArray = new byte[length * 2]; // Each short is 2 bytes
-        for (int i = 0; i < length; i++) {
-            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
-            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
-        }
-        return byteArray;
-    }
-    public void traitementAudio(boolean shouldRestartNewCycle){
+    public void traitementAudio(){
         currentState = "NOISE";
 
         alReadyHadSpoke = false;
@@ -2584,17 +1811,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void getTranslateHotwordList(){
         if (!getLangue().getNom().equals(langueFr) && !getLangue().getNom().equals(langueEn) && !getLangue().getNom().equals(langueEs) && !getLangue().getNom().equals(langueDe)){
             translatedList=getParamFromFile("hotword_en", configurationFilePseudo);
-//            getEnglishLanguageSelectedTranslator().translate(getParamFromFile("hotword_en", configurationFilePseudo)).addOnSuccessListener(new OnSuccessListener<String>() {
-//                @Override
-//                public void onSuccess(String s) {
-//                    translatedList = s.trim();
-//                }
-//            }).addOnFailureListener(new OnFailureListener() {
-//                @Override
-//                public void onFailure(@NonNull Exception e) {
-//                    Log.e(TAG,"liste traduite onFailure "+e);
-//                }
-//            });
         }
     }
     public void checkTheHotword(String word){
@@ -2640,7 +1856,9 @@ public class BuddyGPTApplication extends BuddyApplication {
                     speechRecognizer.destroy();
                 }
             }
-            catch (Exception e){}
+            catch (Exception e){
+                Log.i(TAG, "stopListening: "+e);
+            }
                 if(freeSpeechSttTask != null) {
                     Log.w(TAG, "stopListeningFreeSpeechStt");
                     try {
@@ -2698,112 +1916,107 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void startSpeakingSplittedText(final String texteToSpeak , LabialExpression expression,String type, String[] texteToSpeakSplitted ){
 
-        Log.i("FCH_DEBUG", "startSpeakingSplittedText "+ Arrays.toString(texteToSpeakSplitted) + " , " + type);
+        Log.i("HOU_DEBUG", "startSpeakingSplittedText "+ Arrays.toString(texteToSpeakSplitted) + " , " + type);
 
 
 
-        Handler handler_all = new Handler(Looper.getMainLooper());
-        Runnable delayedTask = new Runnable() {
-            @Override
-            public void run() {
-                Log.i("FCH_DEBUG", "handler_all start ");
+        Handler handlerAll = new Handler(Looper.getMainLooper());
+        Runnable delayedTask = () -> {
+            Log.i("HOU_DEBUG", "handler_all start ");
 
-                try {
-                    BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                }
-                catch (Exception e){
-                    Log.e(TAG,"BuddySDK Exception  "+e);
-                }
+            try {
+                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            }
+            catch (Exception e){
+                Log.e(TAG,"BuddySDK Exception  "+e);
+            }
 
-                if(currentIndexText < texteToSpeakSplitted.length ){
+            if(currentIndexText < texteToSpeakSplitted.length ){
 
-                    Log.e("FCH_DEBUG", "call startSpeaking");
+                Log.e("HOU_DEBUG", "call startSpeaking");
 
-                    BuddySDK.Speech.startSpeaking(
-                            texteToSpeakSplitted[currentIndexText],
-                            expression,
-                            new ITTSCallback.Stub() {
-                                @Override
-                                public void onSuccess(String iText) throws RemoteException {
-                                    Log.i(TAG, "Succès de prononciation : "+iText);
+                BuddySDK.Speech.startSpeaking(
+                        texteToSpeakSplitted[currentIndexText],
+                        expression,
+                        new ITTSCallback.Stub() {
+                            @Override
+                            public void onSuccess(String iText)  {
+                                Log.i(TAG, "Succès de prononciation : "+iText);
 
-                                    Log.w("FCH_DEBUG", "onSuccess");
+                                Log.w("HOU_DEBUG", "onSuccess");
 
-                                    currentIndexText++;
+                                currentIndexText++;
 
-                                    if (!Stop_TTS_ReadSpeaker) {
-                                        Log.w("FCH_DEBUG", "onSuccess 1 ");
-                                        Handler handler = new Handler(Looper.getMainLooper());
-                                        handler.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Log.w("FCH_DEBUG", "onSuccess 2");
-                                                startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
-                                            }
-                                        }, 150);
-                                    }
-
-
+                                if (!stopTTSReadSpeaker) {
+                                    Log.w("HOU_DEBUG", "onSuccess 1 ");
+                                    Handler handler = new Handler(Looper.getMainLooper());
+                                    handler.postDelayed(() -> {
+                                        Log.w("HOU_DEBUG", "onSuccess 2");
+                                        startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
+                                    }, 150);
                                 }
-                                @Override
-                                public void onError(String iError) throws RemoteException {
-                                    Log.e(TAG, "Erreur pendant la prononciation : "+iError);
-
-                                    Log.w("FCH_DEBUG", "onError");
-
-                                    allTextPronoucedSuccess = false;
 
 
-                                    currentIndexText++;
-
-                                    if (!Stop_TTS_ReadSpeaker) {
-                                        Log.w("FCH_DEBUG", "onError 1 ");
-                                        Handler handler = new Handler(Looper.getMainLooper());
-                                        handler.postDelayed(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                Log.w("FCH_DEBUG", "onError 2");
-                                                startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
-                                            }
-                                        }, 150);
-                                    }
-
-                                }
-                                @Override
-                                public void onPause() throws RemoteException {}
-                                @Override
-                                public void onResume() throws RemoteException {}
                             }
-                    );
+                            @Override
+                            public void onError(String iError) {
+                                Log.e(TAG, "Erreur pendant la prononciation : "+iError);
 
+                                Log.w("HOU_DEBUG", "onError");
+
+                                allTextPronoucedSuccess = false;
+
+
+                                currentIndexText++;
+
+                                if (!stopTTSReadSpeaker) {
+                                    Log.w("HOU_DEBUG", "onError 1 ");
+                                    Handler handler = new Handler(Looper.getMainLooper());
+                                    handler.postDelayed(() -> {
+                                        Log.w("HOU_DEBUG", "onError 2");
+                                        startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
+                                    }, 150);
+                                }
+
+                            }
+                            @Override
+                            public void onPause() {
+                               // onPause()
+                            }
+                            @Override
+                            public void onResume() {
+                                //onResume()
+                            }
+                        }
+                );
+
+            }
+
+            else{
+                Log.e("HOU_DEBUG", "END OF SPEAK : " + allTextPronoucedSuccess);
+
+                if(allTextPronoucedSuccess){
+                    //success
+                    allTextPronouced(texteToSpeak,  type);
                 }
 
                 else{
-                    Log.e("FCH_DEBUG", "END OF SPEAK : " + allTextPronoucedSuccess);
-
-                    if(allTextPronoucedSuccess){
-                        //success
-                        allTextPronouced(texteToSpeak,  type);
+                    setLanguageDetected("");
+                    //error
+                    if (type.equals("storedResponse")){
+                        questionNumber++;
+                        notifyObservers("TTS_error;"+texteToSpeak);
+                        storedResponse="";
                     }
-
-                    else{
-                        setLanguageDetected("");
-                        //error
-                        if (type.equals("storedResponse")){
-                            questionNumber++;
-                            notifyObservers("TTS_error;"+texteToSpeak);
-                            storedResponse="";
-                        }
-                        else {
-                            questionNumber++;
-                            notifyObservers("TTS_error;"+texteToSpeak);
-                        }
+                    else {
+                        questionNumber++;
+                        notifyObservers("TTS_error;"+texteToSpeak);
                     }
                 }
             }
         };
 
-        handler_all.postDelayed(delayedTask, 0);
+        handlerAll.postDelayed(delayedTask, 0);
     }
     /**
      * Cette fonction s'exécute lorsque le TTS prononce la réponse du ChatBot.
@@ -2845,50 +2058,38 @@ public class BuddyGPTApplication extends BuddyApplication {
      * @param expression : jouer un mouvement spécial de la bouche [SPEAK_ANGRY / NO_FACE / SPEAK_HAPPY / SPEAK_NEUTRAL]
      */
     public void speakTTS(final String texteToSpeak , LabialExpression expression, String type){
+        String[] texteToSpeakSplitted;
         setAlreadyChatting(true);
         Log.e("MEHDI","texteToSpeak "+texteToSpeak);
         currentIndexText = 0;
-        Stop_TTS_ReadSpeaker = false;
+        stopTTSReadSpeaker = false;
         Log.w(TAG, "speakTTS : "+texteToSpeak);
 
         currentIndexText = 0;
-        Stop_TTS_ReadSpeaker = false;
+        stopTTSReadSpeaker = false;
 
         if (getCurrentLanguage().equals("en")) {
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_en);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_en);
         }
         else if (getCurrentLanguage().equals("fr")){
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_fr);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_fr);
         }
         else if (getCurrentLanguage().equals("de")) {
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_de);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_de);
         }
         else if (getCurrentLanguage().equals("es")) {
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_es);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_es);
         }
         else{
             getEnglishLanguageSelectedTranslator()
                     .translate(getString(R.string.toast_tts_android_indispo_en))
-                    .addOnSuccessListener(new OnSuccessListener<String>() {
-                        @Override
-                        public void onSuccess(String translatedText) {
-                            toast_tts_android_indispo = translatedText;
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_en);
-                        }
-                    });
+                    .addOnSuccessListener(translatedText -> toastTtsAndroidIndispo = translatedText)
+                    .addOnFailureListener(e -> toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_en));
         }
 
         try {
             setTTSAfterDetectingLanguage();
-//            if (usingEmotions && !type.equals("timeOutExpired") && !messageError){
-//                shouldPlayEmotion= true;
-//                notifyObservers("playEmotion");
-//            }
+
             if (((getCurrentLanguage().equals("en") || getCurrentLanguage().equals("fr")) && getparam("TTS").equalsIgnoreCase("ReadSpeaker") && usingReadSpeaker) || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && usingReadSpeaker) ){
                 Log.e("TEST","using readspeaker");
                 if (getCurrentLanguage().equals("en")){
@@ -2901,30 +2102,30 @@ public class BuddyGPTApplication extends BuddyApplication {
                 }
                 BuddySDK.Speech.setSpeakerVolume(getSpeakVolume());
                 if(BuddySDK.Speech.isReadyToSpeak()) {
-                    String texteToSpeak_modified = texteToSpeak;
+                    String texteToSpeakModified = texteToSpeak;
                     if (texteToSpeak.toLowerCase().contains("content")) {
-                        texteToSpeak_modified = texteToSpeak.replaceAll("\\bcontent\\b", "contents");
+                        texteToSpeakModified = texteToSpeak.replaceAll("\\bcontent\\b", "contents");
                     }
                     if (!type.equals("timeOutExpired")) {
                         // Split the text based on periods and commas
-                        texteToSpeakSplitted = texteToSpeak_modified.split("[.,]");
+                        texteToSpeakSplitted = texteToSpeakModified.split("[.,]");
                         Log.e("texteToSpeakSplitted", Arrays.toString(texteToSpeakSplitted));
 
-                        Log.d("FCH_DEBUG", "calling startSpeakingSplittedText : " + texteToSpeak);
+                        Log.d("HOU_DEBUG", "calling startSpeakingSplittedText : " + texteToSpeak);
                         startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
                     } else {
                         BuddySDK.Speech.startSpeaking(
-                                texteToSpeak_modified,
+                                texteToSpeakModified,
                                 expression,
                                 new ITTSCallback.Stub() {
                                     @Override
-                                    public void onSuccess(String iText) throws RemoteException {
+                                    public void onSuccess(String iText)   {
                                         Log.i(TAG, "Succès de prononciation : " + iText);
                                         allTextPronouced(texteToSpeak,  type);
                                     }
 
                                     @Override
-                                    public void onError(String iError) throws RemoteException {
+                                    public void onError(String iError)   {
                                         Log.e(TAG, "Erreur pendant la prononciation : " + iError);
                                         if (type.equals("timeOutExpired")) {
                                             timeoutExpired = false;
@@ -2937,11 +2138,13 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     }
 
                                     @Override
-                                    public void onPause() throws RemoteException {
+                                    public void onPause() {
+                                        //onPause()
                                     }
 
                                     @Override
-                                    public void onResume() throws RemoteException {
+                                    public void onResume()  {
+                                        // onResume
                                     }
                                 }
                         );
@@ -2950,14 +2153,14 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
             else if (getparam("TTS").equalsIgnoreCase("Android") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("Android"))){
                 Log.e("TEST","using tts android");
-                int result = tts_android.speak(texteToSpeak, TextToSpeech.QUEUE_FLUSH, null, "TTS_UTTERANCE_ID");
+                int result = ttsAndroid.speak(texteToSpeak, TextToSpeech.QUEUE_FLUSH, null, "TTS_UTTERANCE_ID");
                 if(!isAppInstalled(getApplicationContext(),"com.google.android.tts")) {
-                    showToast(toast_tts_android_indispo);
+                    showToast(toastTtsAndroidIndispo);
                 }
                 if(result == -1){
                     notifyObservers("TTS_error;"+texteToSpeak);
                 }else{
-                    tts_android.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                    ttsAndroid.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                         @Override
                         public void onStart(String utteranceId) {
                             try {
@@ -3130,9 +2333,8 @@ public class BuddyGPTApplication extends BuddyApplication {
      * Cette fonction permet d'arrêter la prononciation
      */
     public void stopTTS() {
-        Stop_TTS_ReadSpeaker = true;
         Log.w(TAG, "stopTTS");
-        Stop_TTS_ReadSpeaker = true;
+        stopTTSReadSpeaker = true;
         try {
             if (BuddySDK.Speech.isSpeaking()) {
                 BuddySDK.Speech.stopSpeaking();
@@ -3140,8 +2342,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         } catch (Exception e) {
             Log.e(TAG, "Erreur pendant l'arrêt de la prononciation TTS : "+e);
         }
-        if (tts_android!= null){
-            tts_android.stop();
+        if (ttsAndroid!= null){
+            ttsAndroid.stop();
         }
         if (googleCloudTTS != null ){
             googleCloudTTS.stop();
@@ -3179,16 +2381,16 @@ public class BuddyGPTApplication extends BuddyApplication {
                                 if (getparam("TTS").equalsIgnoreCase("Android")
                                         || (getparam("TTS").equalsIgnoreCase("ReadSpeaker")
                                                 && getSecondTTSfromTTSList().equalsIgnoreCase("Android"))) {
-                                    tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(
+                                    ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(
                                             getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                                    tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(
+                                    ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(
                                             getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                                    tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                    ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                             getLangue().getLanguageCode().split("-")[1]));
                                 } else if (getparam("TTS").equalsIgnoreCase("ApiGoogle")
                                         || (getparam("TTS").equalsIgnoreCase("ReadSpeaker")
                                                 && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))) {
-
+                                                // explain
                                 }
                                 //0.5,2.0
 
@@ -3204,19 +2406,19 @@ public class BuddyGPTApplication extends BuddyApplication {
                     else {
                         if (getLangue().getLanguageCode().split("-")[0].equals("en")){
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                     getLangue().getLanguageCode().split("-")[1]));
                         } else {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale("en", "US"));
+                            ttsAndroid.setLanguage(new Locale("en", "US"));
                         }
                     }
                     break;
@@ -3232,11 +2434,11 @@ public class BuddyGPTApplication extends BuddyApplication {
                             if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
                                 Log.e("MEHDI", "usingReadSpeaker 2");
                                 usingReadSpeaker = false;
-                                tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                         .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
-                                tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                         .parseInt(getParamFromFile("TTS_Android_speed_fr", configurationFilePseudo))));
-                                tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                                ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                         getLangue().getLanguageCode().split("-")[1]));
                             } else {
                                 Log.e("MRAA", "frensh roxane");
@@ -3248,19 +2450,19 @@ public class BuddyGPTApplication extends BuddyApplication {
                     } else {
                         if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_fr", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                     getLangue().getLanguageCode().split("-")[1]));
                         } else {
                             usingReadSpeaker = false;
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_fr", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale("fr", "FR"));
+                            ttsAndroid.setLanguage(new Locale("fr", "FR"));
                         }
                     }
                     break;
@@ -3268,24 +2470,24 @@ public class BuddyGPTApplication extends BuddyApplication {
                     usingReadSpeaker = false;
                     if (getLangue().getLanguageCode().split("-")[0].equals("es")) {
 
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                        ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                 getLangue().getLanguageCode().split("-")[1]));
                     } else {
-                        int result = tts_android
+                        int result = ttsAndroid
                                 .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
                             Log.e("TEST", "langue qui doit etre " + code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                            ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
@@ -3294,24 +2496,24 @@ public class BuddyGPTApplication extends BuddyApplication {
                     usingReadSpeaker = false;
                     if (getLangue().getLanguageCode().split("-")[0].equals("de")) {
 
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
+                        ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
                                 getLangue().getLanguageCode().split("-")[1]));
                     } else {
-                        int result = tts_android
+                        int result = ttsAndroid
                                 .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
                             Log.e("TEST", "langue qui doit etre " + code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                            ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
@@ -3323,25 +2525,25 @@ public class BuddyGPTApplication extends BuddyApplication {
                             + getCurrentLanguage().split("-").length);
                     if (!getCurrentLanguage().equals("")
                             && getCurrentLanguage().split("-")[0].trim().equalsIgnoreCase(language)) {
-                        tts_android.setPitch(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                        tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(
+                        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(
                                 Integer.parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                        tts_android.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),
+                        ttsAndroid.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),
                                 getCurrentLanguage().split("-")[1].trim()));
                     } else {
                         Log.e("TEST", "set Langue TTS " + language.toLowerCase() + "," + language.toUpperCase());
-                        int result = tts_android
+                        int result = ttsAndroid
                                 .setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
                         if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                             Log.e("TEST", "langue non pas prise ne charge");
                             String code = getFirstFullLanguageCode(language.toLowerCase());
                             Log.e("TEST", "langue qui doit etre " + code);
-                            tts_android.setPitch(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_pitch_en", configurationFilePseudo))));
-                            tts_android.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
+                            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer
                                     .parseInt(getParamFromFile("TTS_Android_speed_en", configurationFilePseudo))));
-                            tts_android.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                            ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
 
                         }
                     }
@@ -3382,7 +2584,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 }
 
             }
-            if (!languageCodeExist){
+            if (Boolean.FALSE.equals(languageCodeExist)){
                 for (String code : getVoiceList().getLanguageCodes()) {
                     if (code.split("-")[0].equals(languageCode.split("-")[0])){
                         languageCodeExist=true;
@@ -3398,7 +2600,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     }
                 }
             }
-            if (!languageCodeExist){
+            if (Boolean.FALSE.equals(languageCodeExist)){
                 languageCode = "en-US";
                 voice = "en-US-Standard-C";
             }
@@ -3495,7 +2697,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         } catch (IOException ex) {
                             Log.e(TAG, "Error writing to file: " + ex.getMessage());
                         }
-                        String errorTXT= new Date().toString()+", GoogleCloudTTSERROR,ERROR CODE= "+errorLOG.getAsJsonObject("error").get("code")+", ERROR Body{ message= "+errorLOG.getAsJsonObject("error").get("message")+", status= "+errorLOG.getAsJsonObject("error").get("status")+"}"+System.getProperty("line.separator");
+                        String errorTXT= new Date() +", GoogleCloudTTSERROR,ERROR CODE= "+errorLOG.getAsJsonObject("error").get("code")+", ERROR Body{ message= "+errorLOG.getAsJsonObject("error").get("message")+", status= "+errorLOG.getAsJsonObject("error").get("status")+"}"+System.getProperty("line.separator");
                         File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
                         try (FileWriter fileWriter2 = new FileWriter(file2, true)) {
                             fileWriter2.write(errorTXT);
@@ -3556,8 +2758,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private float getConvertedPitchAndSpeedValue(int nombre){
         int valeurMinEntree = 50;
         int valeurMaxEntree = 150;
-        float valeurMinSortie = 0.5f;
-        float valeurMaxSortie = 2.0f;
+
         Log.e("TEST","converted value :nombre= "+nombre);
         // Vérification si le nombre se trouve dans l'intervalle d'entrée
         if (nombre < valeurMinEntree || nombre > valeurMaxEntree) {
@@ -3577,12 +2778,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         Locale[] locales = Locale.getAvailableLocales();
         Boolean hasThesame =false;
         boolean firstLanguageCode = true;
-        String FullLanguageCode="";
+        String fullLanguageCode="";
         for (Locale locale : locales) {
             if (shortLanguageCode.equalsIgnoreCase(locale.getLanguage()) && !locale.getCountry().isEmpty()) {
                 if (firstLanguageCode){
                     firstLanguageCode=false;
-                    FullLanguageCode =locale.getLanguage() + "-" + locale.getCountry();
+                    fullLanguageCode =locale.getLanguage() + "-" + locale.getCountry();
                 }
                 if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())){
                     hasThesame =true;
@@ -3592,126 +2793,77 @@ public class BuddyGPTApplication extends BuddyApplication {
 
             }
         }
-        if (hasThesame){
-            FullLanguageCode = shortLanguageCode.toLowerCase()+"-"+shortLanguageCode.toUpperCase();
+        if (Boolean.TRUE.equals(hasThesame)){
+            fullLanguageCode = shortLanguageCode.toLowerCase()+"-"+shortLanguageCode.toUpperCase();
         }
-        return FullLanguageCode;
+        return fullLanguageCode;
     }
     /**
      * Cette méthode permet d'inialiser le TTS d'android
      */
     public void initTTSAndroid(){
-        tts_android = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
-            @Override
-            public void onInit(int status) {
-                if (status == TextToSpeech.SUCCESS) {
-                    // TTS is initialized successfully
-                    Log.e("TTS_Android","TTS is initialized successfully");
-                }else {
-                    Log.e("TTS_Android", "TTS Initilization Failed!" + status);
-
-                }
+        ttsAndroid = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                // TTS is initialized successfully
+                Log.e("TTS_Android","TTS is initialized successfully");
+            }else {
+                Log.e("TTS_Android", "TTS Initilization Failed!" + status);
 
             }
+
         },"com.google.android.tts");
     }
-    public void initTTSGoogleCoud(){
-//        googleCloudTTS = TtsFactory.create(getParamFromFile("ApiGoogle_Key",configurationFilePseudo));
-//        new AsyncTask<Void, Void, Void>() {
-//            @Override
-//            protected Void doInBackground(Void... voids) {
-//                try {
-//
-//                    voiceList = googleCloudTTS.load();
-//
-//
-//
-//                } catch (Exception e) {
-//                    Log.e("MRA","load  Exception-----------  "+e);
-//                    Log.e(TAG,"Exception "+e);
-//                    try {
-//                        int startIndex = e.getMessage().indexOf('{');
-//                        // Trouver la fin de la réponse JSON
-//                        int endIndex = e.getMessage().lastIndexOf('}') + 1;
-//                        // Extraire la réponse JSON
-//                        String jsonContent = e.getMessage().substring(startIndex, endIndex);
-//                        JsonObject errorLOG = JsonParser.parseString(jsonContent).getAsJsonObject();
-//
-//                        //Mettre   le fichier le plus récent reçu
-//                        String fileName = "ERROR-LOG";
-//                        File file1 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/" + fileName + ".json");
-//                        if (file1.exists() && file1.isFile()) {
-//                            file1.delete();
-//                        }
-//                        FileWriter fileWriter = new FileWriter(file1);
-//                        Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-//                        String jsonStringF=gson.toJson(errorLOG);
-//                        fileWriter.write(jsonStringF);
-//                        fileWriter.close();
-//                        String errorTXT= new Date().toString()+", GoogleCloudTTSERROR,ERROR CODE= "+errorLOG.getAsJsonObject("error").get("code")+", ERROR Body{ message= "+errorLOG.getAsJsonObject("error").get("message")+", status= "+errorLOG.getAsJsonObject("error").get("status")+"}"+System.getProperty("line.separator");
-//                        File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
-//                            FileWriter fileWriter2 = new FileWriter(file2,true);
-//                            fileWriter2.write(errorTXT);
-//                            fileWriter2.close();
-//
-//                    } catch (IOException ej) {
-//                        e.printStackTrace();
-//                    }
-//                }
-//                return null;
-//            }
-//        }.execute();
 
-    }
 
 
 
     public void playUsingReadSpeakerCaseError(String text, ITTSCallbacks ittsCallbacks){
-        if(usingReadSpeaker){
+        final String[] toastTtsGoogleApiIndispo = new String[1];
+        if(Boolean.TRUE.equals(usingReadSpeaker)){
             ittsCallbacks.onError("error is in readspeaker not tts_android");
             return;
         }
         String voice; //kate ou roxane
 
         if (getCurrentLanguage().equals("en")) {
-            toast_tts_googleApi_indispo =getString(R.string.toast_tts_googleApi_indispo_en);
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_en);
+            toastTtsGoogleApiIndispo[0] =getString(R.string.toast_tts_googleApi_indispo_en);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_en);
             voice = "kate";
             if (getparam("TTS").equalsIgnoreCase("ApiGoogle") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))){
-                showToast(toast_tts_googleApi_indispo);
+                showToast(toastTtsGoogleApiIndispo[0]);
             }
             else{
-                showToast(toast_tts_android_indispo);
+                showToast(toastTtsAndroidIndispo);
             }
         }
         else if (getCurrentLanguage().equals("fr")){
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_fr);
-            toast_tts_googleApi_indispo =getString(R.string.toast_tts_googleApi_indispo_fr);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_fr);
+            toastTtsGoogleApiIndispo[0] =getString(R.string.toast_tts_googleApi_indispo_fr);
             voice = "roxane";
             if (getparam("TTS").equalsIgnoreCase("ApiGoogle") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))){
-                showToast(toast_tts_googleApi_indispo);
+                showToast(toastTtsGoogleApiIndispo[0]);
             }
             else{
-                showToast(toast_tts_android_indispo);
+                showToast(toastTtsAndroidIndispo);
             }
         }
         else if (getCurrentLanguage().equals("de")) {
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_de);
-            toast_tts_googleApi_indispo =getString(R.string.toast_tts_googleApi_indispo_de);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_de);
+            toastTtsGoogleApiIndispo[0] =getString(R.string.toast_tts_googleApi_indispo_de);
             voice = "kate";
             if ( getparam("TTS").equalsIgnoreCase("ReadSpeaker")){
-                showToast(toast_tts_googleApi_indispo);
+                showToast(toastTtsGoogleApiIndispo[0]);
             }
             else{
-                showToast(toast_tts_android_indispo);
+                showToast(toastTtsAndroidIndispo);
             }
         }
         else if (getCurrentLanguage().equals("es")) {
-            toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_es);
-            toast_tts_googleApi_indispo =getString(R.string.toast_tts_googleApi_indispo_es);
+            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_es);
+            toastTtsGoogleApiIndispo[0] =getString(R.string.toast_tts_googleApi_indispo_es);
             voice = "kate";
 
-                showToast(toast_tts_android_indispo);
+                showToast(toastTtsAndroidIndispo);
 
         }
         else{
@@ -3720,37 +2872,25 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                 getEnglishLanguageSelectedTranslator()
                         .translate(getString(R.string.toast_tts_googleApi_indispo_en))
-                        .addOnSuccessListener(new OnSuccessListener<String>() {
-                            @Override
-                            public void onSuccess(String translatedText) {
-                                toast_tts_googleApi_indispo = translatedText;
-                                showToast(toast_tts_googleApi_indispo);
-                            }
+                        .addOnSuccessListener(translatedText -> {
+                            toastTtsGoogleApiIndispo[0] = translatedText;
+                            showToast(toastTtsGoogleApiIndispo[0]);
                         })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                toast_tts_googleApi_indispo = getString(R.string.toast_tts_googleApi_indispo_en);
-                                showToast(toast_tts_googleApi_indispo);
-                            }
+                        .addOnFailureListener(e -> {
+                            toastTtsGoogleApiIndispo[0] = getString(R.string.toast_tts_googleApi_indispo_en);
+                            showToast(toastTtsGoogleApiIndispo[0]);
                         });
             }
             else{
                 getEnglishLanguageSelectedTranslator()
                         .translate(getString(R.string.toast_tts_android_indispo_en))
-                        .addOnSuccessListener(new OnSuccessListener<String>() {
-                            @Override
-                            public void onSuccess(String translatedText) {
-                                toast_tts_android_indispo = translatedText;
-                                showToast(toast_tts_android_indispo);
-                            }
+                        .addOnSuccessListener(translatedText -> {
+                            toastTtsAndroidIndispo = translatedText;
+                            showToast(toastTtsAndroidIndispo);
                         })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                toast_tts_android_indispo = getString(R.string.toast_tts_android_indispo_en);
-                                showToast(toast_tts_android_indispo);
-                            }
+                        .addOnFailureListener(e -> {
+                            toastTtsAndroidIndispo = getString(R.string.toast_tts_android_indispo_en);
+                            showToast(toastTtsAndroidIndispo);
                         });
 
             }
@@ -3761,29 +2901,33 @@ public class BuddyGPTApplication extends BuddyApplication {
         BuddySDK.Speech.setSpeakerVoice(voice);
 
         if(BuddySDK.Speech.isReadyToSpeak()) {
-            Log.e("FCH_TEST","start play from TTS error");
+            Log.e("HOU_TEST","start play from TTS error");
             BuddySDK.Speech.startSpeaking(
                     text,
                     LabialExpression.SPEAK_NEUTRAL,
                     new ITTSCallback.Stub() {
                         @Override
-                        public void onSuccess(String s) throws RemoteException {
+                        public void onSuccess(String s)   {
                             ittsCallbacks.onSuccess(s);
-                            Log.e("FCH_TEST","start play from TTS error  onSuccess");
+                            Log.e("HOU_TEST","start play from TTS error  onSuccess");
                         }
                         @Override
-                        public void onPause() throws RemoteException {}
+                        public void onPause()   {
+                            // onPause
+                        }
                         @Override
-                        public void onResume() throws RemoteException {}
+                        public void onResume()   {
+                            // onResume
+                        }
                         @Override
-                        public void onError(String s) throws RemoteException {
+                        public void onError(String s)   {
                             ittsCallbacks.onError(s);
-                            Log.e("FCH_TEST","start play from TTS error  onERRor");
+                            Log.e("HOU_TEST","start play from TTS error  onERRor");
                         }
                     });
         }
         else{
-            Log.e("FCH_TEST","else---------- start play from TTS error");
+            Log.e("HOU_TEST","else---------- start play from TTS error");
             ittsCallbacks.onError("ReadSpeaker indisponible");
         }
 
@@ -3824,6 +2968,8 @@ public class BuddyGPTApplication extends BuddyApplication {
                 case "off":
                     BuddySDK.USB.updateAllLed("#000000", iUsbLedCommandRsp);
                     break;
+                default:
+                    BuddySDK.USB.updateAllLed("#00D4D0", iUsbLedCommandRsp);
             }
             Log.i(TAG, "Changement de couleurs des LEDs ["+state+"]");
         } catch (Exception e) {
@@ -3840,13 +2986,10 @@ public class BuddyGPTApplication extends BuddyApplication {
         if (mToast != null) {
             mToast.cancel();
         }
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                mToast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
-                mToast.setDuration(Toast.LENGTH_LONG);
-                mToast.show();
-            }
+        new Handler(Looper.getMainLooper()).post(() -> {
+            mToast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
+            mToast.setDuration(Toast.LENGTH_LONG);
+            mToast.show();
         });
     }
 
@@ -3856,7 +2999,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         handler.post(() -> {
             if(dialog != null && dialog.isShowing()) dialog.dismiss();
 
-            Log.w("BuddyGPT", "Dialog shown: ");
+            Log.w("BuddyGPTApp", "Dialog shown: ");
             // Create a new Dialog and remove default title for a more modern look
             dialog = new Dialog(activity);
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -3898,8 +3041,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 
             // Set smaller width and height for the OK button
             LinearLayout.LayoutParams buttonParams = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT,  // Width wraps content
-                    LinearLayout.LayoutParams.WRAP_CONTENT  // Height wraps content
+                    WRAP_CONTENT,  // Width wraps content
+                    WRAP_CONTENT  // Height wraps content
             );
             okButton.setLayoutParams(buttonParams);
 
@@ -4058,7 +3201,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         wordIterator.setText(chaine);
 
         int wordCount = 0;
-        int lastIndex = 0;
 
         // Boucle pour compter les mots en utilisant l'itérateur de mots
         while (wordIterator.next() != BreakIterator.DONE) {
@@ -4068,10 +3210,9 @@ public class BuddyGPTApplication extends BuddyApplication {
             if (Character.isLetterOrDigit(chaine.charAt(currentIndex - 1))) {
                 wordCount++;
             }
-            lastIndex = currentIndex;
         }
         Log.e("MEHDI","nombre de mots  ------------ "+wordCount);
-        return wordCount >= Integer.parseInt(getParamFromFile("Number_of_words","BuddyGPT.properties"));
+        return wordCount >= Integer.parseInt(getParamFromFile("Number_of_words",configurationFilePseudo));
     }
 
     /**
@@ -4080,7 +3221,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     public boolean isConnectedToInternet() {
         boolean haveConnectedWifi = false;
         boolean haveConnectedMobile = false;
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         final Network n = cm.getActiveNetwork();
         if (n != null) {
             final NetworkCapabilities nc = cm.getNetworkCapabilities(n);
@@ -4103,16 +3244,16 @@ public class BuddyGPTApplication extends BuddyApplication {
      * cette méthode permet de récupérer la langue à utiliser
      */
     public String getCurrentLanguage(){
-        if(this.langue.getNom() .equals("Français")){
+        if(this.langue.getNom() .equals(langueFr)){
             return "fr";
         }
-        else if (this.langue.getNom() .equals("Anglais")){
+        else if (this.langue.getNom() .equals(langueEn)){
             return "en";
         }
-        else if (this.langue.getNom() .equals("Espagnol")){
+        else if (this.langue.getNom() .equals(langueEs)){
             return "es";
         }
-        else if (this.langue.getNom() .equals("Allemand")){
+        else if (this.langue.getNom() .equals(langueDe)){
             return "de";
         }
         else return this.langue.getLanguageCode();
@@ -4198,7 +3339,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     /**
      * Cette fonction permet de créer le fichier de configuration
      */
-    public String createPropertiesFile() throws IOException {
+    public String createPropertiesFile() {
         File directory = new File(getString(R.string.path), "BuddyGPT");
         String initOrMajOrNone = ConfigurationFile.createConfigurationFile(directory);
         init();
@@ -4211,10 +3352,10 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void setVolume(int percentage,int type) {
         AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        int max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        int maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
 
 
-        int volume = getClosestInt((double) (percentage * max) / 100);
+        int volume = getClosestInt((double) (percentage * maxVolume) / 100);
 
 
         if (audioManager.isBluetoothScoOn()) {

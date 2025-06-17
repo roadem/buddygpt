@@ -18,10 +18,7 @@ public class SettingsContentObserver extends ContentObserver {
         this.context = cntx;
     }
 
-    @Override
-    public boolean deliverSelfNotifications() {
-        return super.deliverSelfNotifications();
-    }
+
 
     @Override
     public void onChange(boolean selfChange) {

@@ -77,35 +77,26 @@ public class TtsGoogleC implements AutoCloseable{
 
         try {
             SynthesizeResponse response = mSynthesizeApi.get(request);
-            //playAudio(response.getAudioContent());
             stop();
             String base64EncodedString = response.getAudioContent();
             String url = "data:audio/mp3;base64," + base64EncodedString;
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setDataSource(url);
-            mMediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
-                @Override
-                public void onPrepared(MediaPlayer mp) {
-                    if (mTtsListener != null) {
-                        mTtsListener.onStart();
-                    }
-                    mp.start();
+            mMediaPlayer.setOnPreparedListener(mp -> {
+                if (mTtsListener != null) {
+                    mTtsListener.onStart();
                 }
+                mp.start();
             });
 
-            mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    if (mTtsListener != null) {
-                        mTtsListener.onDone();
-                    }
-                    mp.release();
+            mMediaPlayer.setOnCompletionListener(mp -> {
+                if (mTtsListener != null) {
+                    mTtsListener.onDone();
                 }
+                mp.release();
             });
 
             mMediaPlayer.prepareAsync();
-//                mMediaPlayer.prepare();
-//                mMediaPlayer.start();
         } catch (Exception e) {
             if (mTtsListener != null) {
                 mTtsListener.onError();
@@ -136,15 +127,6 @@ public class TtsGoogleC implements AutoCloseable{
         }
     }
 
-    private void playAudio(String base64EncodedString) throws IOException {
-        stop();
-
-        String url = "data:audio/mp3;base64," + base64EncodedString;
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setDataSource(url);
-        mMediaPlayer.prepare();
-        mMediaPlayer.start();
-    }
 
     public void close() {
         stop();

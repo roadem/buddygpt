@@ -19,7 +19,7 @@ import java.util.Set;
 public class CustomProperties extends Properties {
     private static final long serialVersionUID = 1L;
 
-    private final Map<Object, Object> linkMap = new LinkedHashMap<Object, Object>();
+    private final Map<Object, Object> linkMap = new LinkedHashMap<>();
     private Map<String, List<String>> propertySpecificComments = new HashMap<>();
 
     @Override
@@ -70,7 +70,7 @@ public class CustomProperties extends Properties {
     public synchronized String getProperty(String key) {
         String val = null;
         for (Iterator<Entry<Object, Object>> e = linkMap.entrySet().iterator(); e.hasNext();) {
-            Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) e.next();
+            Map.Entry<Object, Object> entry = e.next();
             if (key.equalsIgnoreCase((String) entry.getKey())) {
                 val = (String) entry.getValue();
                 break;
@@ -136,4 +136,21 @@ public class CustomProperties extends Properties {
         bw.write(s);
         bw.newLine();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CustomProperties)) return false;
+        CustomProperties that = (CustomProperties) o;
+        return linkMap.equals(that.linkMap) &&
+                propertySpecificComments.equals(that.propertySpecificComments);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = linkMap.hashCode();
+        result = 31 * result + propertySpecificComments.hashCode();
+        return result;
+    }
+
 }

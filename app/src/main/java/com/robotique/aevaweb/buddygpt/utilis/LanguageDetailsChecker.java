@@ -13,9 +13,7 @@ import java.util.List;
 
 public class LanguageDetailsChecker extends BroadcastReceiver
 {
-    private List<String> supportedLanguages;
 
-    private String languagePreference;
     private LanguageDetailsListener listener;
 
     public LanguageDetailsChecker(LanguageDetailsListener listener) {

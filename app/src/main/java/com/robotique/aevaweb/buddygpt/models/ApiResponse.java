@@ -1,61 +1,61 @@
 package com.robotique.aevaweb.buddygpt.models;
 
 public class ApiResponse {
-    private String session_id;
-    private String Emotion;
-    private String Answer;
-    private boolean is_finished;
-    private String Commandes;
+    private String sessionId;
+    private String emotion;
+    private String answer;
+    private boolean isFinished;
+    private String commandes;
 
     // Getters and setters
     public String getSessionId() {
-        return session_id;
+        return sessionId;
     }
 
-    public void setSessionId(String session_id) {
-        this.session_id = session_id;
+    public void setSessionId(String sessionId) {
+        this.sessionId = sessionId;
     }
 
     public String getEmotion() {
-        return Emotion;
+        return emotion;
     }
 
-    public void setEmotion(String Emotion) {
-        this.Emotion = Emotion;
+    public void setEmotion(String emotion) {
+        this.emotion = emotion;
     }
 
     public String getAnswer() {
-        return Answer;
+        return answer;
     }
 
-    public void setAnswer(String Answer) {
-        this.Answer = Answer;
+    public void setAnswer(String answer) {
+        this.answer = answer;
     }
 
     public boolean isFinished() {
-        return is_finished;
+        return isFinished;
     }
 
-    public void setFinished(boolean is_finished) {
-        this.is_finished = is_finished;
+    public void setFinished(boolean isFinished) {
+        this.isFinished = isFinished;
     }
 
     public String getCommandes() {
-        return Commandes;
+        return commandes;
     }
 
-    public void setCommandes(String Commandes) {
-        this.Commandes = Commandes;
+    public void setCommandes(String commandes) {
+        this.commandes = commandes;
     }
 
     @Override
     public String toString() {
         return "ApiResponse{" +
-                "session_id='" + session_id + '\'' +
-                ", Emotion='" + Emotion + '\'' +
-                ", Answer='" + Answer + '\'' +
-                ", is_finished=" + is_finished +
-                ", Commandes='" + Commandes + '\'' +
+                "session_id='" + sessionId + '\'' +
+                ", Emotion='" + emotion + '\'' +
+                ", Answer='" + answer + '\'' +
+                ", is_finished=" + isFinished +
+                ", Commandes='" + commandes + '\'' +
                 '}';
     }
 }

@@ -43,6 +43,7 @@
             android:screenOrientation="landscape" />
         <activity
             android:name="com.robotique.aevaweb.buddygpt.activities.MainActivity"
+            android:exported="true"
             android:screenOrientation="landscape">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

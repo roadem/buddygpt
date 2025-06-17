@@ -78,14 +78,14 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     private static final String HOUR_PATTERN = "HH:mm:ss";
     private static final String SELECTED_CHATBOT = "SelectedChatbot";
     private BuddyGPTApplication buddyGPTApplication;
-    private Random random = new Random();
+    private final Random random = new Random();
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private boolean isListeningFreeSpeech = false;
     private boolean isWaitingForResponse = false;
 
 
     private ArrayList<Replica> listRep=new ArrayList<>();
-    private ArrayList<Replica> listRepGlobale=new ArrayList<>();
+    private final ArrayList<Replica> listRepGlobale=new ArrayList<>();
     private ReplicaListAdapter adapter;
 
     //timers
@@ -109,18 +109,18 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     boolean startlisten=true;
     MailSender smtpService;
     private ResponseFromTeamGPT responseFromTeamGPT;
-    private String langueFr = "Français";
-    private String langueEn = "Anglais";
-    private String langueEs = "Espagnol";
-    private String langueDe = "Allemand";
-    private Handler handlerTTSError = new Handler();
+    private static final String langueFr = "Français";
+    private static final String langueEn = "Anglais";
+    private static final String langueEs = "Espagnol";
+    private static final String langueDe = "Allemand";
+    private static final Handler handlerTTSError = new Handler();
     private Runnable runnableTTSError;
-    private String configFile ="BuddyGPT.properties";
+    private static final String configFile ="BuddyGPT.properties";
     private boolean isClickedBtnCloseChat=false;
     String[] newSessionText = new String[1];
     String[] responseText = new String[1];
     String[] qstText = new String[1];
-    private Handler handlerPauseTime = new Handler();
+    private static final Handler handlerPauseTime = new Handler();
     private Runnable runnablePauseTime;
 
     //-----------------------------Cycle de vie de l'activité--------------------
@@ -153,7 +153,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         if (responseTimeout != null) responseTimeout.cancel();
 
         // Supprime les callbacks liés aux erreurs TTS s'ils existent
-        if (handlerTTSError != null && runnableTTSError != null) {
+        if (runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
             handlerTTSError.removeCallbacksAndMessages(null); // Supprime tous les messages restants
         }
@@ -186,7 +186,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
     @Override
     protected void onDestroy() {
         // Vérifie si les préférences initiales ne sont pas définies
-        if (!buddyGPTApplication.getInitSharedpreferences()) {
+        if (Boolean.FALSE.equals(buddyGPTApplication.getInitSharedpreferences())) {
             buddyGPTApplication.setparam("firstLaunch", "true");
             buddyGPTApplication.notifyObservers("ChatDestroy");
         }
@@ -254,9 +254,8 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         View decorView = getWindow().getDecorView();
         decorView.setSystemUiVisibility(uiFlags);
         decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
-            if (visibility == View.SYSTEM_UI_FLAG_VISIBLE) {
+            if (visibility == View.SYSTEM_UI_FLAG_VISIBLE)
                 decorView.setSystemUiVisibility(uiFlags);
-            }
         });
     }
 
@@ -598,7 +597,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
         buddyGPTApplication.setLed(NEUTRAL);
         microBtn.setImageResource(R.drawable.micro_off);
         buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-        buddyGPTApplication.traitementAudio(false);
+        buddyGPTApplication.traitementAudio();
     }
 
     private void setAddMailDestinationText(){
@@ -938,7 +937,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                                                 messageToSpeak = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_de", configFile);
                                                 break;
                                             default:
-                                                messageToSpeak = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", "BuddyGPT.properties");
+                                                messageToSpeak = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", configFile);
                                                 break;
                                         }
                                         String[] messages = messageToSpeak.split("/");

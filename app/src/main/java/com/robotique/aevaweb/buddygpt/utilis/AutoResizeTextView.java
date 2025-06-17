@@ -54,7 +54,7 @@ public class AutoResizeTextView extends AppCompatTextView {
     private boolean mEnableSizeCache = true;
     private boolean mInitiallized;
 
-    public int textBestSize;
+    int textBestSize;
 
     public AutoResizeTextView(Context context) {
         super(context);
@@ -86,14 +86,14 @@ public class AutoResizeTextView extends AppCompatTextView {
     @Override
     public void setText(final CharSequence text, BufferType type) {
         super.setText(text, type);
-        adjustTextSize(text.toString());
+        adjustTextSize();
     }
 
     @Override
     public void setTextSize(float size) {
         mMaxTextSize = size;
         mTextCachedSizes.clear();
-        adjustTextSize(getText().toString());
+        adjustTextSize();
     }
 
     @Override
@@ -103,6 +103,7 @@ public class AutoResizeTextView extends AppCompatTextView {
         reAdjust();
     }
 
+    @Override
     public int getMaxLines() {
         return mMaxLines;
     }
@@ -144,7 +145,7 @@ public class AutoResizeTextView extends AppCompatTextView {
         mMaxTextSize = TypedValue.applyDimension(unit, size,
                 r.getDisplayMetrics());
         mTextCachedSizes.clear();
-        adjustTextSize(getText().toString());
+        adjustTextSize();
     }
 
     @Override
@@ -165,10 +166,10 @@ public class AutoResizeTextView extends AppCompatTextView {
     }
 
     private void reAdjust() {
-        adjustTextSize(getText().toString());
+        adjustTextSize();
     }
 
-    private void adjustTextSize(String string) {
+    private void adjustTextSize() {
         if (!mInitiallized) {
             return;
         }
@@ -237,7 +238,7 @@ public class AutoResizeTextView extends AppCompatTextView {
     public void enableSizeCache(boolean enable) {
         mEnableSizeCache = enable;
         mTextCachedSizes.clear();
-        adjustTextSize(getText().toString());
+        adjustTextSize();
     }
 
     private int efficientTextSizeSearch(int start, int end,

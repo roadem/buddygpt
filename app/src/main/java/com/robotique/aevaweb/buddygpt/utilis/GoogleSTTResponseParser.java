@@ -11,8 +11,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
 
 public class GoogleSTTResponseParser {
 
@@ -26,7 +28,7 @@ public class GoogleSTTResponseParser {
     private String mTranscript = null;
 
     private static String extractJsonString(InputStream in) throws IOException {
-        InputStreamReader inputStreamReader = new InputStreamReader(in, "UTF-8");
+        InputStreamReader inputStreamReader = new InputStreamReader(in, StandardCharsets.UTF_8);
         BufferedReader br = new BufferedReader(inputStreamReader);
         String s;
         StringBuilder resultContent = new StringBuilder();
@@ -115,6 +117,19 @@ public class GoogleSTTResponseParser {
         @Override
         public int compareTo(@NonNull Result result) {
             return Double.compare(result.confidence, confidence);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Result result = (Result) o;
+            return Double.compare(confidence, result.confidence) == 0 && Objects.equals(transcript, result.transcript);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(transcript, confidence);
         }
     }
 

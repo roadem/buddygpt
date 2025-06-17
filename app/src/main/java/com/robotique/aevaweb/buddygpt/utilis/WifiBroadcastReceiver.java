@@ -19,8 +19,8 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
     private Context mContext;
     private ConnectivityManager cm;
     private Context contextAct;
-    private int mWifiLevel;
-    private final String isConnected = "isConnected";
+    int mWifiLevel;
+    private static final String isConnected = "isConnected";
     BuddyGPTApplication application;
 
     public void onReceive(final Context context, final Intent intent) {
@@ -28,7 +28,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
         cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         forceCheckConnexState(mContext);
         if (application.isConnectedToInternet()) {
-            application.notifyObservers("isConnected");
+            application.notifyObservers(isConnected);
         } else {
             application.notifyObservers("isNotConnected");
         }

@@ -6,6 +6,7 @@ import android.text.Html;
 import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.RelativeSizeSpan;
 import android.util.TypedValue;
@@ -17,8 +18,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.models.Replica;
@@ -26,9 +25,9 @@ import com.robotique.aevaweb.buddygpt.models.Replica;
 public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     Replica[] mDataset;
-    int item_send=1;
-    int item_receive=2;
-    int item_session=3;
+    int itemSend=1;
+    int itemReceive=2;
+    int itemSession=3;
     private BuddyGPTApplication buddyGPTApplication;
 
     public static class SentViewHolder extends RecyclerView.ViewHolder {
@@ -61,21 +60,18 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     }
     public static class SessionViewHolder extends RecyclerView.ViewHolder {
 
-        private TextView txt_session;
+        private TextView txtSession;
 
 
         public SessionViewHolder(View itemView, BuddyGPTApplication buddyGPTApplication){
             super(itemView);
-            txt_session =itemView.findViewById(R.id.txt_session);
-            txt_session.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
-//            if(buddyGPTApplication.getParamFromFile("show_openAI_prices", "BuddyGPT.properties").trim().equalsIgnoreCase("yes")){
-//                messageConsommation = itemView.findViewById(R.id.openai_price);
-//                messageConsommation.setTextSize(TypedValue.COMPLEX_UNIT_PX,buddyGPTApplication.getTextSizeBullesPX());
-//            }
+            txtSession =itemView.findViewById(R.id.txt_session);
+            txtSession.setTextSize(TypedValue.COMPLEX_UNIT_PX, buddyGPTApplication.getTextSizeBullesPX());
+
         }
 
         public TextView getTextView() {
-            return txt_session;
+            return txtSession;
         }
     }
 
@@ -120,33 +116,23 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
 
             // Fusionner les deux textes avec un format HTML
             SpannableString spannable = new SpannableString(message + " " + duration);
-            spannable.setSpan(new ForegroundColorSpan(Color.BLACK), message.length() + 1, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            spannable.setSpan(new RelativeSizeSpan(0.7f), message.length() + 1, spannable.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannable.setSpan(new ForegroundColorSpan(Color.BLACK), message.length() + 1, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannable.setSpan(new RelativeSizeSpan(0.7f), message.length() + 1, spannable.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             ((ReceiveViewHolder) holder).receivemessage.setText(spannable);
         }
         else if (holder.getClass()==SessionViewHolder.class){
 
             if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
+                ((SessionViewHolder) holder).txtSession.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
             }
             else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_fr)+"_______________________");
+                ((SessionViewHolder) holder).txtSession.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_fr)+"_______________________");
             }
             else {
                 buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                         .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_session_en))
-                        .addOnSuccessListener(new OnSuccessListener<String>() {
-                            @Override
-                            public void onSuccess(String translatedText) {
-                                ((SessionViewHolder) holder).txt_session.setText("_______________________"+translatedText+"_______________________");
-                            }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                ((SessionViewHolder) holder).txt_session.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________");
-                            }
-                        });
+                        .addOnSuccessListener(translatedText -> ((SessionViewHolder) holder).txtSession.setText("_______________________"+translatedText+"_______________________"))
+                        .addOnFailureListener(e -> ((SessionViewHolder) holder).txtSession.setText("_______________________"+buddyGPTApplication.getString(R.string.toast_teamgpt_session_en)+"_______________________"));
             }
         }
 
@@ -156,13 +142,13 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     public int getItemViewType(int position) {
 
         if (mDataset[position].getType().equals("Question") ){
-            return item_send;
+            return itemSend;
         }
         if (mDataset[position].getType().equals("Response") ){
-            return item_receive;
+            return itemReceive;
         }
         else {
-            return item_session;
+            return itemSession;
         }
     }
 

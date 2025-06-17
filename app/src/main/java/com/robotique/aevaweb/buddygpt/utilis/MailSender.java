@@ -26,9 +26,10 @@ public class MailSender extends AsyncTask<Void, Void, Void> {
     boolean isEmailAlerte=true;
     String mailTo="";
     String subject="";
-    public boolean isMailSentSuccess = false;
+    public static boolean isMailSentSuccess = false;
     BuddyGPTApplication app;
     Activity activity;
+    private static final String configFile ="BuddyGPT.properties";
 
     public MailSender(Activity activity,String content, String mailTo, String subject) {
         this.activity = activity;
@@ -54,14 +55,14 @@ public class MailSender extends AsyncTask<Void, Void, Void> {
     protected void onPreExecute() {
         super.onPreExecute();
 
-        username = app.getParamFromFile("username","BuddyGPT.properties");
-        password = app.getParamFromFile("username_Password","BuddyGPT.properties");
+        username = app.getParamFromFile("username",configFile);
+        password = app.getParamFromFile("username_Password",configFile);
         props = new Properties();
 
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", app.getParamFromFile("mail.smtp.host","BuddyGPT.properties"));
-        props.put("mail.smtp.port", app.getParamFromFile("mail.smtp.port","BuddyGPT.properties"));
+        props.put("mail.smtp.host", app.getParamFromFile("mail.smtp.host",configFile));
+        props.put("mail.smtp.port", app.getParamFromFile("mail.smtp.port",configFile));
         props.setProperty("mail.smtp.ssl.protocols","TLSv1.2" );
 
     }
@@ -75,7 +76,6 @@ public class MailSender extends AsyncTask<Void, Void, Void> {
     @Override
     protected void onPostExecute(Void aVoid) {
         super.onPostExecute(aVoid);
-        mailSent();
         // Vérifier si l'e-mail a été envoyé avec succès
         if (isMailSentSuccess) {
             Log.e(TAG,"envoi succès");
@@ -88,20 +88,16 @@ public class MailSender extends AsyncTask<Void, Void, Void> {
         }
     }
 
-
-    public void mailSent(){
-    }
-
     public void sendMail(String msg, String mailTo, String subject) {
 
-        String emailfrom=app.getParamFromFile("Mail_Sender","BuddyGPT.properties");
+        String emailfrom=app.getParamFromFile("Mail_Sender",configFile);
 
         try {
             Session session = Session.getInstance(props,
                     new javax.mail.Authenticator() {
+                        @Override
                         protected PasswordAuthentication getPasswordAuthentication() {
-                            PasswordAuthentication ps= new PasswordAuthentication(username, password);
-                            return ps;
+                            return new PasswordAuthentication(username, password);
                         }
                     });
             Message message = new MimeMessage(session);

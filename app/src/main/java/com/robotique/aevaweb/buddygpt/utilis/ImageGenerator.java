@@ -62,11 +62,10 @@ public class ImageGenerator extends AsyncTask<String, Void, Bitmap> {
             File directory = new File( context.getString(R.string.path), "BuddyGPT");
 
             // Vérifiez si le répertoire existe, sinon, créez-le
-            if (!directory.exists()) {
-                if (!directory.mkdirs()) {
+            if (!directory.exists() && !directory.mkdirs()) {
                     Log.e("saveImageToCustomDirectory", "Erreur: Impossible de créer le répertoire");
                     return;
-                }
+
             }
 
             File file = new File(directory, fileName);

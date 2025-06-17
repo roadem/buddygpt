@@ -12,7 +12,7 @@ import com.robotique.aevaweb.buddygpt.R;
 public class CustomToast {
 
     // private static instance variable to hold the singleton instance
-    private static volatile CustomToast INSTANCE = null;
+    private static volatile CustomToast instance = null;
 
     // private constructor to prevent instantiation of the class
     private CustomToast() {}
@@ -20,36 +20,31 @@ public class CustomToast {
     // public static method to retrieve the singleton instance
     public static CustomToast getInstance() {
         // Check if the instance is already created
-        if(INSTANCE == null) {
+        if(instance == null) {
             // synchronize the block to ensure only one thread can execute at a time
             synchronized (CustomToast.class) {
                 // check again if the instance is already created
-                if (INSTANCE == null) {
+                if (instance == null) {
                     // create the singleton instance
-                    INSTANCE = new CustomToast();
+                    instance = new CustomToast();
                 }
             }
         }
         // return the singleton instance
-        return INSTANCE;
+        return instance;
     }
 
-    private RelativeLayout custom_toast_info;
+    private RelativeLayout customToastInfo;
     private final Handler handler = new Handler();
-    private final Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            hideToast();
-        }
-    };
+    private final Runnable runnable = this::hideToast;
 
     public void showInfo(Activity context, String info, long delay) {
 
-        custom_toast_info = context.findViewById(R.id.custom_toast_info);
+        customToastInfo = context.findViewById(R.id.custom_toast_info);
         TextView tv = context.findViewById(R.id.info);
 
         tv.setText(info + "");
-        custom_toast_info.setVisibility(View.VISIBLE);
+        customToastInfo.setVisibility(View.VISIBLE);
 
         handler.removeCallbacks(runnable);
         handler.removeCallbacksAndMessages(null);
@@ -59,8 +54,8 @@ public class CustomToast {
     public void hideToast() {
         handler.removeCallbacks(runnable);
         handler.removeCallbacksAndMessages(null);
-        if (custom_toast_info != null) {
-            custom_toast_info.setVisibility(View.GONE);
+        if (customToastInfo != null) {
+            customToastInfo.setVisibility(View.GONE);
         }
     }
 }

@@ -27,8 +27,8 @@ public class GoogleSTT {
         }
     }
 
-    public void sendRequest(byte[] record, int samplingRate, GoogleSTTCallbacks googleSTTCallbacks){
-        new UploadMessageTask(googleSTTCallbacks).execute(record, samplingRate);
+    public void sendRequest(byte[] recording, int samplingRate, GoogleSTTCallbacks googleSTTCallbacks){
+        new UploadMessageTask(googleSTTCallbacks).execute(recording, samplingRate);
     }
 
     private class UploadMessageTask extends AsyncTask<Object, Void, UploadMessageTask.STTResult> {
