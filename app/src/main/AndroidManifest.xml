@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.robotique.aevaweb.buddygpt">
+
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="com.bfr.buddy.resource.SPEECH" />
@@ -30,13 +31,9 @@
         android:theme="@style/BuddyTheme"
         android:usesCleartextTraffic="true">
         <activity
-            android:name="com.robotique.aevaweb.buddygpt.activities.BuddyGPTBlueMicActivity"
-            android:exported="false"
-            android:screenOrientation="landscape"/>
-        <activity
             android:name="com.robotique.aevaweb.buddygpt.activities.SettingsActivity"
             android:exported="false"
-            android:screenOrientation="landscape"/>
+            android:screenOrientation="landscape" />
         <activity
             android:name="com.robotique.aevaweb.buddygpt.activities.ChatWindow"
             android:exported="false"

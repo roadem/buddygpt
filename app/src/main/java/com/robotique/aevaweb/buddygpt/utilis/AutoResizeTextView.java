@@ -16,45 +16,59 @@ import androidx.appcompat.widget.AppCompatTextView;
 
 public class AutoResizeTextView extends AppCompatTextView {
 
-    private interface SizeTester {
-        /**
-         *
-         * @param suggestedSize
-         *            Size of text to be tested
-         * @param availableSpace
-         *            available space in which text must fit
-         * @return an integer < 0 if after applying {@code suggestedSize} to
-         *         text, it takes less space than {@code availableSpace}, > 0
-         *         otherwise
-         */
-        public int onTestSize(int suggestedSize, RectF availableSpace);
-    }
-
-    private RectF mTextRect = new RectF();
-
-    private RectF mAvailableSpaceRect;
-
-    private SparseIntArray mTextCachedSizes;
-
-    private TextPaint mPaint;
-
-    private float mMaxTextSize;
-
-    private float mSpacingMult = 1.0f;
-
-    private float mSpacingAdd = 0.0f;
-
-    private float mMinTextSize = 20;
-
-    private int mWidthLimit;
-
     private static final int NO_LINE_LIMIT = -1;
+    int textBestSize;
+    private final RectF mTextRect = new RectF();
+    private RectF mAvailableSpaceRect;
+    private SparseIntArray mTextCachedSizes;
+    private TextPaint mPaint;
+    private float mMaxTextSize;
+    private float mSpacingMult = 1.0f;
+    private float mSpacingAdd = 0.0f;
+    private float mMinTextSize = 20;
+    private int mWidthLimit;
     private int mMaxLines;
+    private final SizeTester mSizeTester = new SizeTester() {
+        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+        @Override
+        public int onTestSize(int suggestedSize, RectF availableSPace) {
+            mPaint.setTextSize(suggestedSize);
+            String text = getText().toString();
+            boolean singleline = getMaxLines() == 1;
+            if (singleline) {
+                mTextRect.bottom = mPaint.getFontSpacing();
+                mTextRect.right = mPaint.measureText(text);
+            } else {
+                StaticLayout layout = new StaticLayout(text, mPaint,
+                        mWidthLimit, Layout.Alignment.ALIGN_NORMAL, mSpacingMult,
+                        mSpacingAdd, true);
+                // return early if we have more lines
+                if (getMaxLines() != NO_LINE_LIMIT
+                        && layout.getLineCount() > getMaxLines()) {
+                    return 1;
+                }
+                mTextRect.bottom = layout.getHeight();
+                int maxWidth = -1;
+                for (int i = 0; i < layout.getLineCount(); i++) {
+                    if (maxWidth < layout.getLineWidth(i)) {
+                        maxWidth = (int) layout.getLineWidth(i);
+                    }
+                }
+                mTextRect.right = maxWidth;
+            }
 
+            mTextRect.offsetTo(0, 0);
+            if (availableSPace.contains(mTextRect)) {
+                // may be too small, don't worry we will find the best match
+                return -1;
+            } else {
+                // too big
+                return 1;
+            }
+        }
+    };
     private boolean mEnableSizeCache = true;
     private boolean mInitiallized;
-
-    int textBestSize;
 
     public AutoResizeTextView(Context context) {
         super(context);
@@ -69,6 +83,31 @@ public class AutoResizeTextView extends AppCompatTextView {
     public AutoResizeTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
         initialize();
+    }
+
+    private static int binarySearch(int start, int end, SizeTester sizeTester,
+                                    RectF availableSpace) {
+        int lastBest = start;
+        int lo = start;
+        int hi = end - 1;
+        int mid = 0;
+        while (lo <= hi) {
+            mid = (lo + hi) >>> 1;
+            int midValCmp = sizeTester.onTestSize(mid, availableSpace);
+            if (midValCmp < 0) {
+                lastBest = lo;
+                lo = mid + 1;
+            } else if (midValCmp > 0) {
+                hi = mid - 1;
+                lastBest = hi;
+            } else {
+                return mid;
+            }
+        }
+        // make sure to return last best
+        // this is what should always be returned
+        return lastBest;
+
     }
 
     private void initialize() {
@@ -97,15 +136,15 @@ public class AutoResizeTextView extends AppCompatTextView {
     }
 
     @Override
+    public int getMaxLines() {
+        return mMaxLines;
+    }
+
+    @Override
     public void setMaxLines(int maxlines) {
         super.setMaxLines(maxlines);
         mMaxLines = maxlines;
         reAdjust();
-    }
-
-    @Override
-    public int getMaxLines() {
-        return mMaxLines;
     }
 
     @Override
@@ -186,54 +225,13 @@ public class AutoResizeTextView extends AppCompatTextView {
                         mSizeTester, mAvailableSpaceRect));
     }
 
-    private final SizeTester mSizeTester = new SizeTester() {
-        @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-        @Override
-        public int onTestSize(int suggestedSize, RectF availableSPace) {
-            mPaint.setTextSize(suggestedSize);
-            String text = getText().toString();
-            boolean singleline = getMaxLines() == 1;
-            if (singleline) {
-                mTextRect.bottom = mPaint.getFontSpacing();
-                mTextRect.right = mPaint.measureText(text);
-            } else {
-                StaticLayout layout = new StaticLayout(text, mPaint,
-                        mWidthLimit, Layout.Alignment.ALIGN_NORMAL, mSpacingMult,
-                        mSpacingAdd, true);
-                // return early if we have more lines
-                if (getMaxLines() != NO_LINE_LIMIT
-                        && layout.getLineCount() > getMaxLines()) {
-                    return 1;
-                }
-                mTextRect.bottom = layout.getHeight();
-                int maxWidth = -1;
-                for (int i = 0; i < layout.getLineCount(); i++) {
-                    if (maxWidth < layout.getLineWidth(i)) {
-                        maxWidth = (int) layout.getLineWidth(i);
-                    }
-                }
-                mTextRect.right = maxWidth;
-            }
-
-            mTextRect.offsetTo(0, 0);
-            if (availableSPace.contains(mTextRect)) {
-                // may be too small, don't worry we will find the best match
-                return -1;
-            } else {
-                // too big
-                return 1;
-            }
-        }
-    };
-
     /**
      * Enables or disables size caching, enabling it will improve performance
      * where you are animating a value inside TextView. This stores the font
      * size against getText().length() Be careful though while enabling it as 0
      * takes more space than 1 on some fonts and so on.
      *
-     * @param enable
-     *            enable font size caching
+     * @param enable enable font size caching
      */
     public void enableSizeCache(boolean enable) {
         mEnableSizeCache = enable;
@@ -248,8 +246,7 @@ public class AutoResizeTextView extends AppCompatTextView {
         }
         String text = getText().toString();
         int key = text == null ? 0 : text.length();
-        int size = mTextCachedSizes.get(key)
-                ;
+        int size = mTextCachedSizes.get(key);
         if (size != 0) {
             return size;
         }
@@ -257,31 +254,6 @@ public class AutoResizeTextView extends AppCompatTextView {
         mTextCachedSizes.put(key, size);
         textBestSize = size;
         return size;
-    }
-
-    private static int binarySearch(int start, int end, SizeTester sizeTester,
-                                    RectF availableSpace) {
-        int lastBest = start;
-        int lo = start;
-        int hi = end - 1;
-        int mid = 0;
-        while (lo <= hi) {
-            mid = (lo + hi) >>> 1;
-            int midValCmp = sizeTester.onTestSize(mid, availableSpace);
-            if (midValCmp < 0) {
-                lastBest = lo;
-                lo = mid + 1;
-            } else if (midValCmp > 0) {
-                hi = mid - 1;
-                lastBest = hi;
-            } else {
-                return mid;
-            }
-        }
-        // make sure to return last best
-        // this is what should always be returned
-        return lastBest;
-
     }
 
     @Override
@@ -299,5 +271,16 @@ public class AutoResizeTextView extends AppCompatTextView {
         if (width != oldwidth || height != oldheight) {
             reAdjust();
         }
+    }
+
+    private interface SizeTester {
+        /**
+         * @param suggestedSize  Size of text to be tested
+         * @param availableSpace available space in which text must fit
+         * @return an integer < 0 if after applying {@code suggestedSize} to
+         * text, it takes less space than {@code availableSpace}, > 0
+         * otherwise
+         */
+        int onTestSize(int suggestedSize, RectF availableSpace);
     }
 }

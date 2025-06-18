@@ -13,11 +13,11 @@ import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 public class SettingsContentObserver extends ContentObserver {
     public Context context;
     public BuddyGPTApplication app;
-    public SettingsContentObserver(Handler handler ,Context cntx) {
+
+    public SettingsContentObserver(Handler handler, Context cntx) {
         super(handler);
         this.context = cntx;
     }
-
 
 
     @Override

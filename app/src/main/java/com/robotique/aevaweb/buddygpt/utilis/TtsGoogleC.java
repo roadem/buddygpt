@@ -2,8 +2,6 @@ package com.robotique.aevaweb.buddygpt.utilis;
 
 import android.media.MediaPlayer;
 
-import java.io.IOException;
-
 import darren.googlecloudtts.api.SynthesizeApi;
 import darren.googlecloudtts.api.VoicesApi;
 import darren.googlecloudtts.exception.ApiException;
@@ -15,10 +13,10 @@ import darren.googlecloudtts.request.SynthesizeRequest;
 import darren.googlecloudtts.response.SynthesizeResponse;
 import darren.googlecloudtts.response.VoicesResponse;
 
-public class TtsGoogleC implements AutoCloseable{
+public class TtsGoogleC implements AutoCloseable {
 
-    private SynthesizeApi mSynthesizeApi;
-    private VoicesApi mVoicesApi;
+    private final SynthesizeApi mSynthesizeApi;
+    private final VoicesApi mVoicesApi;
 
     private VoiceSelectionParams mVoiceSelectionParams;
     private AudioConfig mAudioConfig;
@@ -33,7 +31,7 @@ public class TtsGoogleC implements AutoCloseable{
         mVoicesApi = voicesApi;
     }
 
-    public  TtsGoogleC setVoiceSelectionParams(VoiceSelectionParams voiceSelectionParams) {
+    public TtsGoogleC setVoiceSelectionParams(VoiceSelectionParams voiceSelectionParams) {
         mVoiceSelectionParams = voiceSelectionParams;
         return this;
     }
@@ -42,6 +40,7 @@ public class TtsGoogleC implements AutoCloseable{
         mAudioConfig = audioConfig;
         return this;
     }
+
     public void setTtsListener(TtsGoogleApiListener ttsListener) {
         mTtsListener = ttsListener;
     }
@@ -130,7 +129,7 @@ public class TtsGoogleC implements AutoCloseable{
 
     public void close() {
         stop();
-        if (mMediaPlayer !=null){
+        if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
         }

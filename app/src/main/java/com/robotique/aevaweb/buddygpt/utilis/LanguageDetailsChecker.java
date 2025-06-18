@@ -9,20 +9,17 @@ import android.speech.RecognizerIntent;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.List;
 
-public class LanguageDetailsChecker extends BroadcastReceiver
-{
+public class LanguageDetailsChecker extends BroadcastReceiver {
 
-    private LanguageDetailsListener listener;
+    private final LanguageDetailsListener listener;
 
     public LanguageDetailsChecker(LanguageDetailsListener listener) {
         this.listener = listener;
     }
 
     @Override
-    public void onReceive(Context context, Intent intent)
-    {
+    public void onReceive(Context context, Intent intent) {
         Log.i("LanguageDetails", "BroadcastReceiver onReceive called");
         int resultCode = getResultCode();
         Log.i("LanguageDetails", "Result code: " + resultCode);
@@ -48,6 +45,7 @@ public class LanguageDetailsChecker extends BroadcastReceiver
             Log.i("LanguageDetails", "Unexpected result code: " + resultCode);
         }
     }
+
     public interface LanguageDetailsListener {
         void onLanguagesReceived(ArrayList<String> languages);
     }

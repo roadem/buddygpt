@@ -20,7 +20,18 @@ public class CustomProperties extends Properties {
     private static final long serialVersionUID = 1L;
 
     private final Map<Object, Object> linkMap = new LinkedHashMap<>();
-    private Map<String, List<String>> propertySpecificComments = new HashMap<>();
+    private final Map<String, List<String>> propertySpecificComments = new HashMap<>();
+
+    private static String escapePropertyValue(String value) {
+        // Escape characters as needed
+        value = value.replace("\\", "\\\\"); // escape backslashes
+        return value;
+    }
+
+    private static void writeln(BufferedWriter bw, String s) throws IOException {
+        bw.write(s);
+        bw.newLine();
+    }
 
     @Override
     public synchronized Object put(Object key, Object value) {
@@ -64,12 +75,10 @@ public class CustomProperties extends Properties {
         return put(key, value);
     }
 
-
-
     @Override
     public synchronized String getProperty(String key) {
         String val = null;
-        for (Iterator<Entry<Object, Object>> e = linkMap.entrySet().iterator(); e.hasNext();) {
+        for (Iterator<Entry<Object, Object>> e = linkMap.entrySet().iterator(); e.hasNext(); ) {
             Map.Entry<Object, Object> entry = e.next();
             if (key.equalsIgnoreCase((String) entry.getKey())) {
                 val = (String) entry.getValue();
@@ -78,9 +87,11 @@ public class CustomProperties extends Properties {
         }
         return val;
     }
+
     public synchronized void addPropertyComment(String key, String comment) {
         propertySpecificComments.computeIfAbsent(key, k -> new ArrayList<>()).add(comment);
     }
+
     @Override
     public synchronized void store(OutputStream out, String comments) throws IOException {
         BufferedWriter awriter = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
@@ -90,11 +101,11 @@ public class CustomProperties extends Properties {
         if (linkMap.containsKey("fileVersion")) {
             writeln(awriter, "fileVersion=" + linkMap.get("fileVersion"));
         }
-        writeln(awriter, "#" + new Date().toString());
+        writeln(awriter, "#" + new Date());
 
 
         // Write other properties
-        for (Iterator<Map.Entry<Object, Object>> e = linkMap.entrySet().iterator(); e.hasNext();) {
+        for (Iterator<Map.Entry<Object, Object>> e = linkMap.entrySet().iterator(); e.hasNext(); ) {
             Map.Entry<Object, Object> entry = e.next();
 
             String key = (String) entry.getKey();
@@ -114,7 +125,8 @@ public class CustomProperties extends Properties {
                 }
 
                 if (!val.contains("#") && !key.contains("#")) {
-                    if(key.equals("Pattern_End_Phrase")) writeln(awriter, key + "=" + escapePropertyValue(val));
+                    if (key.equals("Pattern_End_Phrase"))
+                        writeln(awriter, key + "=" + escapePropertyValue(val));
                     else writeln(awriter, key + "=" + val);
                 }
             }
@@ -123,18 +135,6 @@ public class CustomProperties extends Properties {
 
         awriter.flush();
         awriter.close();
-    }
-
-    private static String escapePropertyValue(String value) {
-        // Escape characters as needed
-        value = value.replace("\\", "\\\\"); // escape backslashes
-        return value;
-    }
-
-
-    private static void writeln(BufferedWriter bw, String s) throws IOException {
-        bw.write(s);
-        bw.newLine();
     }
 
     @Override

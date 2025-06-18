@@ -16,12 +16,12 @@ import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 
 @RequiresApi(api = Build.VERSION_CODES.M)
 public class WifiBroadcastReceiver extends BroadcastReceiver {
+    private static final String isConnected = "isConnected";
+    int mWifiLevel;
+    BuddyGPTApplication application;
     private Context mContext;
     private ConnectivityManager cm;
     private Context contextAct;
-    int mWifiLevel;
-    private static final String isConnected = "isConnected";
-    BuddyGPTApplication application;
 
     public void onReceive(final Context context, final Intent intent) {
         mContext = context;
@@ -40,8 +40,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
      * Récuperer la vitesse de la connexion wifi
      */
 
-    public int getWifiLevel()
-    {
+    public int getWifiLevel() {
         WifiManager wifiManger = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
         WifiInfo wifiInfo = wifiManger.getConnectionInfo();
         return (wifiInfo.getLinkSpeed());
@@ -50,14 +49,15 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
      * Récuperer la vitesse de la connexion de données mobile
      */
 
-    public int getMobileConnectionLevel(){
+    public int getMobileConnectionLevel() {
         NetworkCapabilities nc = null;
         nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
-        if(nc != null)
-            return ((nc.getLinkUpstreamBandwidthKbps())/1024);
+        if (nc != null)
+            return ((nc.getLinkUpstreamBandwidthKbps()) / 1024);
         return 0;
     }
-    public  boolean isConnectedToInternet() {
+
+    public boolean isConnectedToInternet() {
         boolean haveConnectedWifi = false;
         boolean haveConnectedMobile = false;
 
@@ -65,12 +65,12 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
         final Network n = cm.getActiveNetwork();
         if (n != null) {
             final NetworkCapabilities nc = cm.getNetworkCapabilities(n);
-            if( nc != null) {
+            if (nc != null) {
                 if (nc.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)) {
                     haveConnectedWifi = true;
                     int levelWifi = getWifiLevel();
                     setSignalQualite(levelWifi);
-                    application.notifyObservers("mWifiLevel:wifi:"+levelWifi);
+                    application.notifyObservers("mWifiLevel:wifi:" + levelWifi);
 
 
                 } else if (nc.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)) {
@@ -78,7 +78,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         int levelMobile = getMobileConnectionLevel();
                         setSignalQualite(levelMobile);
-                        application.notifyObservers("mWifiLevel:mobile:"+levelMobile);
+                        application.notifyObservers("mWifiLevel:mobile:" + levelMobile);
 
                     }
 
@@ -89,31 +89,33 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
         }
 
 
-
         return false;
     }
+
     public void setAct(Context context) {
         contextAct = context;
 
     }
-    public void setSignalQualite(int lev){
+
+    public void setSignalQualite(int lev) {
         mWifiLevel = lev;
     }
-    private Context getmContext(){
+
+    private Context getmContext() {
         return contextAct;
     }
+
     public void forceCheckConnexState(Context context) {
         mContext = context;
         cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if(getmContext()!=null) {
+        if (getmContext() != null) {
             application = (BuddyGPTApplication) getmContext();
-            if(isConnectedToInternet() ){
+            if (isConnectedToInternet()) {
                 application.notifyObservers(isConnected);
                 application.notifyObservers("connectChat");
 
 
-            }
-            else {
+            } else {
                 application.notifyObservers("isNotConnected");
 
             }

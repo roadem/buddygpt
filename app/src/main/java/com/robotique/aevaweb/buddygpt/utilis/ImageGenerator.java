@@ -19,8 +19,8 @@ import java.net.URL;
 
 public class ImageGenerator extends AsyncTask<String, Void, Bitmap> {
 
-    private WeakReference<Context> contextRef;
-    private String filename;
+    private final WeakReference<Context> contextRef;
+    private final String filename;
 
     public ImageGenerator(Context context, String filename) {
         contextRef = new WeakReference<>(context);
@@ -59,12 +59,12 @@ public class ImageGenerator extends AsyncTask<String, Void, Bitmap> {
         Context context = contextRef.get();
 
         if (context != null) {
-            File directory = new File( context.getString(R.string.path), "BuddyGPT");
+            File directory = new File(context.getString(R.string.path), "BuddyGPT");
 
             // Vérifiez si le répertoire existe, sinon, créez-le
             if (!directory.exists() && !directory.mkdirs()) {
-                    Log.e("saveImageToCustomDirectory", "Erreur: Impossible de créer le répertoire");
-                    return;
+                Log.e("saveImageToCustomDirectory", "Erreur: Impossible de créer le répertoire");
+                return;
 
             }
 

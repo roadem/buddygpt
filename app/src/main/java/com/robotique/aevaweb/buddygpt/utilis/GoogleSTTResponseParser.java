@@ -27,20 +27,9 @@ public class GoogleSTTResponseParser {
     private double mConfidence = 1.0;
     private String mTranscript = null;
 
-    private static String extractJsonString(InputStream in) throws IOException {
-        InputStreamReader inputStreamReader = new InputStreamReader(in, StandardCharsets.UTF_8);
-        BufferedReader br = new BufferedReader(inputStreamReader);
-        String s;
-        StringBuilder resultContent = new StringBuilder();
-        while ((s = br.readLine()) != null) {
-            resultContent.append(s);
-        }
-        return resultContent.toString();
-    }
-
     /**
      * parse the response
-     * 
+     *
      * @param response response stream
      * @throws JSONException exception throw if the response is malformed
      */
@@ -52,6 +41,17 @@ public class GoogleSTTResponseParser {
             e.printStackTrace();
         }
         parseJson(json);
+    }
+
+    private static String extractJsonString(InputStream in) throws IOException {
+        InputStreamReader inputStreamReader = new InputStreamReader(in, StandardCharsets.UTF_8);
+        BufferedReader br = new BufferedReader(inputStreamReader);
+        String s;
+        StringBuilder resultContent = new StringBuilder();
+        while ((s = br.readLine()) != null) {
+            resultContent.append(s);
+        }
+        return resultContent.toString();
     }
 
     private ArrayList<Result> extractAllResults(JSONArray alternative) throws JSONException {
@@ -87,7 +87,7 @@ public class GoogleSTTResponseParser {
 
     /**
      * get the best transcript
-     * 
+     *
      * @return transcript or null if the is not present
      */
     @Nullable
@@ -97,7 +97,7 @@ public class GoogleSTTResponseParser {
 
     /**
      * get the confidence value (between 0 and 1) of the best transcript
-     * 
+     *
      * @return confidence value for the transcript
      */
     double getConfidence() {

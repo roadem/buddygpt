@@ -13,14 +13,17 @@ public class CustomToast {
 
     // private static instance variable to hold the singleton instance
     private static volatile CustomToast instance = null;
+    private final Handler handler = new Handler();
+    private RelativeLayout customToastInfo;
 
     // private constructor to prevent instantiation of the class
-    private CustomToast() {}
+    private CustomToast() {
+    }
 
     // public static method to retrieve the singleton instance
     public static CustomToast getInstance() {
         // Check if the instance is already created
-        if(instance == null) {
+        if (instance == null) {
             // synchronize the block to ensure only one thread can execute at a time
             synchronized (CustomToast.class) {
                 // check again if the instance is already created
@@ -34,22 +37,18 @@ public class CustomToast {
         return instance;
     }
 
-    private RelativeLayout customToastInfo;
-    private final Handler handler = new Handler();
-    private final Runnable runnable = this::hideToast;
-
     public void showInfo(Activity context, String info, long delay) {
 
         customToastInfo = context.findViewById(R.id.custom_toast_info);
         TextView tv = context.findViewById(R.id.info);
 
-        tv.setText(info + "");
+        tv.setText(info);
         customToastInfo.setVisibility(View.VISIBLE);
 
         handler.removeCallbacks(runnable);
         handler.removeCallbacksAndMessages(null);
         handler.postDelayed(runnable, delay);
-    }
+    }    private final Runnable runnable = this::hideToast;
 
     public void hideToast() {
         handler.removeCallbacks(runnable);
@@ -58,4 +57,6 @@ public class CustomToast {
             customToastInfo.setVisibility(View.GONE);
         }
     }
+
+
 }
