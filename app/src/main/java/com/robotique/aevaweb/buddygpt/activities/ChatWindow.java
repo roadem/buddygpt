@@ -885,7 +885,7 @@ public class ChatWindow extends BuddyActivity implements IDBObserver {
                     if (buddyGPTApplication.getResponseFromTeamGPT() == null)
                         buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
 
-                    buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage, buddyGPTApplication.getQuestionNumber());
+                    buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage);
 
                     if ((Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) != 0)
                             && ((

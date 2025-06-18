@@ -456,7 +456,8 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
         downloadingBar = findViewById(R.id.progressBar_MLKitDownload);
         reGroup = findViewById(R.id.reGroup);
-
+        lytOpenMenuSettings.setOnClickListener(view -> btnOpenSettings());
+        lytOpenMenuChat.setOnClickListener(view -> btnOpenChat());
         AudioManager amanager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         amanager.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
 
@@ -803,7 +804,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                         if (buddyGPTApplication.getResponseFromTeamGPT() == null)
                             buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
                         //if(buddyGPTApplication.getparam("Stream_mode").equalsIgnoreCase("true")){
-                        buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage, buddyGPTApplication.getQuestionNumber());
+                        buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage);
 //                                }else
 //                                    buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestNStream(detectedSTTMessage, buddyGPTApplication.getQuestionNumber());
 
@@ -1252,7 +1253,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(), this);
     }
 
-    public void btnOpenSettings(View view) {
+    public void btnOpenSettings() {
         if (Boolean.FALSE.equals(mlKitIsDownloading)) {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             intent.putExtra("activity_name", "main");
@@ -1271,7 +1272,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-    public void btnOpenChat(View view) {
+    public void btnOpenChat() {
         if (Boolean.FALSE.equals(mlKitIsDownloading)) {
             Intent intent = new Intent(MainActivity.this, ChatWindow.class);
             startActivity(intent);

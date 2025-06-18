@@ -69,11 +69,11 @@ public class ResponseFromTeamGPT {
     private String phrase = "";
     private String errorMsg = "";
     private final String historicMessages = "messages";
+    private final String TeamGPTKey = "TeamGPT_Key";
     private Runnable phrasesRunnable;
     private String currentDisplayedText = "";
     private boolean isFullResponseReceived = false;
     private boolean isDisplayFinished = true;
-    private final String text = "";
     private String phraseToPronounceWhenResumed;
     private boolean isReset = false;
     private boolean isPaused = false;
@@ -95,7 +95,7 @@ public class ResponseFromTeamGPT {
             try {
                 String url = buddyGPTApplication.getparam("TeamGPT_url");
                 String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
-                String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
+                String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
                 String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
 
                 URL obj = new URL(url + endpoint);
@@ -129,14 +129,14 @@ public class ResponseFromTeamGPT {
                         if (parameters != null) {
                             if (!parameters.getStt().equalsIgnoreCase("local")
                                     || !parameters.getTts().equalsIgnoreCase("local")) {
-                                buddyGPTApplication.setparam("TeamGPT_Key", gptKey);
+                                buddyGPTApplication.setparam(TeamGPTKey, gptKey);
                                 buddyGPTApplication.resetSharedPreferences();
                                 buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
                                 buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "TRUE");
                             } else {
                                 buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                                 buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
-                                buddyGPTApplication.setparam("TeamGPT_Key", parameters.getTeamGptKey());
+                                buddyGPTApplication.setparam(TeamGPTKey, parameters.getTeamGptKey());
                                 buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
                                 buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
                                 buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
@@ -183,7 +183,7 @@ public class ResponseFromTeamGPT {
                 } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
                     Log.i(TAG_PARAM, "run: notifyObservers response msg " + con.getResponseMessage());
                     Log.i(TAG_PARAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
-                    buddyGPTApplication.setparam("TeamGPT_Key", gptKey);
+                    buddyGPTApplication.setparam(TeamGPTKey, gptKey);
                     buddyGPTApplication.resetSharedPreferences();
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
@@ -207,11 +207,11 @@ public class ResponseFromTeamGPT {
     }
 
 
-    public void sendPutRequestStream(String question, int numberOfQuestion) {
+    public void sendPutRequestStream(String question) {
         isEmotionNeutral = false;
         String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
         String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response"); // Endpoint dynamique.
-        String gptKey = buddyGPTApplication.getparam("TeamGPT_Key"); // Clé API.
+        String gptKey = buddyGPTApplication.getparam(TeamGPTKey); // Clé API.
         String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
 
         Retrofit retrofit = RetrofitClient.getClient(baseUrl);
@@ -770,7 +770,6 @@ public class ResponseFromTeamGPT {
 
 
     public void reset() {
-        String result = "";
         Log.i(TAG_STREAM, "------------------reset-------------------");
         isReset = true;
         //reset phrasesQueue:
@@ -778,7 +777,6 @@ public class ResponseFromTeamGPT {
         phrasesHandler.removeCallbacksAndMessages(null);
         phrasesQueue.clear();
         isReadyToSpeak = true;
-        result = "";
         //reset wordsQueue:
         if (wordsRunnable != null) wordsHandler.removeCallbacks(wordsRunnable);
         wordsHandler.removeCallbacksAndMessages(null);

@@ -21,8 +21,7 @@
                 android:layout_marginStart="140px"
                 android:clickable="true"
                 android:elevation="0.8dp"
-                android:background="@drawable/ellipse_opened"
-                android:onClick="btnCloseSettings">
+                android:background="@drawable/ellipse_opened">
                 <ImageView
                     android:id="@+id/button_close_menu_settings"
                     android:layout_width="36px"
@@ -250,7 +249,6 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="5dp"
                             android:layout_gravity="center_vertical"
-                            android:visibility="gone"
                             android:orientation="horizontal">
 
                             <TextView

@@ -20,7 +20,7 @@ public class MailSender extends AsyncTask<Void, Void, Void> {
 
     private static final String TAG = MailSender.class.getSimpleName();
     private static final String configFile = "BuddyGPT.properties";
-    public static boolean isMailSentSuccess = false;
+    public boolean isMailSentSuccess = false;
     String username = "";
     String password = "";
     Properties props = null;

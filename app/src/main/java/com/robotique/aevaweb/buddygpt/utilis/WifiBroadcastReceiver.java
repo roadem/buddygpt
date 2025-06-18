@@ -16,7 +16,7 @@ import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 
 @RequiresApi(api = Build.VERSION_CODES.M)
 public class WifiBroadcastReceiver extends BroadcastReceiver {
-    private static final String isConnected = "isConnected";
+    private static final String IS_CONNECTED  = "isConnected";
     int mWifiLevel;
     BuddyGPTApplication application;
     private Context mContext;
@@ -28,7 +28,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
         cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
         forceCheckConnexState(mContext);
         if (application.isConnectedToInternet()) {
-            application.notifyObservers(isConnected);
+            application.notifyObservers(IS_CONNECTED );
         } else {
             application.notifyObservers("isNotConnected");
         }
@@ -111,7 +111,7 @@ public class WifiBroadcastReceiver extends BroadcastReceiver {
         if (getmContext() != null) {
             application = (BuddyGPTApplication) getmContext();
             if (isConnectedToInternet()) {
-                application.notifyObservers(isConnected);
+                application.notifyObservers(IS_CONNECTED );
                 application.notifyObservers("connectChat");
 
 

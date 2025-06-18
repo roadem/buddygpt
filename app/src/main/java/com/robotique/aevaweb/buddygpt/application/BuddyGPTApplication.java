@@ -144,9 +144,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     int remainingAttempts;
     private int listeningDuration;
     private int listeningAttempt;
-    private int speakSpeed;
     private int speakVolume;
-    private Replica question;
     private ResponseFromTeamGPT responseFromTeamGPT;
     private Replica reponse;
     private Setting setting;
@@ -154,7 +152,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Session session;
     private ArrayList<Session> listSession = new ArrayList<>();
     private String switchdetectLanguage;
-    private String switchModeStream;
     private String switchCommande;
     private String switchVisibility;
     private String switchEmotion;
@@ -205,7 +202,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Thread thread;
     private Thread thread1;
     private Float previousVolume = Float.valueOf(0);
-    private boolean streamMode = false;
     private EncodingRegistry registry;
     private Boolean appIsListeningToTheQuestion = false;
     private String toastSttAndroidIndispo;
@@ -216,10 +212,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Boolean appIsCurrentlyDealingWithTheQuestion = false;
     private Boolean bIExecution = false;
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
-    private String imeiDevice;
     private String imeiRobot;
-    private String tokenHealysa;
-    private boolean replicaEnd = false;
     private Toast mToast;
 
     public static Locale getLocale(String language) {
@@ -236,14 +229,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         Log.e("GoogleSTT", "getLocale(" + language + ") result : null");
 
         return Locale.ENGLISH;
-    }
-
-    public boolean isReplicaEnd() {
-        return replicaEnd;
-    }
-
-    public void setReplicaEnd(boolean replicaEnd) {
-        this.replicaEnd = replicaEnd;
     }
 
     public boolean isAlreadyChatting() {
@@ -296,14 +281,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setDialog(Dialog dialog) {
         this.dialog = dialog;
-    }
-
-    public boolean getStreamMode() {
-        return streamMode;
-    }
-
-    public void setStreamMode(boolean streamMode) {
-        this.streamMode = streamMode;
     }
 
     public String getModel() {
@@ -403,14 +380,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.listeningAttempt = listeningAttempt;
     }
 
-    public int getSpeakSpeed() {
-        return speakSpeed;
-    }
-
-    public void setSpeakSpeed(int speakSpeed) {
-        this.speakSpeed = speakSpeed;
-    }
-
     public File getFileupdate() {
         return fileupdate;
     }
@@ -427,21 +396,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.speakVolume = speakVolume;
     }
 
-    public Replica getQuestion() {
-        return question;
-    }
-
-    public void setQuestion(Replica question) {
-        this.question = question;
-    }
-
-    public Replica getReponse() {
-        return reponse;
-    }
-
-    public void setReponse(Replica reponse) {
-        this.reponse = reponse;
-    }
 
     public Setting getSetting() {
         return setting;
@@ -573,14 +527,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setSwitchdetectLanguage(String switchdetectLanguage) {
         this.switchdetectLanguage = switchdetectLanguage;
-    }
-
-    public String getSwitchModeStream() {
-        return switchModeStream;
-    }
-
-    public void setSwitchModeStream(String switchModeStream) {
-        this.switchModeStream = switchModeStream;
     }
 
     public String getSwitchCommande() {
@@ -791,21 +737,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.voiceList = voiceList;
     }
 
-    public String getImeiDevice() {
-        return imeiDevice;
-    }
 
-    public void setImeiDevice(String imeiDevice) {
-        this.imeiDevice = imeiDevice;
-    }
-
-    public String getTokenHealysa() {
-        return tokenHealysa;
-    }
-
-    public void setTokenHealysa(String tokenHealysa) {
-        this.tokenHealysa = tokenHealysa;
-    }
 
     /**
      * initialisations

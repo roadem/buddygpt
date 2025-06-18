@@ -6,12 +6,15 @@ import darren.googlecloudtts.api.SynthesizeApiImpl;
 import darren.googlecloudtts.api.VoicesApi;
 import darren.googlecloudtts.api.VoicesApiImpl;
 
-public class TtsFactory {
+public final class TtsFactory { // Made final as good practice for utility classes
 
+    // Private constructor to prevent instantiation
+    private TtsFactory() {
+    }
 
     public static TtsGoogleC create(String apiKey) {
         GoogleCloudAPIConfig config = new GoogleCloudAPIConfig(apiKey);
-        return create(config);
+        return create(config); // Calls the other static create method
     }
 
     public static TtsGoogleC create(GoogleCloudAPIConfig config) {
@@ -19,5 +22,4 @@ public class TtsFactory {
         VoicesApi voicesApi = new VoicesApiImpl(config);
         return new TtsGoogleC(synthesizeApi, voicesApi);
     }
-
 }
