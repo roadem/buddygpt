@@ -155,7 +155,6 @@ public class PoseLandmarkerHelper {
         matrix.postRotate(imageProxy.getImageInfo().getRotationDegrees());
 
         // Mise à l'échelle de l'image si la caméra est orientée vers l'avant
-        //matrix.postScale(-1f, 1f, imageProxy.getWidth(), imageProxy.getHeight());
 
         // Création d'un nouveau tampon Bitmap en fonction de la rotation et de l'orientation de la caméra
         Bitmap rotatedBitmap = Bitmap.createBitmap(bitmapBuffer, 0, 0, bitmapBuffer.getWidth(), bitmapBuffer.getHeight(), matrix, true);
@@ -174,7 +173,6 @@ public class PoseLandmarkerHelper {
         Boolean isPdetected= false;
         for (List<NormalizedLandmark> poseLandmarks : results.landmarks()) {
             Log.d("zam", "Pose Index: " + poseIndex++);
-            int landmarkIndex = 0;
             for (NormalizedLandmark landmark : poseLandmarks) {
                 float x = landmark.x();
                 float y = landmark.y();
@@ -183,7 +181,6 @@ public class PoseLandmarkerHelper {
                 }else {
                     isPdetected=false;
                 }
-                //Log.d("zam", "Landmark Index: " + landmarkIndex++ + " - X: " + x + " Y: " + y);
             }
         }
         return isPdetected;

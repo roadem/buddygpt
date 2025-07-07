@@ -18,7 +18,7 @@ public class MainViewModel extends ViewModel {
         return _model;
     }
 
-    public float getCurrentMinPoseDetectionConfidence() {
+    public float getMinPoseDetectionConfidence() {
         return _minPoseDetectionConfidence;
     }
 
@@ -44,26 +44,6 @@ public class MainViewModel extends ViewModel {
 
     public void setMinPosePresenceConfidence(float confidence) {
         _minPosePresenceConfidence = confidence;
-    }
-
-    public int get_model() {
-        return _model;
-    }
-
-    public int get_delegate() {
-        return _delegate;
-    }
-
-    public float get_minPoseDetectionConfidence() {
-        return _minPoseDetectionConfidence;
-    }
-
-    public float get_minPoseTrackingConfidence() {
-        return _minPoseTrackingConfidence;
-    }
-
-    public float get_minPosePresenceConfidence() {
-        return _minPosePresenceConfidence;
     }
 
     public void set_model(int _model) {

@@ -16,7 +16,7 @@ public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
     private static final int FILE_VERSION = 5; // upgrade this whenever you want to overwrite the file
-    public static CustomProperties props = new CustomProperties();
+    public static  CustomProperties props = new CustomProperties();
     public static InputStream is = null;
     private ConfigurationFile() {
         throw new IllegalStateException("Utility class");
@@ -94,7 +94,7 @@ public class ConfigurationFile {
             }
 
             // ---------------------------- VERSION DU FICHIER DE CONFIG -----------------
-            //todo : upgrade FILE_VERSION whenever you want to overwrite the file !
+            // upgrade FILE_VERSION whenever you want to overwrite the file !
             props.setProperty("fileVersion", String.valueOf(FILE_VERSION));
 
 

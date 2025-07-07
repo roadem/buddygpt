@@ -3,30 +3,30 @@ package com.robotique.aevaweb.buddygpt.models;
 import java.util.ArrayList;
 
 public class Session {
-    private ArrayList<Replica> session;
+    private ArrayList<Replica> sessionList;
 
     public Session() {
     }
 
-    public Session(ArrayList<Replica> session) {
-        this.session = session;
+    public Session(ArrayList<Replica> sessionList) {
+        this.sessionList = sessionList;
     }
 
     public ArrayList<Replica> getSession() {
-        return session;
+        return sessionList;
     }
 
-    public void setSession(ArrayList<Replica> session) {
-        this.session = session;
+    public void setSession(ArrayList<Replica> sessionList) {
+        this.sessionList = sessionList;
     }
     public void clearSession(){
-        session.clear();
+        sessionList.clear();
     }
 
     @Override
     public String toString() {
         return "Session{" +
-                "session=" + session +
+                "session=" + sessionList +
                 '}';
     }
 }

@@ -19,6 +19,7 @@ import java.util.Set;
 public class CustomProperties extends Properties {
     private static final long serialVersionUID = 1L;
 
+    String fileVersion= "fileVersion";
     private final Map<Object, Object> linkMap = new LinkedHashMap<>();
     private final Map<String, List<String>> propertySpecificComments = new HashMap<>();
 
@@ -98,8 +99,8 @@ public class CustomProperties extends Properties {
 
         //write comment + fileVersion + Date
         if (comments != null) writeln(awriter, "#" + comments);
-        if (linkMap.containsKey("fileVersion")) {
-            writeln(awriter, "fileVersion=" + linkMap.get("fileVersion"));
+        if (linkMap.containsKey(fileVersion)) {
+            writeln(awriter, fileVersion+"=" + linkMap.get(fileVersion));
         }
         writeln(awriter, "#" + new Date());
 
@@ -111,7 +112,7 @@ public class CustomProperties extends Properties {
             String key = (String) entry.getKey();
             String val = (String) entry.getValue();
 
-            if (!"fileVersion".equals(key)) {
+            if (!fileVersion.equals(key)) {
                 List<String> specificComments = propertySpecificComments.get(key);
 
                 if (specificComments != null) {

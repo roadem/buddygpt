@@ -24,6 +24,7 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
     int itemSend = 1;
     int itemReceive = 2;
     int itemSession = 3;
+    String literal= "_______________________";
     private final BuddyGPTApplication buddyGPTApplication;
 
     public ReplicaListAdapter(BuddyGPTApplication buddyGPTApplication, Replica[] dataSet) {
@@ -71,14 +72,14 @@ public class ReplicaListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHo
         } else if (holder.getClass() == SessionViewHolder.class) {
 
             if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                ((SessionViewHolder) holder).txtSession.setText("_______________________" + buddyGPTApplication.getString(R.string.toast_teamgpt_session_en) + "_______________________");
+                ((SessionViewHolder) holder).txtSession.setText(literal+""+ buddyGPTApplication.getString(R.string.toast_teamgpt_session_en) + ""+literal);
             } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                ((SessionViewHolder) holder).txtSession.setText("_______________________" + buddyGPTApplication.getString(R.string.toast_teamgpt_session_fr) + "_______________________");
+                ((SessionViewHolder) holder).txtSession.setText(literal+"" + buddyGPTApplication.getString(R.string.toast_teamgpt_session_fr) + ""+literal);
             } else {
                 buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                         .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_session_en))
-                        .addOnSuccessListener(translatedText -> ((SessionViewHolder) holder).txtSession.setText("_______________________" + translatedText + "_______________________"))
-                        .addOnFailureListener(e -> ((SessionViewHolder) holder).txtSession.setText("_______________________" + buddyGPTApplication.getString(R.string.toast_teamgpt_session_en) + "_______________________"));
+                        .addOnSuccessListener(translatedText -> ((SessionViewHolder) holder).txtSession.setText(literal+"" + translatedText + ""+literal))
+                        .addOnFailureListener(e -> ((SessionViewHolder) holder).txtSession.setText(literal+"" + buddyGPTApplication.getString(R.string.toast_teamgpt_session_en) + ""+literal));
             }
         }
 

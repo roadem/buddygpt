@@ -374,12 +374,13 @@ public class ResponseFromTeamGPT {
         final int totalLength = currentDisplayedText.length() + phrase.length();
         for (int i = 1; i <= phrase.length(); i++) {
             final String phraseToShow = currentDisplayedText + phrase.substring(0, i);
-            wordsHandler.postDelayed(wordsRunnable = () -> {
+            wordsRunnable = () -> {
                 buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
                 if (phraseToShow.length() == totalLength) {
                     isDisplayFinished = true;
                 }
-            }, i);
+            };
+            wordsHandler.postDelayed(wordsRunnable, i);
         }
         currentDisplayedText += phrase + " ";
     }
@@ -396,115 +397,127 @@ public class ResponseFromTeamGPT {
             String line;
             Log.i(TAG_STREAM, "handleStreamingResponse: !isReset " + !isReset);
             Log.i(TAG_STREAM, "handleStreamingResponse: !isError " + !isError);
+
             while ((line = reader.readLine()) != null && reader.readLine().equalsIgnoreCase("") && !isReset && !isError) {
                 try {
-
                     Log.w("HOU_DEBUG", "Received line: " + line);
 
-                    if (line.contains("\"is_finished\": true,")) formattedContent.append(line);
-                    else {
-                        JSONObject jsonObject = new JSONObject(line.replace("data:", "").trim());
-                        String formattedObject = jsonObject.toString(4);
-                        formattedContent.append("data: ").append(formattedObject);
-                        formattedContent.append("\n\n");
-                    }
-
-                    Log.w(TAG_STREAM, "Received line: " + line);
-                    String jsonData = line.substring("data:".length()).trim();
-
-                    JSONObject jsonObject = new JSONObject(jsonData);
-
-                    if (jsonObject.has("Emotion") && jsonObject.getString("Emotion").equalsIgnoreCase("") &&
-                            jsonObject.has("Answer") && jsonObject.getString("Answer").equalsIgnoreCase("")) {
-                        Log.i(TAG_STREAM, "handleStreamingResponse: continue");
-                        if (jsonObject.has("is_finished") && jsonObject.getBoolean("is_finished")) {
-                            isFullResponseReceived = true;
-                            isSessionIdProcessed = false;
-                        }
-
-                    } else {
-                        Log.i(TAG_STREAM, "handleStreamingResponse: else continue");
-                        // Handle "emotion"
-                        if (buddyGPTApplication.getparam("switch_emotion").equals("true")) {
-
-                            if (jsonObject.has("Emotion") && !jsonObject.getString("Emotion").equalsIgnoreCase("")) {
-                                // Si l'émotion n'a pas encore été traitée, définir l'animation
-
-                                String emotion = jsonObject.getString("Emotion");
-                                Log.i(TAG_STREAM, "handleStreamingResponse: emo " + emotion);
-                                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;" + emotion);
-
-                            } else {
-                                Log.i(TAG_STREAM, "handleStreamingResponse: emo null");
-                            }
-
-                        } else {
-                            if (!isEmotionNeutral) {
-                                isEmotionNeutral = true;
-                                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;BuddyFace_Neutral");
-                            }
-
-                        }
-
-
-                        // Handle "session_id"
-                        Handler mainHandler2 = new Handler(Looper.getMainLooper());
-                        if (!isSessionIdProcessed) {
-                            if (jsonObject.has("session_id")) {
-                                String sessionId = jsonObject.getString("session_id");
-                                Log.i(TAG_STREAM, "handleStreamingResponse: session " + jsonObject.getString("session_id"));
-
-                                if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
-
-                                    mainHandler2.post(() ->
-                                            buddyGPTApplication.notifyObservers("Session_ID_Changed")
-                                    );
-                                    buddyGPTApplication.setparam("session_id", sessionId);
-                                    String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
-                                    existingHistoryArray = new JSONArray(jsonArrayString);
-                                    JSONObject newSessionObject = new JSONObject();
-                                    newSessionObject.put("Session", buddyGPTApplication.getparam("SelectedChatbot") + " - " + buddyGPTApplication.getModel());
-                                    existingHistoryArray.put(newSessionObject);
-                                    buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
-                                }
-
-
-                            }
-                            isSessionIdProcessed = true;
-                        }
-
-
-                        // Handle "Answer"
-                        if (jsonObject.has("Answer")) {
-
-                            String resp = jsonObject.getString("Answer");
-
-                            if (!resp.isEmpty()) {
-                                Log.i(TAG_STREAM, "handleStreamingResponse: if1 " + resp);
-                                answer += " " + resp;
-                                phrase = resp;
-                                onNewPhrase();
-                                if (jsonObject.getBoolean("is_finished")) {
-                                    isFullResponseReceived = true;
-                                    isSessionIdProcessed = false;
-                                }
-
-                            } else {
-                                if (jsonObject.getBoolean("is_finished")) {
-                                    isFullResponseReceived = true;
-                                    isSessionIdProcessed = false;
-                                }
-                            }
-                        }
-
-                    }
-
+                    processStreamLine(line, formattedContent);
 
                 } catch (JSONException e) {
                     Log.e(TAG_STREAM, "Invalid JSON data: " + line, e);
                 }
-
             }
+            updateHistoryWithResponse();
+            storeStreamResponse(fileName, formattedContent.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            onErrorStreaming("EXCEPTION", null);
+        }
+    }
+
+    private void processStreamLine(String line, StringBuilder formattedContent) throws JSONException {
+        if (line.contains("\"is_finished\": true,")) {
+            formattedContent.append(line);
+        } else {
+            JSONObject jsonObject = new JSONObject(line.replace("data:", "").trim());
+            String formattedObject = jsonObject.toString(4);
+            formattedContent.append("data: ").append(formattedObject);
+            formattedContent.append("\n\n");
+        }
+
+        Log.w(TAG_STREAM, "Received line: " + line);
+        String jsonData = line.substring("data:".length()).trim();
+        JSONObject jsonObject = new JSONObject(jsonData);
+
+        if (isEmptyEmotionAndAnswer(jsonObject)) {
+            if (jsonObject.has("is_finished") && jsonObject.getBoolean("is_finished")) {
+                isFullResponseReceived = true;
+                isSessionIdProcessed = false;
+            }
+        } else {
+            handleEmotion(jsonObject);
+            handleSessionId(jsonObject);
+            handleAnswer(jsonObject);
+        }
+    }
+
+    private boolean isEmptyEmotionAndAnswer(JSONObject jsonObject) throws JSONException {
+        return jsonObject.has("Emotion") && jsonObject.getString("Emotion").equalsIgnoreCase("")
+                && jsonObject.has("Answer") && jsonObject.getString("Answer").equalsIgnoreCase("");
+    }
+
+    private void handleEmotion(JSONObject jsonObject) throws JSONException {
+        if (buddyGPTApplication.getparam("switch_emotion").equals("true")) {
+            if (jsonObject.has("Emotion") && !jsonObject.getString("Emotion").equalsIgnoreCase("")) {
+                String emotion = jsonObject.getString("Emotion");
+                Log.i(TAG_STREAM, "handleStreamingResponse: emo " + emotion);
+                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;" + emotion);
+            } else {
+                Log.i(TAG_STREAM, "handleStreamingResponse: emo null");
+            }
+        } else {
+            if (!isEmotionNeutral) {
+                isEmotionNeutral = true;
+                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;BuddyFace_Neutral");
+            }
+        }
+    }
+
+    private void handleSessionId(JSONObject jsonObject) throws JSONException {
+        if (!isSessionIdProcessed) {
+            if (jsonObject.has("session_id")) {
+                String sessionId = jsonObject.getString("session_id");
+                Log.i(TAG_STREAM, "handleStreamingResponse: session " + sessionId);
+
+                if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
+                    Handler mainHandler2 = new Handler(Looper.getMainLooper());
+                    mainHandler2.post(() -> buddyGPTApplication.notifyObservers("Session_ID_Changed"));
+                    buddyGPTApplication.setparam("session_id", sessionId);
+                    addSessionToHistory();
+                }
+            }
+            isSessionIdProcessed = true;
+        }
+    }
+
+    private void addSessionToHistory() {
+        try {
+            String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
+            existingHistoryArray = new JSONArray(jsonArrayString);
+            JSONObject newSessionObject = new JSONObject();
+            newSessionObject.put("Session", buddyGPTApplication.getparam("SelectedChatbot") + " - " + buddyGPTApplication.getModel());
+            existingHistoryArray.put(newSessionObject);
+            buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
+        } catch (Exception e) {
+            Log.e(TAG_STREAM, "Error adding session to history", e);
+        }
+    }
+
+    private void handleAnswer(JSONObject jsonObject) throws JSONException {
+        if (jsonObject.has("Answer")) {
+            String resp = jsonObject.getString("Answer");
+            if (!resp.isEmpty()) {
+                Log.i(TAG_STREAM, "handleStreamingResponse: if1 " + resp);
+                answer += " " + resp;
+                phrase = resp;
+                onNewPhrase();
+                if (jsonObject.getBoolean("is_finished")) {
+                    isFullResponseReceived = true;
+                    isSessionIdProcessed = false;
+                }
+            } else {
+                if (jsonObject.getBoolean("is_finished")) {
+                    isFullResponseReceived = true;
+                    isSessionIdProcessed = false;
+                }
+            }
+        }
+    }
+
+    private void updateHistoryWithResponse() {
+        try {
             String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
             existingHistoryArray = new JSONArray(jsonArrayString);
             JSONObject newRespObject = new JSONObject();
@@ -514,12 +527,8 @@ public class ResponseFromTeamGPT {
             newRespObject.put("Response", answer + ";SPLIT;" + formattedTime + " ms");
             existingHistoryArray.put(newRespObject);
             buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
-            // Save formattedContent in ChatGPT-recv-stream.txt
-            storeStreamResponse(fileName, formattedContent.toString());
-
         } catch (Exception e) {
-            e.printStackTrace();
-            onErrorStreaming("EXCEPTION", null);
+            Log.e(TAG_STREAM, "Error updating history with response", e);
         }
     }
 
@@ -572,7 +581,7 @@ public class ResponseFromTeamGPT {
                                                 float confidence = language.getConfidence();
                                                 Log.i("MRA_idetifyLanguage", "Language of : [ " + phraseToPronounce + " ] is : " + languageCode + ", Confidence: " + confidence);
                                                 if (buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties") != null &&
-                                                        !buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties").trim().equals("") &&
+                                                        !buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties").trim().isEmpty() &&
                                                         !buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties").trim().equals("0")) {
                                                     if (Integer.parseInt(buddyGPTApplication.getParamFromFile("Detection_confidence_rate", "BuddyGPT.properties")) <= (confidence * 100)) {
                                                         buddyGPTApplication.setLanguageDetected(languageCode.trim());
@@ -603,8 +612,8 @@ public class ResponseFromTeamGPT {
                 return;
             }
         }
-        phrasesHandler.postDelayed(phrasesRunnable = this::processPhrasesWithDelay, 50);
-    }
+        phrasesRunnable = this::processPhrasesWithDelay;
+        phrasesHandler.postDelayed(phrasesRunnable, 50);    }
 
     private void onFinishStreaming() {
         Log.i(TAG_STREAM, "------------------END-------------------");
@@ -624,7 +633,6 @@ public class ResponseFromTeamGPT {
             Log.i(TAG_STREAM, "storeStreamResponse() : new file added");
         } catch (Exception e) {
             Log.e(TAG_STREAM, "storeStreamResponse() : " + e);
-            e.printStackTrace();
         }
     }
 
@@ -639,20 +647,9 @@ public class ResponseFromTeamGPT {
         Log.e(TAG_STREAM, "------------------ERROR-------------------");
 
         if (!isReset) {
-
-            if (phrasesRunnable != null) phrasesHandler.removeCallbacks(phrasesRunnable);
-            phrasesHandler.removeCallbacksAndMessages(null);
-            phrasesQueue.clear();
-
-            if (wordsRunnable != null) wordsHandler.removeCallbacks(wordsRunnable);
-            wordsHandler.removeCallbacksAndMessages(null);
-
+            clearHandlersAndQueues();
             buddyGPTApplication.stopTTS();
-            try {
-                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-            } catch (Exception e) {
-                Log.e(TAG_STREAM, "BuddySDK Exception  " + e);
-            }
+            resetLabialExpression();
 
             SystemClock.sleep(1000);
 
@@ -660,114 +657,159 @@ public class ResponseFromTeamGPT {
             isError = true;
 
             if (error.equals("RESPONSE_NOT_SUCCESSFUL")) {
-
-                try {
-                    if (response != null && response.errorBody() != null) {
-                        JsonObject errorLOG = new JsonObject();
-                        JsonObject errorCode = new JsonObject();
-                        errorCode.addProperty("ERROR CODE", response.code());
-                        String jsonString = response.errorBody().string();
-                        JSONObject jsonErrorContent = new JSONObject(jsonString);
-                        JSONObject errorObject = jsonErrorContent.getJSONObject("error");
-                        String message = errorObject.getString("message");
-                        String type = errorObject.getString("type");
-                        String param = errorObject.getString("param");
-                        String code = errorObject.getString("code");
-                        JsonObject reformErrorJson = new JsonObject();
-                        reformErrorJson.addProperty("message", message);
-                        reformErrorJson.addProperty("type", type);
-                        reformErrorJson.addProperty("param", param);
-                        reformErrorJson.addProperty("code", code);
-                        errorCode.add("ERROR Body", reformErrorJson);
-                        errorLOG.add("OpenAIERROR", errorCode);
-                        String fileName = "ERROR-LOG";
-                        File file1 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/" + fileName + ".json");
-                        try {
-                            if (file1.exists() && file1.isFile()) {
-                                file1.delete();
-                            }
-                            FileWriter fileWriter = new FileWriter(file1);
-                            Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-                            String jsonStringF = gson.toJson(errorLOG);
-                            fileWriter.write(jsonStringF);
-                            fileWriter.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        String errorTXT = new Date() + ", OpenAIERROR,ERROR CODE= " + response.code()
-                                + ", ERROR Body{ message= " + message + ", type= " + type + ", param= " + param + ", code= " + code + "}"
-                                + System.getProperty("line.separator");
-                        File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
-                        try {
-                            FileWriter fileWriter = new FileWriter(file2, true);
-                            fileWriter.write(errorTXT);
-                            fileWriter.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                    errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties");
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_fr", "BuddyGPT.properties");
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Espagnol")) {
-                    errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_es", "BuddyGPT.properties");
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Allemand")) {
-                    errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_de", "BuddyGPT.properties");
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties"))
-                            .addOnSuccessListener(translatedText -> errorMsg = translatedText)
-                            .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties"));
-                }
+                handleResponseNotSuccessful(response);
             } else if (error.equals("FAILURE")) {
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_en);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_fr);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Espagnol")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_es);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Allemand")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_de);
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(buddyGPTApplication.getString(R.string.chatBotNoFound_en))
-                            .addOnSuccessListener(translatedText -> errorMsg = translatedText)
-                            .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_en));
-                }
+                errorMsg = getLocalizedErrorMessage("chatBotNoFound");
             } else {
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_en);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_fr);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Espagnol")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_es);
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Allemand")) {
-                    errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_de);
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(buddyGPTApplication.getString(R.string.chatBot_ERROR_en))
-                            .addOnSuccessListener(translatedText -> errorMsg = translatedText)
-                            .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_en));
-                }
+                errorMsg = getLocalizedErrorMessage("chatBot_ERROR");
             }
 
             buddyGPTApplication.setMessageError(true);
-            if (!buddyGPTApplication.isOpenaialreadySwitchEmotion()) {
-                try {
-                    BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
-                } catch (Exception e) {
-                    Log.e(TAG_STREAM, "BuddySDK Exception  " + e);
-                }
-            }
+            setTiredFacialExpressionIfNeeded();
             processPhrasesWithDelay();
             pronouncePhrase(errorMsg);
         }
     }
 
+    private void clearHandlersAndQueues() {
+        if (phrasesRunnable != null) phrasesHandler.removeCallbacks(phrasesRunnable);
+        phrasesHandler.removeCallbacksAndMessages(null);
+        phrasesQueue.clear();
+
+        if (wordsRunnable != null) wordsHandler.removeCallbacks(wordsRunnable);
+        wordsHandler.removeCallbacksAndMessages(null);
+    }
+
+    private void resetLabialExpression() {
+        try {
+            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+        } catch (Exception e) {
+            Log.e(TAG_STREAM, "BuddySDK Exception  " + e);
+        }
+    }
+
+    private void handleResponseNotSuccessful(Response<ResponseBody> response) {
+        try {
+            if (response != null && response.errorBody() != null) {
+                logErrorToFile(response);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        String lang = buddyGPTApplication.getLangue().getNom();
+        switch (lang) {
+            case "Anglais":
+                errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties");
+                break;
+            case "Français":
+                errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_fr", "BuddyGPT.properties");
+                break;
+            case "Espagnol":
+                errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_es", "BuddyGPT.properties");
+                break;
+            case "Allemand":
+                errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_de", "BuddyGPT.properties");
+                break;
+            default:
+                buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                        .translate(buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties"))
+                        .addOnSuccessListener(translatedText -> errorMsg = translatedText)
+                        .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_en", "BuddyGPT.properties"));
+                break;
+        }
+    }
+
+    private void logErrorToFile(Response<ResponseBody> response) {
+        try {
+            JsonObject errorLOG = new JsonObject();
+            JsonObject errorCode = new JsonObject();
+            errorCode.addProperty("ERROR CODE", response.code());
+            String jsonString = response.errorBody().string();
+            JSONObject jsonErrorContent = new JSONObject(jsonString);
+            JSONObject errorObject = jsonErrorContent.getJSONObject("error");
+            String message = errorObject.getString("message");
+            String type = errorObject.getString("type");
+            String param = errorObject.getString("param");
+            String code = errorObject.getString("code");
+            JsonObject reformErrorJson = new JsonObject();
+            reformErrorJson.addProperty("message", message);
+            reformErrorJson.addProperty("type", type);
+            reformErrorJson.addProperty("param", param);
+            reformErrorJson.addProperty("code", code);
+            errorCode.add("ERROR Body", reformErrorJson);
+            errorLOG.add("OpenAIERROR", errorCode);
+            String fileName = "ERROR-LOG";
+            File file1 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/" + fileName + ".json");
+            if (file1.exists() && file1.isFile()) file1.delete();
+            try (FileWriter fileWriter = new FileWriter(file1)) {
+                Gson gson = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
+                String jsonStringF = gson.toJson(errorLOG);
+                fileWriter.write(jsonStringF);
+            }
+
+            String errorTXT = new Date() + ", OpenAIERROR,ERROR CODE= " + response.code()
+                    + ", ERROR Body{ message= " + message + ", type= " + type + ", param= " + param + ", code= " + code + "}"
+                    + System.getProperty("line.separator");
+            File file2 = new File(Environment.getExternalStorageDirectory(), "BuddyGPT/ERROR-History.txt");
+            try (FileWriter fileWriter2 = new FileWriter(file2, true)) {
+                fileWriter2.write(errorTXT);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String getLocalizedErrorMessage(String key) {
+        String lang = buddyGPTApplication.getLangue().getNom();
+        switch (key) {
+            case "chatBotNoFound":
+                switch (lang) {
+                    case "Anglais":
+                        return buddyGPTApplication.getString(R.string.chatBotNoFound_en);
+                    case "Français":
+                        return buddyGPTApplication.getString(R.string.chatBotNoFound_fr);
+                    case "Espagnol":
+                        return buddyGPTApplication.getString(R.string.chatBotNoFound_es);
+                    case "Allemand":
+                        return buddyGPTApplication.getString(R.string.chatBotNoFound_de);
+                    default:
+                        buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                                .translate(buddyGPTApplication.getString(R.string.chatBotNoFound_en))
+                                .addOnSuccessListener(translatedText -> errorMsg = translatedText)
+                                .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getString(R.string.chatBotNoFound_en));
+                        return buddyGPTApplication.getString(R.string.chatBotNoFound_en);
+                }
+            case "chatBot_ERROR":
+            default:
+                switch (lang) {
+                    case "Anglais":
+                        return buddyGPTApplication.getString(R.string.chatBot_ERROR_en);
+                    case "Français":
+                        return buddyGPTApplication.getString(R.string.chatBot_ERROR_fr);
+                    case "Espagnol":
+                        return buddyGPTApplication.getString(R.string.chatBot_ERROR_es);
+                    case "Allemand":
+                        return buddyGPTApplication.getString(R.string.chatBot_ERROR_de);
+                    default:
+                        buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                                .translate(buddyGPTApplication.getString(R.string.chatBot_ERROR_en))
+                                .addOnSuccessListener(translatedText -> errorMsg = translatedText)
+                                .addOnFailureListener(e -> errorMsg = buddyGPTApplication.getString(R.string.chatBot_ERROR_en));
+                        return buddyGPTApplication.getString(R.string.chatBot_ERROR_en);
+                }
+        }
+    }
+
+    private void setTiredFacialExpressionIfNeeded() {
+        if (!buddyGPTApplication.isOpenaialreadySwitchEmotion()) {
+            try {
+                BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
+            } catch (Exception e) {
+                Log.e(TAG_STREAM, "BuddySDK Exception  " + e);
+            }
+        }
+    }
 
     public void reset() {
         Log.i(TAG_STREAM, "------------------reset-------------------");

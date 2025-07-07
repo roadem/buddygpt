@@ -21,16 +21,21 @@ public class PoseTracking {
     private Runnable runnable;
     private IUsbCommadRsp iUsbCommadRsp = new IUsbCommadRsp.Stub() {
         @Override
-        public void onSuccess(String success) throws RemoteException {}
+        public void onSuccess(String success) throws RemoteException {
+            // comment
+        }
         @Override
-        public void onFailed(String error) throws RemoteException {}
+        public void onFailed(String error) throws RemoteException {
+            // comment
+        }
     };
 
     public Integer getLandmarksCamera(PoseLandmarkerResult results) {
-        int poseIndex = 0, landmarkDansLecran = 0;
+        int poseIndex = 0;
+        int landmarkDansLecran = 0;
         for (List<NormalizedLandmark> poseLandmarks : results.landmarks()) {
             Log.d(TAG_TRACKING_DEBUG, "Pose Index: " + poseIndex++);
-            int landmarkIndex = 0;
+
             for (NormalizedLandmark landmark : poseLandmarks) {
                 float x = landmark.x();
                 float y = landmark.y();
@@ -159,51 +164,55 @@ public class PoseTracking {
 
     }
 
-    public void Rotation(float degx, boolean boddy) {
+    public void rotation(float degx, boolean boddy) {
         if(handler!=null && runnable!=null){
             handler.removeCallbacks(runnable);
             handler.removeCallbacksAndMessages(null);
         }
-        handler.post(runnable = new Runnable() {
-            int speedR, speedL;
-            @Override
-            public void run() {
-                try{
-                    if (degx > 3 || degx < -3) {
-                        speedR = (int) 300;
-                        speedL = (int) 300;
-                    }
-                    if (degx < -3) {
-                        speedR = (int) (speedR + (-degx * 20));
-                        speedL = -speedR;
-                    }
-                    if (degx > 3) {
-                        speedL = (int) (speedR + (degx * 20));
-                        speedR = -speedL;
-                    }
-                    if (boddy && (speedR == -speedL)) {
-                        if (degx < -5) {
-                            BuddySDK.USB.setWheelSpeed(speedL, speedR, 0, 0, iUsbCommadRsp);
-                        } else {
-                            if (degx > 5) {
+        if (handler != null) {
+            runnable = new Runnable() {
+                int speedR;
+                int speedL;
+                @Override
+                public void run() {
+                    try{
+                        if (degx > 3 || degx < -3) {
+                            speedR = 300;
+                            speedL = 300;
+                        }
+                        if (degx < -3) {
+                            speedR = (int) (speedR + (-degx * 20));
+                            speedL = -speedR;
+                        }
+                        if (degx > 3) {
+                            speedL = (int) (speedR + (degx * 20));
+                            speedR = -speedL;
+                        }
+                        if (boddy && (speedR == -speedL)) {
+                            if (degx < -5) {
                                 BuddySDK.USB.setWheelSpeed(speedL, speedR, 0, 0, iUsbCommadRsp);
                             } else {
-                                BuddySDK.USB.emergencyStopMotors(iUsbCommadRsp);
+                                if (degx > 5) {
+                                    BuddySDK.USB.setWheelSpeed(speedL, speedR, 0, 0, iUsbCommadRsp);
+                                } else {
+                                    BuddySDK.USB.emergencyStopMotors(iUsbCommadRsp);
+                                }
+                            }
+                        } else {
+                            if (degx < -5 || degx > 5) {
+                                BuddySDK.USB.buddySayNoStraight(degx, iUsbCommadRsp);
+                            } else {
+                                BuddySDK.USB.buddyStopNoMove(iUsbCommadRsp);
                             }
                         }
-                    } else {
-                        if (degx < -5 || degx > 5) {
-                            BuddySDK.USB.buddySayNoStraight(degx, iUsbCommadRsp);
-                        } else {
-                            BuddySDK.USB.buddyStopNoMove(iUsbCommadRsp);
-                        }
+                    }
+                    catch (Exception e){
+                        e.printStackTrace();
                     }
                 }
-                catch (Exception e){
-                    e.printStackTrace();
-                }
-            }
-        });
+            };
+            handler.post(runnable);
+        }
     }
 
     public void yesTracking(float degy) {
@@ -211,9 +220,8 @@ public class PoseTracking {
             handler.removeCallbacks(runnable);
             handler.removeCallbacksAndMessages(null);
         }
-        handler.post(runnable = new Runnable() {
-            @Override
-            public void run() {
+        if (handler != null) {
+            runnable = () -> {
                 try{
                     if (degy < -5) {
                         BuddySDK.USB.buddySayYesStraight(-degy, iUsbCommadRsp);
@@ -228,11 +236,12 @@ public class PoseTracking {
                 catch (Exception e){
                     e.printStackTrace();
                 }
-            }
-        });
+            };
+            handler.post(runnable);
+        }
     }
 
-    public void look_at(float degx, float degy) {
+    public void lookAt(float degx, float degy) {
         try{
             float look_X = map(-degx, 0.0f, 1000.0f, -25, 25);
             float look_Y = map(degy, 0.0f, 600.0f, -20, 20);
@@ -292,7 +301,7 @@ public class PoseTracking {
      * @return la fonction renvoi le mappage Xb de Xa.
      */
     private float map(float input, float toMin, float toMax, float fromMin, float fromMax) {
-        return (float) (((input - fromMin) / (fromMax - fromMin)) * (toMax - toMin) + toMin);
+        return  (((input - fromMin) / (fromMax - fromMin)) * (toMax - toMin) + toMin);
     }
 
 }

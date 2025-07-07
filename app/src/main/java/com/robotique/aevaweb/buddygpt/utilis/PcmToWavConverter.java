@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class PcmToWavConverter {
+    PcmToWavConverter() {
+    }
     public static void convert(String pcmFilePath, String wavFilePath) {
         if (pcmFilePath == null) {
             // Handle the case where pcmFilePath is null

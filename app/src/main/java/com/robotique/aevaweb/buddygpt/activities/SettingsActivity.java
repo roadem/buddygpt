@@ -60,6 +60,7 @@ import java.util.List;
 
 public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private static final String TAG = "BuddyGPT_SettingsActivity";
+    private static final String EMAIL = "Email";
     private static final String speakVolume = "speak_volume";
     private static final String visibilityString = "switch_visibility";
     private static final String emotionString = "switch_emotion";
@@ -114,7 +115,6 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private Setting setting;
     private List<Langue> langues;
     private ResponseFromTeamGPT responseFromTeamGPT;
-    private String teamGPTKeyValue = "";
     private Boolean modelDownloading = false;
     private boolean englishIsDownloaded = false;
     private boolean french_is_downloaded = false;
@@ -245,8 +245,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         /**
          *  Gestion de l'api key
          */
-        if (!buddyGPTApplication.getparam(teamGPT_Key).equalsIgnoreCase(""))
-            teamGPTKeyValue = buddyGPTApplication.getparam(teamGPT_Key);
+
         handlerApiKey();
 
 
@@ -371,85 +370,115 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     }
 
     private void handlerLangue() {
+        initLangues();
+        setupSpinnerAdapter();
+        selectChosenLanguage();
+        setupSpinnerListener();
+    }
 
+
+
+    private void initLangues() {
         langues = new ArrayList<>();
-
         List<String> langueDisponible = buddyGPTApplication.getDisponibleLangue();
-        for (int i = 1; i < langueDisponible.size(); i++) {
 
-            langues.add(new Gson().fromJson(buddyGPTApplication.getparam(langueDisponible.get(i - 1)), Langue.class));
-            i++;
+        for (int i = 1; i < langueDisponible.size(); i += 2) {
+            String param = buddyGPTApplication.getparam(langueDisponible.get(i - 1));
+            langues.add(new Gson().fromJson(param, Langue.class));
         }
+
         if (langues.isEmpty()) {
             langues.add(new Gson().fromJson(buddyGPTApplication.getparam(langueFR), Langue.class));
         }
+    }
 
-        langueSpinnerAdapter = new LangueSpinnerAdapter(getApplicationContext(),
+
+    private void setupSpinnerAdapter() {
+        langueSpinnerAdapter = new LangueSpinnerAdapter(
+                getApplicationContext(),
                 R.layout.spinner_item_layout_resource,
                 R.id.item_name,
                 R.id.checked_item_checked,
-                langues);
+                langues
+        );
         menuOptionLangueSpinner.setAdapter(langueSpinnerAdapter);
-
-
         avoidSpinnerDropdownFocus(menuOptionLangueSpinner);
+    }
 
 
-        //get the position, of the chosen language
+    private void selectChosenLanguage() {
         for (int index = 0; index < langues.size(); index++) {
-            if (langues.get(index).isChosen()) {
+            Langue lang = langues.get(index);
+            if (lang.isChosen() || index == langues.size() - 1) {
                 chosenLanguagePos = index;
-                buddyGPTApplication.setLangue(langues.get(index));
-                setting.setLangue(langues.get(index).getNom());
+                buddyGPTApplication.setLangue(lang);
+                setting.setLangue(lang.getNom());
                 break;
             }
-            if (index == langues.size() - 1) {
-                chosenLanguagePos = index;
-                buddyGPTApplication.setLangue(langues.get(index));
-                setting.setLangue(langues.get(index).getNom());
-
-            }
         }
+
         menuOptionLangueSpinner.setSelection(chosenLanguagePos);
         menuOptionLangueSpinner.setEnabled(true);
         setLanguageText();
+    }
+
+
+    private void setupSpinnerListener() {
         menuOptionLangueSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                chosenLanguagePos = position;
-                for (Langue langue : langues) {
-                    langue.setChosen(false);
-                    if (langue.equals(parent.getSelectedItem())) {
-                        langue.setChosen(true);
-                        buddyGPTApplication.setLangue(langue);
-                        set.setLangue(langue.getNom());
-                        modelDownloading = true;
-                        buddyGPTApplication.downloadModel(imlKitDownloadCallback, buddyGPTApplication.getLangue().getLanguageCode().split("-")[0].trim());
-                        handlerProgressBar.postDelayed(runnableProgressBar, 500);
-
-                    }
-                    if (langue.getNom().equals(langueFR)) {
-                        buddyGPTApplication.setparam(langueFR, new Gson().toJson(langue));
-                    } else if (langue.getNom().equals(langueEN)) {
-                        buddyGPTApplication.setparam(langueEN, new Gson().toJson(langue));
-                    } else if (langue.getNom().equals(langueES)) {
-                        buddyGPTApplication.setparam(langueES, new Gson().toJson(langue));
-                    } else if (langue.getNom().equals(langueDE)) {
-                        buddyGPTApplication.setparam(langueDE, new Gson().toJson(langue));
-                    } else {
-                        buddyGPTApplication.setparam(langue.getNom(), new Gson().toJson(langue));
-                    }
-                }
-                langueSpinnerAdapter.updateDataSet(langues);
-                setLanguageText();
+                Langue selectedLangue = (Langue) parent.getSelectedItem();
+                updateChosenLanguage(selectedLangue, position);
             }
 
             @Override
             public void onNothingSelected(AdapterView<?> parent) {
-                // Method left empty intentionally because no specific action is needed for this update.
+                // no-op
             }
         });
+    }
+
+
+    private void updateChosenLanguage(Langue selectedLangue, int position) {
+        chosenLanguagePos = position;
+        for (Langue lang : langues) {
+            lang.setChosen(lang.equals(selectedLangue));
+        }
+
+        buddyGPTApplication.setLangue(selectedLangue);
+        set.setLangue(selectedLangue.getNom());
+        modelDownloading = true;
+
+        String languageCode = selectedLangue.getLanguageCode().split("-")[0].trim();
+        buddyGPTApplication.downloadModel(imlKitDownloadCallback, languageCode);
+
+        handlerProgressBar.postDelayed(runnableProgressBar, 500);
+        saveLangueParams();
+        langueSpinnerAdapter.updateDataSet(langues);
+        setLanguageText();
+    }
+
+
+    private void saveLangueParams() {
+        for (Langue lang : langues) {
+            String json = new Gson().toJson(lang);
+            switch (lang.getNom()) {
+                case langueFR:
+                    buddyGPTApplication.setparam(langueFR, json);
+                    break;
+                case langueEN:
+                    buddyGPTApplication.setparam(langueEN, json);
+                    break;
+                case langueES:
+                    buddyGPTApplication.setparam(langueES, json);
+                    break;
+                case langueDE:
+                    buddyGPTApplication.setparam(langueDE, json);
+                    break;
+                default:
+                    buddyGPTApplication.setparam(lang.getNom(), json);
+            }
+        }
     }
 
     private void handlerChatbot() {
@@ -562,7 +591,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     private void handlerNameAndEmail() {
 
         Log.i(TAG, "handlerName: HOU" + buddyGPTApplication.getparam("NomCompte"));
-        menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam("Email"));
+        menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
 
     }
 
@@ -676,7 +705,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                         refresh(0);
                     } else {
                         Log.i("TAG", "run: getParameters else");
-                        if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))) {
+                        if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam(EMAIL))) {
                             buddyGPTApplication.setparam("Mail_Destination", "");
                         }
                         if (buddyGPTApplication.getResponseFromTeamGPT() != null) {
@@ -703,7 +732,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     refresh(0);
                 } else {
                     Log.i("TAG", "run: getParameters 32");
-                    if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam("Email"))) {
+                    if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam(EMAIL))) {
                         buddyGPTApplication.setparam("Mail_Destination", "");
                     }
                     if (buddyGPTApplication.getResponseFromTeamGPT() != null)
@@ -741,9 +770,9 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                     menuOptionTtsLyt.setVisibility(View.GONE);
 
                 menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getModel());
-                menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam("Email"));
+                menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
                 if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
-                    buddyGPTApplication.setparam("Mail_Destination", buddyGPTApplication.getparam("Email"));
+                    buddyGPTApplication.setparam("Mail_Destination", buddyGPTApplication.getparam(EMAIL));
 
                 copyRight.setText(getString(R.string.copyright) + " / " + buddyGPTApplication.getparam("email_support"));
                 identifiers.setText(buddyGPTApplication.getparam("IdCompte") + " / " + buddyGPTApplication.getparam("IMEI_ID_Device"));
@@ -763,7 +792,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
     }
 
     public void setLanguageText() {
-        if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+        if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
             menuTitle.setText(R.string.menu_title_en);
             menuOptionLangueTextView.setText(R.string.menu_option_langue_en);
             menuOptionTtsTextView.setText(R.string.menu_option_tts_en);
@@ -777,7 +806,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             menuNameTextView.setText(R.string.menu_name_en);
             menuHeaderTextView.setText(R.string.menu_header_en);
             menuHeaderEditText.setText(buddyGPTApplication.getparam(header));
-        } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+        } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
             menuTitle.setText(R.string.menu_title_fr);
 
             menuOptionLangueTextView.setText(R.string.menu_option_langue_fr);
@@ -875,7 +904,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
         Log.d(TAG, " --- onResume() ---");
 
         buddyGPTApplication.hideSystemUI(this);
-        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam("speak_volume")), AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
+        buddyGPTApplication.setVolume(Integer.parseInt(buddyGPTApplication.getparam(speakVolume)), AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
     }
 
     @Override
@@ -929,7 +958,7 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
                 int max = buddyGPTApplication.getMaxVolume();
                 int defaultVolume = buddyGPTApplication.getClosestInt((double) (speakVolumeValue * 100) / max);
                 Log.e("FCH", "volumeMedia  " + defaultVolume);
-                buddyGPTApplication.setparam("speak_volume", String.valueOf(defaultVolume));
+                buddyGPTApplication.setparam(speakVolume, String.valueOf(defaultVolume));
                 buddyGPTApplication.setVolume(defaultVolume, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
                 volumeSeekbarValue.setText(defaultVolume + " %");
                 set.setVolume(Integer.toString(defaultVolume));
@@ -938,14 +967,14 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             if (message.contains("INVALID_TEAMGPT_KEY")) {
                 refresh(0);
                 Log.i(TAG, "afterTextChanged: invalid");
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Espagnol")) {
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueES)) {
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_es), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_es));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Allemand")) {
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueDE)) {
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_de), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_de));
                 } else {
                     buddyGPTApplication.getEnglishLanguageSelectedTranslator()
@@ -957,10 +986,10 @@ public class SettingsActivity extends BuddyActivity implements IDBObserver {
             if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
                 refresh(0);
                 Log.i(TAG, "afterTextChanged: invalid");
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
                     buddyGPTApplication.showInputDialog(SettingsActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
                 } else {
                     buddyGPTApplication.getEnglishLanguageSelectedTranslator()

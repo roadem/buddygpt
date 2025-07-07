@@ -12,7 +12,7 @@ import com.robotique.aevaweb.buddygpt.R;
 public class CustomToast {
 
     // private static instance variable to hold the singleton instance
-    private static volatile CustomToast instance = null;
+    private static CustomToast instance = null;
     private final Handler handler = new Handler();
     private RelativeLayout customToastInfo;
 
@@ -27,10 +27,7 @@ public class CustomToast {
             // synchronize the block to ensure only one thread can execute at a time
             synchronized (CustomToast.class) {
                 // check again if the instance is already created
-                if (instance == null) {
-                    // create the singleton instance
                     instance = new CustomToast();
-                }
             }
         }
         // return the singleton instance
