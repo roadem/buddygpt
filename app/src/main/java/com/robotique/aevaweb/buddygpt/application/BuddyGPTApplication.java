@@ -745,8 +745,8 @@ public class BuddyGPTApplication extends BuddyApplication {
     @Override
     public void onCreate() {
         super.onCreate();
-        AudioManager amanager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        amanager.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
         SettingsContentObserver mSettingsContentObserver = new SettingsContentObserver(new Handler(), getApplicationContext());
         getContentResolver().registerContentObserver(
                 Settings.System.CONTENT_URI, true,

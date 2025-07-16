@@ -1,0 +1,931 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/feedbackbuddy">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_black">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_blue">
+
+            <RelativeLayout
+                android:id="@+id/lyt_close_menu_settings"
+                android:layout_width="100px"
+                android:layout_height="100px"
+                android:layout_marginTop="20px"
+                android:layout_marginStart="140px"
+                android:clickable="true"
+                android:elevation="0.8dp"
+                android:background="@drawable/ellipse_opened">
+                <ImageView
+                    android:id="@+id/button_close_menu_settings"
+                    android:layout_width="36px"
+                    android:layout_height="37px"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/cog"
+                    android:tint="@color/white" />
+            </RelativeLayout>
+
+            <LinearLayout
+                android:id="@+id/layout_settings"
+                android:layout_width="match_parent"
+                android:layout_height="348dp"
+                android:layout_marginHorizontal="60px"
+                android:layout_marginBottom="35dp"
+                android:layout_marginTop="140px"
+                android:paddingVertical="20px"
+                android:orientation="vertical"
+                android:background="@drawable/window_bg"
+                tools:context="com.robotique.aevaweb.buddygpt.activities.SettingsActivity">
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="20dp"
+                    android:orientation="horizontal">
+
+                    <!-- Blue Mic Icon -->
+                    <!--                    <ImageView-->
+                    <!--                        android:id="@+id/blue_mic_lyt"-->
+                    <!--                        android:layout_width="100px"-->
+                    <!--                        android:layout_height="100px"-->
+                    <!--                        android:visibility="invisible"-->
+                    <!--                        android:src="@drawable/micro_bluetooth"-->
+                    <!--                        android:onClick="btnOpenBlueMic"-->
+                    <!--                        android:layout_centerInParent="true"-->
+                    <!--                        android:layout_alignParentStart="true"/>-->
+                    <!-- Android language STT Icon -->
+                    <!--                    <ImageView-->
+                    <!--                        android:id="@+id/Android_STT_language_lyt"-->
+                    <!--                        android:layout_width="100px"-->
+                    <!--                        android:layout_height="100px"-->
+                    <!--                        android:src="@drawable/list_of_languages"-->
+                    <!--                        android:onClick="btnAfficheLanguageList"-->
+                    <!--                        android:layout_toEndOf="@id/blue_mic_lyt"-->
+                    <!--                        android:layout_marginStart="20dp"-->
+                    <!--                        android:layout_centerVertical="true"-->
+                    <!--                        android:visibility="invisible"/>-->
+
+
+                    <TextView
+                        android:id="@+id/menu_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="@string/menu_title_fr"
+                        android:textColor="#000000"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:layout_centerInParent="true"/>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerInParent="true"
+                        android:orientation="vertical">
+                        <TextView
+                            android:id="@+id/copyright_texte"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerInParent="true"
+                            android:layout_gravity="center_vertical|end"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginEnd="0dp"
+                            android:textColor="#000000"
+                            android:textSize="8sp" />
+                        <TextView
+                            android:id="@+id/identifiers_texte"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:layout_centerInParent="true"
+                            android:layout_gravity="center_vertical|end"
+                            android:layout_marginStart="200dp"
+                            android:layout_marginEnd="0dp"
+                            android:textColor="#000000"
+                            android:textSize="8sp" />
+                    </LinearLayout>
+
+
+                </RelativeLayout>
+                <ScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:fillViewport="true"
+                    android:orientation="vertical">
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="248dp"
+                        android:orientation="vertical">
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_listening_duration_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="35dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_listening_duration_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_listening_duration_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <LinearLayout-->
+                        <!--                                android:id="@+id/menu_option_listening_duration_editText_lyt"-->
+                        <!--                                android:layout_width="350dp"-->
+                        <!--                                android:layout_height="30dp"-->
+                        <!--                                android:layout_gravity="end|center_vertical"-->
+                        <!--                                android:gravity="center_vertical"-->
+                        <!--                                android:background="@drawable/button_black_bg">-->
+                        <!--                                <EditText-->
+                        <!--                                    android:id="@+id/menu_option_listening_duration_editText"-->
+                        <!--                                    android:layout_width="match_parent"-->
+                        <!--                                    android:layout_height="match_parent"-->
+                        <!--                                    android:layout_gravity="center_horizontal|center_vertical"-->
+                        <!--                                    android:textAlignment="center"-->
+                        <!--                                    android:layout_marginStart="10dp"-->
+                        <!--                                    android:textSize="15sp"-->
+                        <!--                                    android:background="@null"-->
+                        <!--                                    android:hint="@string/menu_option_listening_duration_hint_fr"-->
+                        <!--                                    android:inputType="number"-->
+                        <!--                                    android:importantForAutofill="noExcludeDescendants"-->
+                        <!--                                    android:textColor="#FFFFFF"-->
+                        <!--                                    android:textColorHint="#FFFFFF"/>-->
+                        <!--                            </LinearLayout>-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; listening_attempt &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_listening_attempt_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="30dp"-->
+                        <!--                            android:layout_marginTop="5dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_listening_attempt_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_listening_attempt_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <LinearLayout-->
+                        <!--                                android:id="@+id/menu_option_listening_attempt_editText_lyt"-->
+                        <!--                                android:layout_width="350dp"-->
+                        <!--                                android:layout_height="30dp"-->
+                        <!--                                android:layout_gravity="end|center_vertical"-->
+                        <!--                                android:gravity="center_vertical"-->
+                        <!--                                android:background="@drawable/button_black_bg">-->
+                        <!--                                <EditText-->
+                        <!--                                    android:id="@+id/menu_option_listening_attempt_editText"-->
+                        <!--                                    android:layout_width="match_parent"-->
+                        <!--                                    android:layout_height="match_parent"-->
+                        <!--                                    android:layout_gravity="center_horizontal|center_vertical"-->
+                        <!--                                    android:textAlignment="center"-->
+                        <!--                                    android:layout_marginStart="10dp"-->
+                        <!--                                    android:textSize="15sp"-->
+                        <!--                                    android:background="@null"-->
+                        <!--                                    android:hint="@string/menu_option_listening_attempt_hint_fr"-->
+                        <!--                                    android:inputType="number"-->
+                        <!--                                    android:importantForAutofill="noExcludeDescendants"-->
+                        <!--                                    android:textColor="#FFFFFF"-->
+                        <!--                                    android:textColorHint="#FFFFFF"/>-->
+                        <!--                            </LinearLayout>-->
+                        <!--                        </LinearLayout>-->
+
+                        <!-- Name/E-mail Section -->
+                        <LinearLayout
+                            android:id="@+id/name"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/name_txt"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="2"
+                                android:gravity="center_vertical|top"
+                                android:text="@string/menu_name_fr"
+                                android:textColor="#000000" />
+
+                            <LinearLayout
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:gravity="center_vertical|top"
+                                android:background="@drawable/rounded_bg">
+
+                                <TextView
+                                    android:id="@+id/user_name"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_marginEnd="5dp"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:longClickable="true"
+                                    android:textIsSelectable="true"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!-- option_Chatbot-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_chatbot_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/menu_option_chatbot_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_chatbot_fr"
+                                android:textColor="#000000" />
+
+                            <LinearLayout
+                                android:id="@+id/menu_option_chatbot_spinner_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/rounded_bg"
+                                android:gravity="center_vertical"
+                                android:layout_gravity="end|center_vertical">
+
+                                <TextView
+                                    android:id="@+id/menu_option_chatbot_spinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF" />
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!-- Entete -->
+                        <LinearLayout
+                            android:id="@+id/header"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/header_txt"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_header_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:layout_width="400dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/rounded_bg">
+                                <TextView
+                                    android:id="@+id/header_editText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:textAlignment="center"
+                                    android:layout_margin="5dp"
+                                    android:paddingLeft="4dp"
+                                    android:paddingRight="4dp"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:inputType="textMultiLine"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Ligne de séparation -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="5dp"
+                            android:background="@drawable/rounded_bg" />
+                        <!-- option_langue-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_langue_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_langue_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_langue_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:id="@+id/menu_option_langue_spinner_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="center_vertical"
+                                android:background="@drawable/rounded_bg"
+                                android:gravity="center_vertical">
+                                <Spinner
+                                    android:id="@+id/menu_option_langue_spinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:background="@drawable/custom_spinner"
+                                    android:dropDownVerticalOffset="8dp"
+                                    android:overlapAnchor="false"
+                                    android:popupBackground="@drawable/spinner_popup_custom"
+                                    android:spinnerMode="dropdown"
+                                    android:gravity="center_horizontal"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!-- option_STT-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_stt_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+                            <TextView
+                                android:id="@+id/menu_option_stt_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_stt_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:id="@+id/menu_option_stt_spinner_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:background="@drawable/rounded_bg"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical">
+                                <Spinner
+                                    android:id="@+id/menu_option_stt_spinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:background="@drawable/custom_spinner"
+                                    android:dropDownVerticalOffset="8dp"
+                                    android:overlapAnchor="false"
+                                    android:dropDownWidth="match_parent"
+                                    android:popupBackground="@drawable/spinner_popup_custom"
+                                    android:spinnerMode="dropdown"
+                                    android:gravity="center_horizontal"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!-- option_TTS-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_tts_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:visibility="gone">
+                            <TextView
+                                android:id="@+id/menu_option_tts_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_tts_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:id="@+id/menu_option_tts_spinner_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:background="@drawable/rounded_bg"
+                                android:gravity="center_vertical">
+                                <Spinner
+                                    android:id="@+id/menu_option_tts_spinner"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:background="@drawable/custom_spinner"
+                                    android:dropDownVerticalOffset="8dp"
+                                    android:overlapAnchor="false"
+                                    android:popupBackground="@drawable/spinner_popup_custom"
+                                    android:spinnerMode="dropdown"
+                                    android:gravity="center_horizontal"/>
+                            </LinearLayout>
+                        </LinearLayout>
+                        <!-- option_volum -->
+                        <LinearLayout
+                            android:id="@+id/menu_option_volume_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/menu_option_volume_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_volume_fr"
+                                android:textColor="#000000" />
+
+                            <RelativeLayout
+                                android:id="@+id/menu_option_volume_seekbar_lyt"
+                                android:layout_width="400dp"
+                                android:layout_height="30dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical">
+
+                                <SeekBar
+                                    android:id="@+id/volume_seekbar"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:gravity="center_horizontal"
+                                    android:max="100"
+                                    android:maxHeight="40dp"
+                                    android:minHeight="39dp"
+                                    android:progressDrawable="@drawable/custom_seekbar"
+                                    android:rotation="360"
+                                    android:scaleX="1.08"
+                                    android:thumb="@android:color/transparent"
+                                    android:thumbOffset="0dp" />
+
+                                <TextView
+                                    android:id="@+id/volume_seekbar_value"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:textColor="#FFFFFF"
+                                    android:textSize="15sp" />
+                            </RelativeLayout>
+                        </LinearLayout>
+                        <!-- option_affichage && activation_emotion-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_affichage_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_affichage_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_affichage_fr"
+                                android:textColor="#000000" />
+
+
+                            <Switch
+                                android:id="@+id/switchVisibility"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginRight="123dp"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+
+                            <TextView
+                                android:id="@+id/menu_option_emotion_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_emotion_fr"
+                                android:textColor="#000000" />
+
+
+                            <Switch
+                                android:id="@+id/switchEmotion"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+
+                        </LinearLayout>
+                        <!-- Detection de la langue -->
+                        <LinearLayout
+                            android:id="@+id/menu_option_detection_language_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/menu_option_language_detection_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_detectionLanguage_fr"
+                                android:textColor="#000000" />
+
+
+                            <Switch
+                                android:id="@+id/switchLanguageDetection"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+                        </LinearLayout>
+                        <!-- Api_Key -->
+                        <LinearLayout
+                            android:id="@+id/api_key"
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:layout_marginTop="5dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/api_key_txt"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical|top"
+                                android:layout_weight="2"
+                                android:text="@string/menu_api_key_fr"
+                                android:textColor="#000000" />
+                            <LinearLayout
+                                android:layout_width="400dp"
+                                android:layout_height="40dp"
+                                android:layout_gravity="end|center_vertical"
+                                android:gravity="center_vertical"
+                                android:background="@drawable/rounded_bg">
+                                <EditText
+                                    android:id="@+id/api_key_editText"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:layout_gravity="center_horizontal|center_vertical"
+                                    android:textAlignment="center"
+                                    android:layout_marginStart="5dp"
+                                    android:layout_marginEnd="5dp"
+                                    android:textSize="12sp"
+                                    android:textColor="#FFFFFF"
+                                    android:background="@null"
+                                    android:inputType="text"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+
+
+
+
+
+                        <!-- Mode Commande -->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_commande_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_commande_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_commande_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchCommande"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_BI &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_BI_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal"-->
+                        <!--                            >-->
+
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_BI_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_BI_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+
+
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchBI"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+
+                        <!--                        </LinearLayout>-->
+
+                        <!--                        &lt;!&ndash; options_Tracking &ndash;&gt;-->
+                        <!--                        &lt;!&ndash; option_tracking_activation &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_activation_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_activation_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_activation_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingActivation"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_tracking_camera_display &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_camera_display_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_camera_display_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_camera_display_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingCameraDisplay"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_tracking_head &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_head_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_head_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_head_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingHead"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_tracking_body &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_body_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_body_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_body_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingBody"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_tracking_auto_listen &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_auto_listen_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_auto_listen_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_auto_listen_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingAutoListen"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!--                        &lt;!&ndash; option_tracking_invitation &ndash;&gt;-->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_invitation_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_invitation_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_invitation_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingInvitation"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+                        <!-- option_tracking_invitation_chatGpt -->
+                        <!--                        <LinearLayout-->
+                        <!--                            android:id="@+id/menu_option_tracking_invitation_chatGpt_lyt"-->
+                        <!--                            android:layout_width="match_parent"-->
+                        <!--                            android:layout_height="50dp"-->
+                        <!--                            android:layout_gravity="center_vertical"-->
+                        <!--                            android:orientation="horizontal">-->
+                        <!--                            <TextView-->
+                        <!--                                android:id="@+id/menu_option_tracking_invitation_chatGpt_textView"-->
+                        <!--                                android:layout_width="0dp"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_gravity="center_vertical"-->
+                        <!--                                android:layout_weight="2"-->
+                        <!--                                android:text="@string/menu_option_tracking_invitation_chatGpt_fr"-->
+                        <!--                                android:textColor="#000000" />-->
+                        <!--                            <Switch-->
+                        <!--                                android:id="@+id/switchTrackingInvitationChatGpt"-->
+                        <!--                                android:layout_width="wrap_content"-->
+                        <!--                                android:layout_height="wrap_content"-->
+                        <!--                                android:layout_alignParentEnd="true"-->
+                        <!--                                android:layout_centerVertical="true"-->
+                        <!--                                android:layout_marginRight="30dp"-->
+                        <!--                                android:layout_marginTop="10dp"-->
+                        <!--                                android:background="@drawable/switch_track_selector"-->
+                        <!--                                android:thumb="@android:color/transparent"-->
+                        <!--                                android:track="@android:color/transparent" />-->
+                        <!--                        </LinearLayout>-->
+
+
+                    </LinearLayout>
+                </ScrollView>
+            </LinearLayout>
+        </RelativeLayout>
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/launch_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#33000000"
+        android:visibility="invisible">
+
+        <ProgressBar
+            android:id="@+id/progressBar_MLKitDownload"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:indeterminate="true"
+            android:indeterminateTintMode="src_atop"
+            android:indeterminateTint="@color/white"
+            android:layout_centerInParent="true"/>
+        <ImageView
+            android:id="@+id/noNetwork"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:src="@drawable/ic_baseline_wifi_off_24"
+            android:layout_centerInParent="true"
+            android:visibility="gone"/>
+
+    </RelativeLayout>
+    <RelativeLayout
+        android:id="@+id/popup_Languages_List"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:visibility="invisible">
+        <LinearLayout
+            android:id="@+id/popup_Languages_List_linearLayout"
+            android:layout_width="350dp"
+            android:layout_height="340dp"
+            android:layout_centerInParent="true"
+            android:orientation="vertical"
+            android:background="@drawable/window_bg"
+            android:elevation="0.8dp"
+            android:padding="16dp"
+            >
+            <TextView
+                android:id="@+id/dialogTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textAlignment="center"
+                android:layout_marginBottom="5dp"
+                android:text="Title"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
+            <!--            <ListView-->
+            <!--                android:id="@+id/dialogListView"-->
+            <!--                android:layout_width="match_parent"-->
+            <!--                android:layout_height="wrap_content"-->
+            <!--                android:layout_marginTop="10dp" />-->
+
+
+
+        </LinearLayout>
+
+    </RelativeLayout>
+</RelativeLayout>

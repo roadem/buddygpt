@@ -48,6 +48,8 @@ import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
+import com.robotique.aevaweb.buddygpt.fragments.ChatFragment;
+import com.robotique.aevaweb.buddygpt.fragments.MainFragment;
 import com.robotique.aevaweb.buddygpt.models.Langue;
 import com.robotique.aevaweb.buddygpt.models.Replica;
 import com.robotique.aevaweb.buddygpt.models.Session;
@@ -93,15 +95,10 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private View decorView;
     private final Random random = new Random();
     //views
-    private RelativeLayout buddyTexteQstLyt;
-    private RelativeLayout buddyTexteRespLyt;
-    private RelativeLayout lytOpenMenuSettings;
-    private RelativeLayout lytOpenMenuChat;
     private RelativeLayout viewFace;
     private RelativeLayout launchView;
     private RelativeLayout reGroup;
-    private TextView buddyTexteQst;
-    private TextView buddyTexteResp;
+
     private ImageView noNetwork;
     private ProgressBar downloadingBar;
     private String infoToast = "";
@@ -261,159 +258,159 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private Runnable runnablePauseTime;
     private final Handler handler = new Handler();
     private Runnable runnable;
-    private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
-        @Override
-        public void onTouch(FaceTouchData faceTouchData) {
-
-            //Right_Eyebrow
-            if (faceTouchData.getX() < 460 && faceTouchData.getY() < 250) {
-                runOnUiThread(() -> {
-                    if (Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) > 0) {
-                        int curr = Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) - 10;
-                        if (curr < 0) {
-                            curr = 0;
-                        }
-                        buddyGPTApplication.setVolume(curr, AudioManager.FLAG_SHOW_UI);
-                        buddyGPTApplication.setparam("speak_volume", valueOf(curr));
-                        buddyGPTApplication.setSpeakVolume(curr);
-                        settingClass.setVolume(valueOf(curr));
-                        Log.d(TAG, "RIGHT_EYE update volume : " + curr);
-                    } else {
-                        Log.d(TAG, "Volume MIN");
-                    }
-                });
-            }
-
-            //Left_Eyebrow
-            else if (faceTouchData.getX() > 720 && faceTouchData.getY() < 250) {
-                runOnUiThread(() -> {
-                    if (Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) < 100) {
-                        int curr = Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) + 10;
-                        if (curr > 100) {
-                            curr = 100;
-                        }
-                        buddyGPTApplication.setVolume(curr, AudioManager.FLAG_SHOW_UI);
-                        buddyGPTApplication.setparam("speak_volume", valueOf(curr));
-                        buddyGPTApplication.setSpeakVolume(curr);
-                        settingClass.setVolume(valueOf(curr));
-                        Log.d(TAG, "LEFT_EYE update volume : " + curr);
-                    } else {
-                        Log.d(TAG, "Volume MAX");
-                    }
-                });
-            }
-
-            //eyes
-            else if (faceTouchData.getY() > 250 && faceTouchData.getY() < 568) {
-                Log.e("FCHH", "click1");
-                if (buddyGPTApplication.getparam("Stimulis").equals("true")) {
-                    Log.e("FCHH", "click");
-                    if (Boolean.TRUE.equals(!buddyGPTApplication.getAppIsCurrentlyDealingWithTheQuestion()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
-                    //
-                        }
-                }
-            }
-
-            //Mouth
-            else if (faceTouchData.getX() > 400 && faceTouchData.getX() < 820 && faceTouchData.getY() > 568) {
-                runOnUiThread(() -> {
-                    Log.d(TAG, "Mouth touched1");
-                    isSpeaking = false;
-                    if (handler != null && runnable != null) {
-                        handler.removeCallbacks(runnable);
-                        handler.removeCallbacksAndMessages(null);
-                    }
-                    if (responseTimeout != null) responseTimeout.cancel();
-                    if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                        buddyGPTApplication.getResponseFromTeamGPT().reset();
-                    if (handlerTTSError != null && runnableTTSError != null) {
-                        handlerTTSError.removeCallbacks(runnableTTSError);
-                        handlerTTSError.removeCallbacksAndMessages(null);
-                    }
-                    if (Boolean.TRUE.equals(!buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
-                        Log.d(TAG, "Mouth touched2");
-                        if (buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-                            Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
-                            buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
-                        } else if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-                            Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_KEY 3");
-                            buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
-                        } else if (buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-                            Log.i("TAG", "run: notifyObservers TEAMGPT_KEY EMPTY 3");
-                            if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
-                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
-                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_fr));
-                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_ES)) {
-                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_es));
-                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_DE)) {
-                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_de));
-                            } else {
-                                buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                                        .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                                        .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
-                                        .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
-                            }
-                        } else {
-                            buddyGPTApplication.setStartRecording(true);
-                            buddyGPTApplication.setSpeaking(true);
-                            if (!isListeningFreeSpeech) {
-                                isListeningFreeSpeech = true;
-                                buddyGPTApplication.setActivityClosed(false);
-                                startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
-                            }
-                        }
-
-                    } else if (Boolean.TRUE.equals(buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
-                        Log.d(TAG, "Mouth touched3 STT  " + buddyGPTApplication.getparam("STT") + " AUTRE " + buddyGPTApplication.getAppIsListeningToTheQuestion());
-                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
-                                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
-                                || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                            buddyGPTApplication.setStartRecording(false);
-                            buddyGPTApplication.setSpeaking(false);
-                            buddyGPTApplication.setActivityClosed(true);
-                            isListeningFreeSpeech = false;
-                            buddyGPTApplication.stopTTS();
-                            buddyGPTApplication.setStoredResponse("");
-                            if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
-                                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                                buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                                buddyTexteQst.setMovementMethod(null);
-                                buddyTexteResp.setMovementMethod(null);
-                            }
-                            lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                            lytOpenMenuChat.setVisibility(View.VISIBLE);
-                            try {
-                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                            } catch (Exception e) {
-                                Log.e(TAG, "BuddySDK Exception  " + e);
-                            }
-                            buddyGPTApplication.notifyObservers("end of timer");
-                        } else {
-                            buddyGPTApplication.setLed("Neutral");
-                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                            try {
-                                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                                BuddySDK.UI.stopListenAnimation();
-                            } catch (Exception e) {
-                                Log.e(TAG, "BuddySDK Exception  " + e);
-                            }
-                            BuddySDK.UI.stopListenAnimation();
-                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-                            buddyGPTApplication.traitementAudio();
-                        }
-                    }
-                });
-            }
-        }
-
-        @Override
-        public void onRelease(FaceTouchData faceTouchData) {
-            // comment
-        }
-    };
+//    private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
+//        @Override
+//        public void onTouch(FaceTouchData faceTouchData) {
+//
+//            //Right_Eyebrow
+//            if (faceTouchData.getX() < 460 && faceTouchData.getY() < 250) {
+//                runOnUiThread(() -> {
+//                    if (Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) > 0) {
+//                        int curr = Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) - 10;
+//                        if (curr < 0) {
+//                            curr = 0;
+//                        }
+//                        buddyGPTApplication.setVolume(curr, AudioManager.FLAG_SHOW_UI);
+//                        buddyGPTApplication.setparam("speak_volume", valueOf(curr));
+//                        buddyGPTApplication.setSpeakVolume(curr);
+//                        settingClass.setVolume(valueOf(curr));
+//                        Log.d(TAG, "RIGHT_EYE update volume : " + curr);
+//                    } else {
+//                        Log.d(TAG, "Volume MIN");
+//                    }
+//                });
+//            }
+//
+//            //Left_Eyebrow
+//            else if (faceTouchData.getX() > 720 && faceTouchData.getY() < 250) {
+//                runOnUiThread(() -> {
+//                    if (Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) < 100) {
+//                        int curr = Integer.parseInt(buddyGPTApplication.getparam("speak_volume")) + 10;
+//                        if (curr > 100) {
+//                            curr = 100;
+//                        }
+//                        buddyGPTApplication.setVolume(curr, AudioManager.FLAG_SHOW_UI);
+//                        buddyGPTApplication.setparam("speak_volume", valueOf(curr));
+//                        buddyGPTApplication.setSpeakVolume(curr);
+//                        settingClass.setVolume(valueOf(curr));
+//                        Log.d(TAG, "LEFT_EYE update volume : " + curr);
+//                    } else {
+//                        Log.d(TAG, "Volume MAX");
+//                    }
+//                });
+//            }
+//
+//            //eyes
+//            else if (faceTouchData.getY() > 250 && faceTouchData.getY() < 568) {
+//                Log.e("FCHH", "click1");
+//                if (buddyGPTApplication.getparam("Stimulis").equals("true")) {
+//                    Log.e("FCHH", "click");
+//                    if (Boolean.TRUE.equals(!buddyGPTApplication.getAppIsCurrentlyDealingWithTheQuestion()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
+//                    //
+//                        }
+//                }
+//            }
+//
+//            //Mouth
+//            else if (faceTouchData.getX() > 400 && faceTouchData.getX() < 820 && faceTouchData.getY() > 568) {
+//                runOnUiThread(() -> {
+//                    Log.d(TAG, "Mouth touched1");
+//                    isSpeaking = false;
+//                    if (handler != null && runnable != null) {
+//                        handler.removeCallbacks(runnable);
+//                        handler.removeCallbacksAndMessages(null);
+//                    }
+//                    if (responseTimeout != null) responseTimeout.cancel();
+//                    if (buddyGPTApplication.getResponseFromTeamGPT() != null)
+//                        buddyGPTApplication.getResponseFromTeamGPT().reset();
+//                    if (handlerTTSError != null && runnableTTSError != null) {
+//                        handlerTTSError.removeCallbacks(runnableTTSError);
+//                        handlerTTSError.removeCallbacksAndMessages(null);
+//                    }
+//                    if (Boolean.TRUE.equals(!buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
+//                        Log.d(TAG, "Mouth touched2");
+//                        if (buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+//                            Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
+//                            buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
+//                        } else if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+//                            Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_KEY 3");
+//                            buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+//                        } else if (buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+//                            Log.i("TAG", "run: notifyObservers TEAMGPT_KEY EMPTY 3");
+//                            if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
+//                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
+//                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
+//                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_fr));
+//                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_ES)) {
+//                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_es));
+//                            } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_DE)) {
+//                                buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_de));
+//                            } else {
+//                                buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+//                                        .translate(getString(R.string.toast_teamgpt_key_indispo_en))
+//                                        .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
+//                                        .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
+//                            }
+//                        } else {
+//                            buddyGPTApplication.setStartRecording(true);
+//                            buddyGPTApplication.setSpeaking(true);
+//                            if (!isListeningFreeSpeech) {
+//                                isListeningFreeSpeech = true;
+//                                buddyGPTApplication.setActivityClosed(false);
+//                                startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
+//                            }
+//                        }
+//
+//                    } else if (Boolean.TRUE.equals(buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
+//                        Log.d(TAG, "Mouth touched3 STT  " + buddyGPTApplication.getparam("STT") + " AUTRE " + buddyGPTApplication.getAppIsListeningToTheQuestion());
+//                        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
+//                                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
+//                                || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                            buddyGPTApplication.setStartRecording(false);
+//                            buddyGPTApplication.setSpeaking(false);
+//                            buddyGPTApplication.setActivityClosed(true);
+//                            isListeningFreeSpeech = false;
+//                            buddyGPTApplication.stopTTS();
+//                            buddyGPTApplication.setStoredResponse("");
+//                            if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
+//                                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
+//                                buddyTexteRespLyt.setVisibility(View.INVISIBLE);
+//                                buddyTexteQst.setMovementMethod(null);
+//                                buddyTexteResp.setMovementMethod(null);
+//                            }
+//                            lytOpenMenuSettings.setVisibility(View.VISIBLE);
+//                            lytOpenMenuChat.setVisibility(View.VISIBLE);
+//                            try {
+//                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+//                            } catch (Exception e) {
+//                                Log.e(TAG, "BuddySDK Exception  " + e);
+//                            }
+//                            buddyGPTApplication.notifyObservers("end of timer");
+//                        } else {
+//                            buddyGPTApplication.setLed("Neutral");
+//                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                            try {
+//                                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+//                                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+//                                BuddySDK.UI.stopListenAnimation();
+//                            } catch (Exception e) {
+//                                Log.e(TAG, "BuddySDK Exception  " + e);
+//                            }
+//                            BuddySDK.UI.stopListenAnimation();
+//                            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+//                            buddyGPTApplication.traitementAudio();
+//                        }
+//                    }
+//                });
+//            }
+//        }
+//
+//        @Override
+//        public void onRelease(FaceTouchData faceTouchData) {
+//            // comment
+//        }
+//    };
 
     /**
      * ------------------ App LifeCycle ---------------------
@@ -435,43 +432,17 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 decorView.setSystemUiVisibility(buddyGPTApplication.hideSystemUI(MainActivity.this));
             }
         });
-
-        //init views
-        buddyTexteQst = findViewById(R.id.buddy_texte_qst);
-        buddyTexteQstLyt = findViewById(R.id.buddy_texte_qst_lyt);
-        buddyTexteResp = findViewById(R.id.buddy_texte_resp);
-        buddyTexteRespLyt = findViewById(R.id.buddy_texte_resp_lyt);
-        lytOpenMenuSettings = findViewById(R.id.lyt_open_menu_settings);
-        lytOpenMenuChat = findViewById(R.id.lyt_open_menu_chat);
         viewFace = findViewById(R.id.view_face);
         launchView = findViewById(R.id.launch_view);
         noNetwork = findViewById(R.id.noNetwork);
-
         downloadingBar = findViewById(R.id.progressBar_MLKitDownload);
         reGroup = findViewById(R.id.reGroup);
-        lytOpenMenuSettings.setOnClickListener(view -> btnOpenSettings());
-        lytOpenMenuChat.setOnClickListener(view -> btnOpenChat());
-        AudioManager amanager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        amanager.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
 
-        Intent myIntent = getIntent();
-        isFirstLaunch = true;
-        if (myIntent != null) {
-            if (myIntent.hasExtra("fromSettings")) {
-                String fromSettings = myIntent.getStringExtra("fromSettings");
-                if (fromSettings != null && fromSettings.equals("true")) {
-                    isFirstLaunch = false;
-                    Log.i(TAG_TRACKING, "is back from Settings");
-                }
-            } else if (myIntent.hasExtra("fromChatWindow")) {
-                String fromChatWindow = myIntent.getStringExtra("fromChatWindow");
-                if (fromChatWindow != null && fromChatWindow.equals("true")) {
-                    isFirstLaunch = false;
-                    Log.i(TAG_TRACKING, "is back from ChatWindow");
-                }
-            }
-        } else {
-            buddyGPTApplication.setSpeaking(false);
+        AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+
+
+        buddyGPTApplication.setSpeaking(false);
             buddyGPTApplication.setNotYet(true);
             buddyGPTApplication.setActivityClosed(false);
             buddyGPTApplication.setStartRecording(false);
@@ -508,7 +479,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             buddyGPTApplication.setBIExecution(false);
             buddyGPTApplication.setAlreadyChatting(false);
             Log.i(TAG_TRACKING, "First launch of application");
-        }
+
 
         /**
          * init animated drawables for timer
@@ -590,14 +561,12 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         onSdkReadyIsAlreadyCalledOnce = false;
         isListeningFreeSpeech = false;
         listRep = new ArrayList<>();
-        buddyGPTApplication.removeObserver(this);
         buddyGPTApplication.stopTTS();
         buddyGPTApplication.setActivityClosed(true);
         stopListeningFreeSpeech();
         CustomToast.getInstance().hideToast();
         try {
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-            BuddySDK.UI.removeFaceTouchListener(iuiFaceTouchCallback);
         } catch (Exception e) {
             Log.e(TAG, "BuddySDK Exception  " + e);
         }
@@ -689,33 +658,8 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
             if (message.contains("CANCEL_RESPONSE_TIMEOUT")) {
                 if (responseTimeout != null) responseTimeout.cancel();
-            } else if (message.contains("MODE_STREAM_TEXT;SPLIT;")) {
-                runOnUiThread(() -> {
-                    if (message.split(";SPLIT;").length > 1) {
-                        String response = message.split(";SPLIT;")[1];
-                        //translate Response Title and show the response :
-                        if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                            showStream("Response", response);
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("fr")) {
-                            showStream("Réponse", response);
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("de")) {
-                            showStream("Antwort", response);
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("es")) {
-                            showStream("Respuesta", response);
-                        } else {
-                            buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate("Response")
-                                    .addOnSuccessListener(translatedText -> showStream(translatedText, response)).addOnFailureListener(e -> showStream("Response", response));
-                        }
-                    }
-                });
-            } else if (message.contains("MODE_STREAM_SPEAK;SPLIT;")) {
-                runOnUiThread(() -> {
-                    if (message.split(";SPLIT;").length > 1) {
-                        String phraseToPronounce = message.split(";SPLIT;")[1];
-                        speak(phraseToPronounce, "nothealysa");
-                    }
-                });
-            } else if (message.contains("STTHotword_success")) {
+            }
+            else if (message.contains("STTHotword_success")) {
                 if (buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE")) {
                     Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 4");
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
@@ -734,382 +678,50 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     });
                 }
 
-            } else if (message.contains("STTQuestion_success")) {
-                runOnUiThread(() -> {
-                    stopListeningFreeSpeech();
-                    buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
-                    SystemClock.sleep(200);
-                    buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-                    String detectedSTTMessage = message.split(";")[1].replaceAll("' ", "'");
-                    Log.i("HOU", "HOU run: " + detectedSTTMessage);
-                    if (!buddyGPTApplication.isActivityClosed()) {
-                        buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber() + 1);
-                        BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
-                        if (settingClass.getSwitchVisibility().equals("true")) {
-                            if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                                buddyTexteQst.setText(format("I heard :  %s ", detectedSTTMessage));
-                            } else if (settingClass.getLangue().equals(LANGUE_FR)) {
-                                buddyTexteQst.setText(format("J'ai entendu :  %s ", detectedSTTMessage));
-                            } else if (settingClass.getLangue().equals(LANGUE_ES)) {
-                                buddyTexteQst.setText(format("He oído :  %s ", detectedSTTMessage));
-                            } else if (settingClass.getLangue().equals(LANGUE_DE)) {
-                                buddyTexteQst.setText(format("Ich habe gehört :  %s ", detectedSTTMessage));
-                            } else {
-                                buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate("I heard ").addOnSuccessListener(translatedText -> buddyTexteQst.setText(format(  " %s  :  %s ",translatedText, detectedSTTMessage))).addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
-                            }
-                            buddyTexteQstLyt.setVisibility(View.VISIBLE);
-                            buddyTexteQst.setMovementMethod(new ScrollingMovementMethod());
-                            buddyTexteQst.scrollTo(0, 0);
-                            lytOpenMenuSettings.setVisibility(View.INVISIBLE);
-                            lytOpenMenuChat.setVisibility(View.INVISIBLE);
-                        }
-                        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
-                        Replica question = new Replica();
-                        question.setType("Question");
-                        question.setTime(time);
-                        question.setValue(detectedSTTMessage);
-                        listRep.add(question);
-                        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                            buddyGPTApplication.getResponseFromTeamGPT().reset();
-
-                        if (buddyGPTApplication.getResponseFromTeamGPT() == null)
-                            buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
-                        buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage);
-
-
-                        if (
-                                (Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) != 0)
-                                        && (
-                                        (
-                                                buddyGPTApplication.getCurrentLanguage().equals("en")
-                                                        && !buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", configFile).trim().isEmpty()
-                                        )
-                                                ||
-                                                (
-                                                        buddyGPTApplication.getCurrentLanguage().equals("fr")
-                                                                && !buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_fr", configFile).trim().isEmpty()
-                                                )
-                                                ||
-                                                (
-                                                        buddyGPTApplication.getCurrentLanguage().equals("es")
-                                                                && !buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_es", configFile).trim().isEmpty()
-                                                )
-                                                ||
-                                                (
-                                                        buddyGPTApplication.getCurrentLanguage().equals("de")
-                                                                && !buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_de", configFile).trim().isEmpty()
-                                                )
-                                                || (
-                                                !buddyGPTApplication.getCurrentLanguage().equals("en")
-                                                        && !buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", configFile).trim().isEmpty()
-                                        )
-
-                                )
-                        ) {
-                            runOnUiThread(() -> {
-                                buddyGPTApplication.setAnswerHasExceededTimeOut(false);
-                                responseTimeout = new CountDownTimer((long) Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) * 1000, 1000) {
-                                    @Override
-                                    public void onTick(long l) {
-                                        // cmnt
-                                    }
-
-                                    @Override
-                                    public void onFinish() {
-                                        if (buddyGPTApplication.isAlreadyGetAnswer()) {
-                                            Log.e(TAG, "app get the answer on time");
-                                        } else {
-                                            buddyGPTApplication.setAnswerHasExceededTimeOut(true);
-                                            buddyGPTApplication.setTimeoutExpired(true);
-                                            if (!buddyGPTApplication.isOpenaialreadySwitchEmotion()) {
-                                                BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
-                                            }
-                                            if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                                                String[] messageTimeoutNotRespectedEn = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", configFile).split("/");
-                                                int randomNumberMessageTimeoutNotRespectedEn = random.nextInt(messageTimeoutNotRespectedEn.length);
-                                                speak(messageTimeoutNotRespectedEn[randomNumberMessageTimeoutNotRespectedEn], "timeOutExpired");
-                                            } else if (buddyGPTApplication.getCurrentLanguage().equals("fr")) {
-                                                String[] messageTimeoutNotRespectedFr = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_fr", configFile).split("/");
-                                                int randomNumberMessageTimeoutNotRespectedFr = random.nextInt(messageTimeoutNotRespectedFr.length);
-                                                speak(messageTimeoutNotRespectedFr[randomNumberMessageTimeoutNotRespectedFr], "timeOutExpired");
-                                            } else if (buddyGPTApplication.getCurrentLanguage().equals("es")) {
-                                                String[] messageTimeoutNotRespectedEs = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_es", configFile).split("/");
-                                                int randomNumberMessageTimeoutNotRespectedEs = random.nextInt(messageTimeoutNotRespectedEs.length);
-                                                speak(messageTimeoutNotRespectedEs[randomNumberMessageTimeoutNotRespectedEs], "timeOutExpired");
-                                            } else if (buddyGPTApplication.getCurrentLanguage().equals("de")) {
-                                                String[] messageTimeoutNotRespectedDe = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_de", configFile).split("/");
-                                                int randomNumberMessageTimeoutNotRespectedDe = random.nextInt(messageTimeoutNotRespectedDe.length);
-                                                speak(messageTimeoutNotRespectedDe[randomNumberMessageTimeoutNotRespectedDe], "timeOutExpired");
-                                            } else {
-                                                String[] messageTimeoutNotRespectedEn = buddyGPTApplication.getParamFromFile("Message_Timeout_NotRespected_en", configFile).split("/");
-                                                int randomNumberMessageTimeoutNotRespectedEn = random.nextInt(messageTimeoutNotRespectedEn.length);
-                                                buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate(messageTimeoutNotRespectedEn[randomNumberMessageTimeoutNotRespectedEn]).addOnSuccessListener(translatedText -> speak(translatedText, "timeOutExpired")).addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
-
-                                            }
-                                        }
-                                    }
-                                };
-                                responseTimeout.start();
-                            });
-                        }
-                    }
-                });
-            } else if (message.contains("TTS_success")) {
-                runOnUiThread(() -> {
-                    Log.e(TAG, " TTS_success");
-                    buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
-                    buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                    buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                    buddyTexteQst.setMovementMethod(null);
-                    buddyTexteResp.setMovementMethod(null);
-                    lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                    lytOpenMenuChat.setVisibility(View.VISIBLE);
-                    isSpeaking = false;
-                });
-                if (handler != null && runnable != null) {
-                    handler.removeCallbacks(runnable);
-                    handler.removeCallbacksAndMessages(null);
-                }
-                runnable = () -> {
-                    if (!buddyGPTApplication.getStoredResponse().isEmpty()) {
-                        runOnUiThread(() -> speak(buddyGPTApplication.getStoredResponse(), "storedResponse"));
-                    } else {
-                        if (Boolean.TRUE.equals(buddyGPTApplication.getStartRecording())) {
-                            Log.e(TAG, "startCycle TTS_success 2");
-                            buddyGPTApplication.setRemainingAttempts(buddyGPTApplication.getListeningAttempt() - 1);
-                            startCycle();
-                        }
-                    }
-                };
-                if (handler != null) {
-                    handler.postDelayed(runnable, 500);
-                } else {
-                    Log.e(TAG, "Handler is null. Unable to post the runnable.");
-                }
-            } else if (message.contains("Emotion_Change")) {
-                buddyGPTApplication.setAnimation(message.split(";SPLIT;")[1]);
-            } else if (message.contains("TTS_error") || message.contains("TTS_exception")) {
-                runOnUiThread(() -> {
-                    String text = message.split(";")[1];
-                    Log.w(TAG, "TTS_ERROR:" + text);
-                    buddyGPTApplication.playUsingReadSpeakerCaseError(text, new ITTSCallbacks() {
-                        @Override
-                        public void onSuccess(String s) {
-                            runOnUiThread(() -> {
-                                buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
-                                try {
-                                    BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                                } catch (Exception e) {
-                                    Log.e(TAG, "BuddySDK Exception  " + e);
-                                }
-                                if (buddyGPTApplication.getparam("Stream_mode").equals("true")) {
-                                    if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                                        buddyGPTApplication.getResponseFromTeamGPT().isReadyToSpeak = true;
-                                } else {
-                                    buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                                    buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                                    buddyTexteQst.setMovementMethod(null);
-                                    buddyTexteResp.setMovementMethod(null);
-                                    lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                                    lytOpenMenuChat.setVisibility(View.VISIBLE);
-                                    isSpeaking = false;
-                                    if (handler != null && runnable != null) {
-                                        handler.removeCallbacks(runnable);
-                                        handler.removeCallbacksAndMessages(null);
-                                    }
-                                    runnable = () -> {
-                                        if (!buddyGPTApplication.getStoredResponse().equals("")) {
-                                            runOnUiThread(() -> speak(buddyGPTApplication.getStoredResponse(), "storedResponse"));
-                                        } else {
-                                            if (Boolean.TRUE.equals(buddyGPTApplication.getStartRecording())) {
-                                                buddyGPTApplication.setRemainingAttempts(buddyGPTApplication.getListeningAttempt() - 1);
-                                                startCycle();
-                                            }
-                                        }
-                                    };
-                                    if (handler != null) {
-                                        handler.postDelayed(runnable, 500);
-                                    } else {
-                                        Log.e(TAG, "Handler is null. Unable to post the runnable.");
-                                    }
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onError(String s) {
-                            int textLength = text.length();// Calculate the length of the pronounced text
-                            int delayTime = (textLength / 20) * 1000; // 1 second for every 20 characters
-                            if (delayTime == 0) {
-                                delayTime = 1500;
-                            }
-                            if (buddyGPTApplication.getparam("TTS").equalsIgnoreCase("ReadSpeaker") && (buddyGPTApplication.getCurrentLanguage().equals("en") || buddyGPTApplication.getCurrentLanguage().equals("fr")) && Boolean.TRUE.equals(buddyGPTApplication.getUsingReadSpeaker())) {
-                                delayTime = 0;
-                                Log.e(TAG, "set 0 delay time  " + delayTime);
-                            }
-                            handlerTTSError.postDelayed(runnableTTSError = () -> runOnUiThread(() -> {
-                                buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
-                                try {
-                                    BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                                } catch (Exception e) {
-                                    Log.e(TAG, "BuddySDK Exception  " + e);
-                                }
-                                if (buddyGPTApplication.getparam("Stream_mode").equals("true")) {
-                                    if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                                        buddyGPTApplication.getResponseFromTeamGPT().isReadyToSpeak = true;
-                                } else {
-
-                                    buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                                    buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                                    buddyTexteQst.setMovementMethod(null);
-                                    buddyTexteResp.setMovementMethod(null);
-                                    lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                                    lytOpenMenuChat.setVisibility(View.VISIBLE);
-                                    isSpeaking = false;
-                                    if (handler != null && runnable != null) {
-                                        handler.removeCallbacks(runnable);
-                                        handler.removeCallbacksAndMessages(null);
-                                    }
-                                    runnable = () -> {
-                                        if (!buddyGPTApplication.getStoredResponse().equals("")) {
-                                            runOnUiThread(() -> speak(buddyGPTApplication.getStoredResponse(), "storedResponse"));
-                                        } else {
-                                            if (Boolean.TRUE.equals(buddyGPTApplication.getStartRecording())) {
-                                                buddyGPTApplication.setRemainingAttempts(buddyGPTApplication.getListeningAttempt() - 1);
-                                                startCycle();
-                                            }
-                                        }
-                                    };
-                                    if (handler != null) {
-                                        handler.postDelayed(runnable, 500);
-                                    } else {
-                                        Log.e(TAG, "Handler is null. Unable to post the runnable.");
-                                    }
-                                }
-                            }), delayTime);
-                        }
-                    });
-                });
-            } else if (message.contains("properties file done")) {
+            }
+            else if (message.contains("properties file done")) {
                 buddyGPTApplication.setNotYet(false);
                 getData();
-            } else if (message.contains("end of timer")) {
+            }
+            else if (message.contains("end of timer")) {
                 buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                 stopListeningFreeSpeech();
                 SystemClock.sleep(200);
                 buddyGPTApplication.startListeningHotwor(this);
-            } else if (message.contains("end of cycle")) {
+            }
+            else if (message.contains("end of cycle")) {
                 runOnUiThread(() -> {
                     BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                     BuddySDK.UI.stopListenAnimation();
                     buddyGPTApplication.setLed("neutral");
                 });
-            } else if (message.contains("restartNewCycle")) {
+            }
+            else if (message.contains("restartNewCycle")) {
                 runnablePauseTime = () -> {
                     startNextCycle();
                     Log.e(TAG, "startNextCycle  after handler ");
                 };
                 handlerPauseTime.postDelayed(runnablePauseTime, 1000);
-            } else if (message.contains("Obtain audio transcription after the listening time has elapsed")) {
-                String shouldRestartNewCycle = message.split(";SPLIT;")[1];
-                Log.e(TAG, "Obtain audio transcription after the listening time has elapsed " + shouldRestartNewCycle);
-                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                BuddySDK.UI.stopListenAnimation();
-                buddyGPTApplication.setLed("neutral");
-                buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-                buddyGPTApplication.traitementAudio();
-            } else if (message.contains("restartListeningHotword")) {
-                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
-                buddyGPTApplication.setStartRecording(false);
-                buddyGPTApplication.setSpeaking(false);
-                buddyGPTApplication.setActivityClosed(true);
-                isListeningFreeSpeech = false;
-                buddyGPTApplication.stopTTS();
-                buddyGPTApplication.setStoredResponse("");
-                if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
-                    buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                    buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                    buddyTexteQst.setMovementMethod(null);
-                    buddyTexteResp.setMovementMethod(null);
-                }
-                lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                lytOpenMenuChat.setVisibility(View.VISIBLE);
-                try {
-                    BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                } catch (Exception e) {
-                    Log.e(TAG, "BuddySDK Exception  " + e);
-                }
-                buddyGPTApplication.notifyObservers("end of timer");
             }
-            if (message.contains("INVALID_TEAMGPT_KEY")) {
-                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
-                if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
-                    buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
-                    buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
-                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(MainActivity.this, translatedText, "Attention !"))
-                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
-                }
-
-
-            }
-            if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
-                buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "TRUE");
-                if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
-                    buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
-                    buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
-                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(MainActivity.this, translatedText, "Attention !"))
-                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
-                }
-
-
-            }
-            if (message.contains("Session_ID_ERROR")) {
-
-                if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
-                    buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
-                    buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en))
-                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog2(MainActivity.this, translatedText, "Attention !"))
-                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog2(MainActivity.this, buddyGPTApplication.getString(R.string.toast_teamgpt_params_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
-                }
-
-
-            } else if (message.contains("QST_LAYOUT_DISMISSED")) {
-                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                buddyTexteQst.setMovementMethod(null);
-                lytOpenMenuSettings.setVisibility(View.VISIBLE);
-                lytOpenMenuChat.setVisibility(View.VISIBLE);
-            } else if (message.contains("playStoredResponse")) {
-                if (!buddyGPTApplication.getStoredResponse().equals("")) {
-                    runOnUiThread(() -> speak(buddyGPTApplication.getStoredResponse(), "storedResponse"));
-                }
-            } else if (message.contains("makeBuddyFaceNeutral")) {
+            else if (message.contains("makeBuddyFaceNeutral")) {
                 BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-            } else if (message.contains("ChatDestroy")) {
+            }
+            else if (message.contains("ChatDestroy")) {
                 buddyGPTApplication.setparam("firstLaunch", "false");
-            } else if (message.contains("isConnected")) {
+            }
+            else if (message.contains("isConnected")) {
                 runOnUiThread(() -> {
                     downloadingBar.setVisibility(View.VISIBLE);
                     noNetwork.setVisibility(View.GONE);
                 });
-            } else if (message.contains("isNotConnected")) {
+            }
+            else if (message.contains("isNotConnected")) {
                 runOnUiThread(() -> {
                     downloadingBar.setVisibility(View.GONE);
                     noNetwork.setVisibility(View.VISIBLE);
                 });
-            } else if (message.contains("changeDetected")) {
+            }
+            else if (message.contains("changeDetected")) {
                 int speakVolume = buddyGPTApplication.getVolume();
                 int max = buddyGPTApplication.getMaxVolume();
                 int defaultVolume = buddyGPTApplication.getClosestInt((double) (speakVolume * 100) / max);
@@ -1118,6 +730,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             }
 
         }
+
     }
 
     /**
@@ -1129,15 +742,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         String imei = getIMEI();
         Log.i(TAG, "init: imei device " + imei);
         buddyGPTApplication.setImeiRobot(imei);
-        BuddySDK.UI.addFaceTouchListener(iuiFaceTouchCallback);
-        buddyGPTApplication.registerObserver(this);
-
-        buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-        buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-        buddyTexteQst.setMovementMethod(null);
-        buddyTexteResp.setMovementMethod(null);
-        lytOpenMenuSettings.setVisibility(View.VISIBLE);
-        lytOpenMenuChat.setVisibility(View.VISIBLE);
+        //BuddySDK.UI.addFaceTouchListener(iuiFaceTouchCallback);
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
         Log.i(TAG, "init: isFirstLaunch " + isFirstLaunch);
         if (isFirstLaunch) {
@@ -1153,8 +758,15 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 buddyGPTApplication.setparam("IdCompte", " _ ");
             }
         }
-    }
 
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, new MainFragment())
+                .commit();
+    }
+    private void refreshSTTLangue() {
+        buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(), this);
+    }
     private void getData() {
 
         buddyGPTApplication.initTTSAndroid();
@@ -1196,61 +808,9 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
     }
 
-    private void showStream(String responseTitle, String response) {
-        if (!buddyGPTApplication.isActivityClosed()) {
-            buddyTexteResp.setText(String.format("%s : %s", responseTitle, response));
-            buddyTexteRespLyt.setVisibility(View.VISIBLE);
-            buddyTexteResp.setMovementMethod(new ScrollingMovementMethod());
-            // Scroll to the end
-            buddyTexteResp.post(() -> {
-                int scrollAmount = buddyTexteResp.getLayout().getLineTop(buddyTexteResp.getLineCount())
-                        - buddyTexteResp.getHeight() + buddyTexteResp.getLineHeight();
-                if (scrollAmount > 0) {
-                    buddyTexteResp.scrollTo(0, scrollAmount);
-                } else {
-                    buddyTexteResp.scrollTo(0, 0);
-                }
-            });
-        }
-    }
 
-    private void refreshSTTLangue() {
-        buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(), this);
-    }
 
-    public void btnOpenSettings() {
-        if (Boolean.FALSE.equals(mlKitIsDownloading)) {
-            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-            intent.putExtra("activity_name", "main");
-            startActivity(intent);
-            finish();
 
-            overridePendingTransition(0, 0);
-        } else if (Boolean.TRUE.equals(buddyGPTApplication.getBIExecution())) {
-            BIPlayer.getInstance().stopBehaviour();
-            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-            intent.putExtra("activity_name", "main");
-            startActivity(intent);
-            finish();
-
-            overridePendingTransition(0, 0);
-        }
-    }
-
-    public void btnOpenChat() {
-        if (Boolean.FALSE.equals(mlKitIsDownloading)) {
-            Intent intent = new Intent(MainActivity.this, ChatWindow.class);
-            startActivity(intent);
-            finish();
-            overridePendingTransition(0, 0);
-        } else if (Boolean.TRUE.equals(buddyGPTApplication.getBIExecution())) {
-            BIPlayer.getInstance().stopBehaviour();
-            Intent intent = new Intent(MainActivity.this, ChatWindow.class);
-            startActivity(intent);
-            finish();
-            overridePendingTransition(0, 0);
-        }
-    }
 
     public String getIMEI() {
         String imei = "";
@@ -1392,94 +952,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-    /**
-     * ------------------------------------------ TTS  -------------------------------------------
-     */
-
-    private void speak(final String texte, String type) {
-        Log.d(TAG, " --- speak(" + texte + ") ---");
-        isSpeaking = true;
-        runOnUiThread(() -> {
-            String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
-            buddyTexteRespLyt.setTranslationY(0);
-            if (responseTimeout != null) responseTimeout.cancel();
-
-            if (!buddyGPTApplication.isActivityClosed()) {
-                if (type.equals("nothealysa") || type.equals("storedResponse")) {
-                    buddyGPTApplication.setAlreadyGetAnswer(true);
-
-                    if (settingClass.getSwitchVisibility().equals("true")) {
-                        if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                            buddyTexteResp.setText(format("Response :  %s ", texte));
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("fr")) {
-                            buddyTexteResp.setText(format("Réponse :  %s ", texte));
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("de")) {
-                            buddyTexteResp.setText(format("Antwort :  %s ", texte));
-                        } else if (buddyGPTApplication.getCurrentLanguage().equals("es")) {
-                            buddyTexteResp.setText(format("Respuesta :  %s ", texte));
-                        } else {
-                            buddyGPTApplication.getEnglishLanguageSelectedTranslator().translate("Response").addOnSuccessListener(translatedText -> buddyTexteResp.setText(format("%s :  %s ", translatedText, texte))).addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
-
-                        }
-                        if (type.equals("storedResponse")) {
-                            lytOpenMenuSettings.setVisibility(View.INVISIBLE);
-                            lytOpenMenuChat.setVisibility(View.INVISIBLE);
-                            if (buddyTexteQstLyt.getVisibility() != View.VISIBLE)
-                                buddyTexteRespLyt.setTranslationY(-155);
-                            else buddyTexteRespLyt.setTranslationY(0);
-                        }
-                        buddyTexteRespLyt.setVisibility(View.VISIBLE);
-                        buddyTexteResp.setMovementMethod(new ScrollingMovementMethod());
-                        if (!listRep.isEmpty()) {
-                            //--> this function is called right after a question : we should create a new Replica for the response
-                            Replica reponse = new Replica();
-                            reponse.setValue(texte);
-                            reponse.setTime(time);
-                            long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
-                            DecimalFormat df = new DecimalFormat("#,###");
-                            String formattedTime = df.format(responseTime);
-                            reponse.setType("Response");
-                            reponse.setDuration(formattedTime + " ms");
-                            listRep.add(reponse);
-                            Session session = new Session(new ArrayList<>(listRep));
-                            buddyGPTApplication.getListSession().add(session);
-                            listRep.clear();
-                        } else {
-                            //---> this function is called after finishing pronouncing a phrase from the response : we should add the new phrase to the already existing Replica
-                            ArrayList<Session> listSessions = buddyGPTApplication.getListSession();
-                            ArrayList<Replica> lastSession = listSessions.get(listSessions.size() - 1).getSession();
-                            Replica lastReplica = lastSession.get(lastSession.size() - 1);
-                            if (lastReplica.getType().equals("Response")) {
-                                lastReplica.setValue(lastReplica.getValue() + texte);
-                            } else
-                                lastReplica.setValue(texte);
-
-                        }
-                    }
-                    if (buddyGPTApplication.getparam("Stream_mode").equalsIgnoreCase("true"))
-                        buddyTexteResp.scrollTo(0, 0);
-                    else {
-
-                        // Scroll to the end
-                        buddyTexteResp.post(() -> {
-                            int scrollAmount = buddyTexteResp.getLayout().getLineTop(buddyTexteResp.getLineCount())
-                                    - buddyTexteResp.getHeight() + buddyTexteResp.getLineHeight();
-                            if (scrollAmount > 0) {
-                                buddyTexteResp.scrollTo(0, scrollAmount);
-                            } else {
-                                buddyTexteResp.scrollTo(0, 0);
-                            }
-                        });
-                    }
-
-
-                    buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
-                } else if (type.equals("timeOutExpired")) {
-                    buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
-                }
-            }
-        });
-    }
 
     /**
      * -------------------------------  Gestion des permissions  ---------------------------------------------------------------
@@ -1536,8 +1008,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             buddyGPTApplication.hideSystemUI(this);
         }
     }
-
-
 
 
 }

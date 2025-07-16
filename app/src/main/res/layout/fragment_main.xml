@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".fragments.MainFragment">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--  BI image  -->
+        <ImageView
+            android:id="@+id/bi_imageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:src="@tools:sample/avatars" />
+
+        <!--  BI Video  -->
+        <com.google.android.exoplayer2.ui.PlayerView
+            android:id="@+id/bi_videoView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="gone"
+            tools:layout_editor_absoluteY="130dp" />
+
+        <!--  Settings btn  -->
+        <RelativeLayout
+            android:id="@+id/lyt_open_menu_settings"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:layout_marginTop="20px"
+            android:layout_marginStart="140px"
+            android:clickable="true"
+            android:elevation="0.8dp"
+            android:background="@drawable/ellipse_closed">
+            <ImageView
+                android:id="@+id/button_open_menu_settings"
+                android:layout_width="36px"
+                android:layout_height="37px"
+                android:layout_centerInParent="true"
+                android:src="@drawable/cog"/>
+        </RelativeLayout>
+
+        <!--  Chat btn  -->
+        <RelativeLayout
+            android:id="@+id/lyt_open_menu_chat"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="20px"
+            android:layout_marginEnd="140px"
+            android:clickable="true"
+            android:elevation="0.8dp"
+            android:background="@drawable/ellipse_closed">
+            <ImageView
+                android:id="@+id/button_open_menu_chat"
+                android:layout_width="36px"
+                android:layout_height="37px"
+                android:layout_centerInParent="true"
+                android:src="@drawable/chat"/>
+        </RelativeLayout>
+
+        <!--  Question lyt  -->
+        <RelativeLayout
+            android:id="@+id/buddy_texte_qst_lyt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20px"
+            android:layout_marginHorizontal="140px"
+            android:elevation="0.8dp"
+            android:visibility="invisible"
+            android:background="@drawable/window_bg"
+            android:animateLayoutChanges="true">
+
+            <TextView
+                android:id="@+id/buddy_texte_qst"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:maxHeight="300px"
+                android:minHeight="100px"
+                android:padding="20dp"
+                android:scrollbars="vertical"
+                android:textColor="#000000"
+                android:textSize="20sp" />
+        </RelativeLayout>
+
+        <!--  Response lyt  -->
+        <RelativeLayout
+            android:id="@+id/buddy_texte_resp_lyt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20px"
+            android:layout_marginHorizontal="140px"
+            android:layout_marginBottom="20px"
+            android:layout_below="@+id/buddy_texte_qst_lyt"
+            android:elevation="0.8dp"
+            android:visibility="invisible"
+            android:background="@drawable/window_bg"
+            android:animateLayoutChanges="true">
+            <TextView
+                android:id="@+id/buddy_texte_resp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#000000"
+                android:minHeight="100px"
+                android:maxHeight="450px"
+                android:scrollbars = "vertical"
+                android:textSize="20sp"
+                android:padding="10dp"/>
+        </RelativeLayout>
+
+        <!--  (CMD PHOTO) -->
+        <RelativeLayout
+            android:id="@+id/previewView_lyt"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="20px"
+            android:layout_marginBottom="20px"
+            android:layout_marginHorizontal="140px"
+            android:elevation="0.8dp"
+            android:visibility="gone"
+            android:animateLayoutChanges="true">
+            <!--  Preview camera -->
+            <androidx.camera.view.PreviewView
+                android:id="@+id/previewView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:translationX="100000000000000dp"/>
+            <!-- Timer -->
+            <RelativeLayout
+                android:id="@+id/photo_timer_bg_rlyt"
+                android:layout_width="400px"
+                android:layout_height="250px"
+                android:layout_centerInParent="true"
+                android:layout_marginLeft="-50dp"
+                android:layout_marginBottom="-5dp"
+                android:background="@drawable/bg_blue_cercle"/>
+            <RelativeLayout
+                android:id="@+id/photo_timer_rlyt"
+                android:layout_width="213.58px"
+                android:layout_height="213.58px"
+                android:layout_centerInParent="true">
+                <ImageView
+                    android:id="@+id/photo_timer_imgview"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:layout_alignParentStart="true"
+                    android:layout_alignParentBottom="true" />
+                <TextView
+                    android:id="@+id/photo_timer_txtView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_centerInParent="true"
+                    android:scaleType="fitXY"
+                    android:gravity="center"
+                    android:textSize="100px"
+                    android:textAlignment="center"
+                    android:elevation="0.8dp"
+                    android:fontFamily="@font/open_sans_bold"
+                    android:textColor="@color/white"
+                    android:text="3"/>
+            </RelativeLayout>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <!--  Custom Toasts  -->
+    <RelativeLayout
+        android:id="@+id/custom_toast_info"
+        android:layout_width="760px"
+        android:layout_height="100px"
+        android:layout_marginTop="20px"
+        android:background="@drawable/toast_bg"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="36px"
+            android:layout_height="36px"
+            android:layout_centerVertical="true"
+            android:layout_marginHorizontal="10px"
+            android:src="@drawable/toast_info_icon"/>
+        <TextView
+            android:id="@+id/info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#2B2B2B"
+            android:textSize="36px"
+            android:textAlignment="textStart"
+            android:layout_marginStart="56px"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+
+    <!--  MLkit Download View  -->
+    <RelativeLayout
+        android:id="@+id/launch_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#33000000"
+        android:visibility="invisible">
+
+        <ProgressBar
+            android:id="@+id/progressBar_MLKitDownload"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:layout_centerInParent="true"
+            android:indeterminate="true"
+            android:indeterminateTint="@color/white"
+            android:indeterminateTintMode="src_atop" />
+
+        <ImageView
+            android:id="@+id/noNetwork"
+            android:layout_width="100px"
+            android:layout_height="100px"
+            android:layout_centerInParent="true"
+            android:src="@drawable/ic_baseline_wifi_off_24"
+            android:visibility="gone" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/reGroup"
+        android:layout_width="150dp"
+        android:layout_height="100dp"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="20dp"
+        android:layout_marginBottom="20dp"
+        android:translationY="1000dp">
+
+        <FrameLayout
+            android:id="@+id/preview_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <androidx.camera.view.PreviewView
+                android:id="@+id/view_finder"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </FrameLayout>
+
+        <com.robotique.aevaweb.buddygpt.utilis.tracking.OverlayView
+            android:id="@+id/overlay"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </RelativeLayout>
+
+
+</FrameLayout>
