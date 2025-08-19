@@ -2559,6 +2559,10 @@ public class BuddyGPTApplication extends BuddyApplication {
 
             Log.w("BuddyGPTApp", "Dialog shown: ");
             // Create a new Dialog and remove default title for a more modern look
+            if (activity == null || activity.isFinishing()) {
+                Log.e("BuddyGPTApp", "Activity is null or finishing, cannot show dialog");
+                return;
+            }
             dialog = new Dialog(activity);
             dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
