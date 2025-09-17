@@ -22,8 +22,6 @@ import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.models.Parameters;
 import com.robotique.aevaweb.buddygpt.models.Request;
-import com.robotique.aevaweb.buddygpt.utilis.ApiEndpointInterface;
-import com.robotique.aevaweb.buddygpt.utilis.RetrofitClient;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,10 +45,7 @@ import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 
 import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 
 public class ResponseFromTeamGPT {
     private static final String TAG_STREAM = "STREAM_MODE";
@@ -158,10 +153,10 @@ public class ResponseFromTeamGPT {
                                     buddyGPTApplication.setparam("Mail_Subject_fr", parameters.getMailSubjectFr());
                                     buddyGPTApplication.setparam("Mail_Subject_en", parameters.getMailSubjectEn());
 
-                                if (parameters.getEmailSupport() != null && !parameters.getEmailSupport().equalsIgnoreCase(""))
-                                    buddyGPTApplication.setparam("email_support", parameters.getEmailSupport());
-                                else
-                                    buddyGPTApplication.setparam("email_support", " _ ");
+                                    if (parameters.getEmailSupport() != null && !parameters.getEmailSupport().equalsIgnoreCase(""))
+                                        buddyGPTApplication.setparam("email_support", parameters.getEmailSupport());
+                                    else
+                                        buddyGPTApplication.setparam("email_support", " _ ");
 
                                     if (parameters.getImeiIdDevice() != null && !parameters.getImeiIdDevice().equalsIgnoreCase(""))
                                         buddyGPTApplication.setparam("IMEI_ID_Device", parameters.getImeiIdDevice());
@@ -290,6 +285,7 @@ public class ResponseFromTeamGPT {
             }
         }).start();
     }
+
     private void updateMessageHistory(String question) {
         try {
             if (buddyGPTApplication.getparam(historicMessages).equalsIgnoreCase(""))
@@ -612,7 +608,8 @@ public class ResponseFromTeamGPT {
             }
         }
         phrasesRunnable = this::processPhrasesWithDelay;
-        phrasesHandler.postDelayed(phrasesRunnable, 50);    }
+        phrasesHandler.postDelayed(phrasesRunnable, 50);
+    }
 
     private void onFinishStreaming() {
         Log.i(TAG_STREAM, "------------------END-------------------");

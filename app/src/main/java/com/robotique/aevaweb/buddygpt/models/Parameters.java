@@ -26,7 +26,6 @@ public class Parameters {
     private String streamMode;
 
 
-
     @SerializedName("email_support")
     private String emailSupport;
 
@@ -119,26 +118,61 @@ public class Parameters {
 
     // --------- GETTERS & SETTERS ---------
 
-    public String getIdCompte() { return idCompte; }
-    public void setIdCompte(String idCompte) { this.idCompte = idCompte; }
+    public String getIdCompte() {
+        return idCompte;
+    }
 
-    public String getImeiIdDevice() { return imeiIdDevice; }
-    public void setImeiIdDevice(String imeiIdDevice) { this.imeiIdDevice = imeiIdDevice; }
+    public void setIdCompte(String idCompte) {
+        this.idCompte = idCompte;
+    }
 
-    public String getTts() { return tts; }
-    public void setTts(String tts) { this.tts = tts; }
+    public String getImeiIdDevice() {
+        return imeiIdDevice;
+    }
 
-    public String getStt() { return stt; }
-    public void setStt(String stt) { this.stt = stt; }
+    public void setImeiIdDevice(String imeiIdDevice) {
+        this.imeiIdDevice = imeiIdDevice;
+    }
 
-    public String getHeader() { return header; }
-    public void setHeader(String header) { this.header = header; }
+    public String getTts() {
+        return tts;
+    }
 
-    public String getEntete() { return entete; }
-    public void setEntete(String entete) { this.entete = entete; }
+    public void setTts(String tts) {
+        this.tts = tts;
+    }
 
-    public String getStreamMode() { return streamMode; }
-    public void setStreamMode(String streamMode) { this.streamMode = streamMode; }
+    public String getStt() {
+        return stt;
+    }
+
+    public void setStt(String stt) {
+        this.stt = stt;
+    }
+
+    public String getHeader() {
+        return header;
+    }
+
+    public void setHeader(String header) {
+        this.header = header;
+    }
+
+    public String getEntete() {
+        return entete;
+    }
+
+    public void setEntete(String entete) {
+        this.entete = entete;
+    }
+
+    public String getStreamMode() {
+        return streamMode;
+    }
+
+    public void setStreamMode(String streamMode) {
+        this.streamMode = streamMode;
+    }
 
     public String getEmailSupport() {
         return emailSupport;
@@ -147,90 +181,236 @@ public class Parameters {
     public void setEmailSupport(String emailSupport) {
         this.emailSupport = emailSupport;
     }
-    public String getMailSender() { return mailSender; }
-    public void setMailSender(String mailSender) { this.mailSender = mailSender; }
 
-    public String getMailSubjectFr() { return mailSubjectFr; }
-    public void setMailSubjectFr(String mailSubjectFr) { this.mailSubjectFr = mailSubjectFr; }
+    public String getMailSender() {
+        return mailSender;
+    }
 
-    public String getMailSubjectEn() { return mailSubjectEn; }
-    public void setMailSubjectEn(String mailSubjectEn) { this.mailSubjectEn = mailSubjectEn; }
+    public void setMailSender(String mailSender) {
+        this.mailSender = mailSender;
+    }
 
-    public String getMessageMailSendFr() { return messageMailSendFr; }
-    public void setMessageMailSendFr(String messageMailSendFr) { this.messageMailSendFr = messageMailSendFr; }
+    public String getMailSubjectFr() {
+        return mailSubjectFr;
+    }
 
-    public String getMessageMailSendEn() { return messageMailSendEn; }
-    public void setMessageMailSendEn(String messageMailSendEn) { this.messageMailSendEn = messageMailSendEn; }
+    public void setMailSubjectFr(String mailSubjectFr) {
+        this.mailSubjectFr = mailSubjectFr;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getMailSubjectEn() {
+        return mailSubjectEn;
+    }
 
-    public String getUsernamePassword() { return usernamePassword; }
-    public void setUsernamePassword(String usernamePassword) { this.usernamePassword = usernamePassword; }
+    public void setMailSubjectEn(String mailSubjectEn) {
+        this.mailSubjectEn = mailSubjectEn;
+    }
 
-    public int getSmtpPort() { return smtpPort; }
-    public void setSmtpPort(int smtpPort) { this.smtpPort = smtpPort; }
+    public String getMessageMailSendFr() {
+        return messageMailSendFr;
+    }
 
-    public String getSmtpHost() { return smtpHost; }
-    public void setSmtpHost(String smtpHost) { this.smtpHost = smtpHost; }
+    public void setMessageMailSendFr(String messageMailSendFr) {
+        this.messageMailSendFr = messageMailSendFr;
+    }
 
-    public boolean isShowPrice() { return showPrice; }
-    public void setShowPrice(boolean showPrice) { this.showPrice = showPrice; }
+    public String getMessageMailSendEn() {
+        return messageMailSendEn;
+    }
 
-    public String getSelectedChatbot() { return selectedChatbot; }
-    public void setSelectedChatbot(String selectedChatbot) { this.selectedChatbot = selectedChatbot; }
+    public void setMessageMailSendEn(String messageMailSendEn) {
+        this.messageMailSendEn = messageMailSendEn;
+    }
 
-    public boolean isEncryptionRequired() { return isEncryptionRequired; }
-    public void setEncryptionRequired(boolean encryptionRequired) { isEncryptionRequired = encryptionRequired; }
+    public String getUsername() {
+        return username;
+    }
 
-    public boolean isAllowConversationStorage() { return allowConversationStorage; }
-    public void setAllowConversationStorage(boolean allowConversationStorage) { this.allowConversationStorage = allowConversationStorage; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public String getProjectIdTeamRag() { return projectIdTeamRag; }
-    public void setProjectIdTeamRag(String projectIdTeamRag) { this.projectIdTeamRag = projectIdTeamRag; }
+    public String getUsernamePassword() {
+        return usernamePassword;
+    }
 
-    public String getPasswordMailSender() { return passwordMailSender; }
-    public void setPasswordMailSender(String passwordMailSender) { this.passwordMailSender = passwordMailSender; }
+    public void setUsernamePassword(String usernamePassword) {
+        this.usernamePassword = usernamePassword;
+    }
 
-    public String getResponseFormatFr() { return responseFormatFr; }
-    public void setResponseFormatFr(String responseFormatFr) { this.responseFormatFr = responseFormatFr; }
+    public int getSmtpPort() {
+        return smtpPort;
+    }
 
-    public String getResponseFormatEn() { return responseFormatEn; }
-    public void setResponseFormatEn(String responseFormatEn) { this.responseFormatEn = responseFormatEn; }
+    public void setSmtpPort(int smtpPort) {
+        this.smtpPort = smtpPort;
+    }
 
-    public String getResponseFilter() { return responseFilter; }
-    public void setResponseFilter(String responseFilter) { this.responseFilter = responseFilter; }
+    public String getSmtpHost() {
+        return smtpHost;
+    }
 
-    public String getLanguageDetection() { return languageDetection; }
-    public void setLanguageDetection(String languageDetection) { this.languageDetection = languageDetection; }
+    public void setSmtpHost(String smtpHost) {
+        this.smtpHost = smtpHost;
+    }
 
-    public int getNumberOfWords() { return numberOfWords; }
-    public void setNumberOfWords(int numberOfWords) { this.numberOfWords = numberOfWords; }
+    public boolean isShowPrice() {
+        return showPrice;
+    }
 
-    public double getDetectionConfidenceRate() { return detectionConfidenceRate; }
-    public void setDetectionConfidenceRate(double detectionConfidenceRate) { this.detectionConfidenceRate = detectionConfidenceRate; }
+    public void setShowPrice(boolean showPrice) {
+        this.showPrice = showPrice;
+    }
 
-    public String getTeamRagHeader() { return teamRagHeader; }
-    public void setTeamRagHeader(String teamRagHeader) { this.teamRagHeader = teamRagHeader; }
+    public String getSelectedChatbot() {
+        return selectedChatbot;
+    }
 
-    public String getTeamRagEntete() { return teamRagEntete; }
-    public void setTeamRagEntete(String teamRagEntete) { this.teamRagEntete = teamRagEntete; }
+    public void setSelectedChatbot(String selectedChatbot) {
+        this.selectedChatbot = selectedChatbot;
+    }
 
-    public String getModeleStt() { return modeleStt; }
-    public void setModeleStt(String modeleStt) { this.modeleStt = modeleStt; }
+    public boolean isEncryptionRequired() {
+        return isEncryptionRequired;
+    }
 
-    public String getNomCompte() { return nomCompte; }
-    public void setNomCompte(String nomCompte) { this.nomCompte = nomCompte; }
+    public void setEncryptionRequired(boolean encryptionRequired) {
+        isEncryptionRequired = encryptionRequired;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public boolean isAllowConversationStorage() {
+        return allowConversationStorage;
+    }
 
-    public String getTeamGptKey() { return teamGptKey; }
-    public void setTeamGptKey(String teamGptKey) { this.teamGptKey = teamGptKey; }
+    public void setAllowConversationStorage(boolean allowConversationStorage) {
+        this.allowConversationStorage = allowConversationStorage;
+    }
 
-    public String getTeamGptVersion() { return teamGptVersion; }
-    public void setTeamGptVersion(String teamGptVersion) { this.teamGptVersion = teamGptVersion; }
+    public String getProjectIdTeamRag() {
+        return projectIdTeamRag;
+    }
 
-    public String getChatbotModel() { return chatbotModel; }
-    public void setChatbotModel(String chatbotModel) { this.chatbotModel = chatbotModel; }
+    public void setProjectIdTeamRag(String projectIdTeamRag) {
+        this.projectIdTeamRag = projectIdTeamRag;
+    }
+
+    public String getPasswordMailSender() {
+        return passwordMailSender;
+    }
+
+    public void setPasswordMailSender(String passwordMailSender) {
+        this.passwordMailSender = passwordMailSender;
+    }
+
+    public String getResponseFormatFr() {
+        return responseFormatFr;
+    }
+
+    public void setResponseFormatFr(String responseFormatFr) {
+        this.responseFormatFr = responseFormatFr;
+    }
+
+    public String getResponseFormatEn() {
+        return responseFormatEn;
+    }
+
+    public void setResponseFormatEn(String responseFormatEn) {
+        this.responseFormatEn = responseFormatEn;
+    }
+
+    public String getResponseFilter() {
+        return responseFilter;
+    }
+
+    public void setResponseFilter(String responseFilter) {
+        this.responseFilter = responseFilter;
+    }
+
+    public String getLanguageDetection() {
+        return languageDetection;
+    }
+
+    public void setLanguageDetection(String languageDetection) {
+        this.languageDetection = languageDetection;
+    }
+
+    public int getNumberOfWords() {
+        return numberOfWords;
+    }
+
+    public void setNumberOfWords(int numberOfWords) {
+        this.numberOfWords = numberOfWords;
+    }
+
+    public double getDetectionConfidenceRate() {
+        return detectionConfidenceRate;
+    }
+
+    public void setDetectionConfidenceRate(double detectionConfidenceRate) {
+        this.detectionConfidenceRate = detectionConfidenceRate;
+    }
+
+    public String getTeamRagHeader() {
+        return teamRagHeader;
+    }
+
+    public void setTeamRagHeader(String teamRagHeader) {
+        this.teamRagHeader = teamRagHeader;
+    }
+
+    public String getTeamRagEntete() {
+        return teamRagEntete;
+    }
+
+    public void setTeamRagEntete(String teamRagEntete) {
+        this.teamRagEntete = teamRagEntete;
+    }
+
+    public String getModeleStt() {
+        return modeleStt;
+    }
+
+    public void setModeleStt(String modeleStt) {
+        this.modeleStt = modeleStt;
+    }
+
+    public String getNomCompte() {
+        return nomCompte;
+    }
+
+    public void setNomCompte(String nomCompte) {
+        this.nomCompte = nomCompte;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getTeamGptKey() {
+        return teamGptKey;
+    }
+
+    public void setTeamGptKey(String teamGptKey) {
+        this.teamGptKey = teamGptKey;
+    }
+
+    public String getTeamGptVersion() {
+        return teamGptVersion;
+    }
+
+    public void setTeamGptVersion(String teamGptVersion) {
+        this.teamGptVersion = teamGptVersion;
+    }
+
+    public String getChatbotModel() {
+        return chatbotModel;
+    }
+
+    public void setChatbotModel(String chatbotModel) {
+        this.chatbotModel = chatbotModel;
+    }
 }

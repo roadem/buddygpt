@@ -10,14 +10,12 @@ import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
-import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -56,9 +54,6 @@ import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.nl.translate.TranslateLanguage;
 import com.google.mlkit.nl.translate.Translation;
@@ -81,7 +76,6 @@ import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
 import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
 import com.robotique.aevaweb.buddygpt.utilis.PcmToWavConverter;
 import com.robotique.aevaweb.buddygpt.utilis.SettingsContentObserver;
-import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleApiListener;
 import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleC;
 
 import org.json.JSONException;
@@ -100,9 +94,6 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 
 import darren.googlecloudtts.model.VoicesList;
-import darren.googlecloudtts.parameter.AudioConfig;
-import darren.googlecloudtts.parameter.AudioEncoding;
-import darren.googlecloudtts.parameter.VoiceSelectionParams;
 
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";

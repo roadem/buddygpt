@@ -16,8 +16,9 @@ public class ConfigurationFile {
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
     private static final int FILE_VERSION = 5; // upgrade this whenever you want to overwrite the file
-    public static  CustomProperties props = new CustomProperties();
+    public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
+
     private ConfigurationFile() {
         throw new IllegalStateException("Utility class");
     }
@@ -127,10 +128,10 @@ public class ConfigurationFile {
             setProperty("ReadSpeaker_pitch_en", "180");
             setProperty("ReadSpeaker_speed_fr", "100");
             setProperty("ReadSpeaker_speed_en", "100");
-            setProperty("TTS_Android_pitch_fr","115");
-            setProperty("TTS_Android_pitch_en","87");
-            setProperty("TTS_Android_speed_fr","100");
-            setProperty("TTS_Android_speed_en","70");
+            setProperty("TTS_Android_pitch_fr", "115");
+            setProperty("TTS_Android_pitch_en", "87");
+            setProperty("TTS_Android_speed_fr", "100");
+            setProperty("TTS_Android_speed_en", "70");
 
             props.addPropertyComment("hotword_fr", "");
             props.addPropertyComment("hotword_fr", "List of hot words in French, English, Spanish and German");

@@ -1,30 +1,21 @@
 package com.robotique.aevaweb.buddygpt.activities;
 
-import static java.lang.String.*;
-
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.graphics.drawable.AnimationDrawable;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
-import android.os.Looper;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.telephony.TelephonyManager;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -32,10 +23,8 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import com.bfr.buddy.ui.shared.FaceTouchData;
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.GazePosition;
-import com.bfr.buddy.ui.shared.IUIFaceTouchCallback;
 import com.bfr.buddy.ui.shared.LabialExpression;
 import com.bfr.buddy.utils.events.EventItem;
 import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
@@ -44,30 +33,17 @@ import com.bfr.buddysdk.BuddyCompatActivity;
 import com.bfr.buddysdk.BuddySDK;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
-import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
-import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
-import com.robotique.aevaweb.buddygpt.fragments.ChatFragment;
 import com.robotique.aevaweb.buddygpt.fragments.MainFragment;
-import com.robotique.aevaweb.buddygpt.models.Langue;
 import com.robotique.aevaweb.buddygpt.models.Replica;
-import com.robotique.aevaweb.buddygpt.models.Session;
-import com.robotique.aevaweb.buddygpt.models.Setting;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
-import com.robotique.aevaweb.buddygpt.utilis.BIPlayer;
 import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
-import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
-import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 import com.robotique.aevaweb.buddygpt.utilis.tracking.PoseTracking;
 
 import java.io.IOException;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends BuddyCompatActivity implements IDBObserver {
@@ -80,84 +56,31 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             Manifest.permission.RECORD_AUDIO,
             Manifest.permission.CAMERA,
             Manifest.permission.READ_PHONE_STATE
-
     };
     private static final int PERMISSION_REQ_ID = 22;
-    private static final String LANGUE_FR = "Français";
-    private static final String LANGUE_EN = "Anglais";
-    private static final String LANGUE_ES = "Espagnol";
-    private static final String LANGUE_DE = "Allemand";
-    private static final String configFile = "BuddyGPT.properties";
     private final WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
+    private final boolean isFirstLaunch = true; // Used to init TeamGPT params only once
+    private final Handler handlerTTSError = new Handler();
+    private final Handler handler = new Handler();
     private BuddyGPTApplication buddyGPTApplication;
     private View decorView;
     //views
     private RelativeLayout viewFace;
     private RelativeLayout launchView;
     private RelativeLayout reGroup;
-
     private ImageView noNetwork;
     private ProgressBar downloadingBar;
-
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private boolean isListeningFreeSpeech = false;
-    private Boolean mlKitIsDownloading = false;
-    private boolean isFirstLaunch = true; // Used to init TeamGPT params only once
-    private CountDownTimer timerEcoute;
     private CountDownTimer responseTimeout;
     private ArrayList<Replica> listRep = new ArrayList<>();
-
     private PoseTracking poseTracking;
     private ExecutorService backgroundExecutor;
-
     private ProcessCameraProvider cameraProvider;
     private String initOrMajOrNone = "";
-
-    private final Runnable runnableProgressBar = new Runnable() {
-        @Override
-        public void run() {
-            buddyGPTApplication.stopTTS();
-            stopListeningFreeSpeech();
-            try {
-                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                BuddySDK.UI.stopListenAnimation();
-            } catch (Exception e) {
-                Log.e(TAG, "BuddySDK Exception :" + e);
-            }
-            launchView.setVisibility(View.VISIBLE);
-            CountDownTimer timerDownloading = new CountDownTimer((long) Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) * 1000, 1000) {
-                @Override
-                public void onTick(long l) {
-                    Log.e(TAG, "onTick mlKitIsDownloading");
-                }
-
-                @Override
-                public void onFinish() {
-                    Log.e(TAG, "on Finish mlKitIsDownloading");
-                    if (Boolean.TRUE.equals(mlKitIsDownloading)) {
-                        if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
-                            Toast.makeText(MainActivity.this, R.string.mlkit_model_is_downloading_en, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_FR)) {
-                            Toast.makeText(MainActivity.this, R.string.mlkit_model_is_downloading_fr, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_ES)) {
-                            Toast.makeText(MainActivity.this, R.string.mlkit_model_is_downloading_es, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_DE)) {
-                            Toast.makeText(MainActivity.this, R.string.mlkit_model_is_downloading_de, Toast.LENGTH_SHORT).show();
-                        } else {
-                            Toast.makeText(MainActivity.this, R.string.mlkit_model_is_downloading_en, Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                }
-            };
-            timerDownloading.start();
-        }
-    };
     private Handler handlerForSensor;
     private Runnable runnableForSensor;
-    private final Handler handlerTTSError = new Handler();
     private Runnable runnableTTSError;
-    private final Handler handler = new Handler();
     private Runnable runnable;
 
     /**
@@ -191,42 +114,42 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
 
         buddyGPTApplication.setSpeaking(false);
-            buddyGPTApplication.setNotYet(true);
-            buddyGPTApplication.setActivityClosed(false);
-            buddyGPTApplication.setStartRecording(false);
-            buddyGPTApplication.setQuestionNumber(0);
-            buddyGPTApplication.setCurrentQuestionNubmer(0);
-            buddyGPTApplication.setAlreadyGetAnswer(false);
-            buddyGPTApplication.setOpenaialreadySwitchEmotion(false);
-            buddyGPTApplication.setTimeoutExpired(false);
-            buddyGPTApplication.setQuestionTime(0);
-            buddyGPTApplication.setStoredResponse("");
-            buddyGPTApplication.setBuddyFaceisTired(false);
-            buddyGPTApplication.setShouldPlayEmotion(false);
-            buddyGPTApplication.setCurrentEmotion("");
-            buddyGPTApplication.setMessageError(false);
-            buddyGPTApplication.setCurrentIndexText(0);
-            buddyGPTApplication.setAllTextPronoucedSuccess(true);
-            buddyGPTApplication.setStopTTSReadSpeaker(false);
-            buddyGPTApplication.setInitSharedpreferences(true);
-            buddyGPTApplication.setLanguageDetected("");
-            buddyGPTApplication.setAlreadyCalled(false);
-            buddyGPTApplication.setRecording(false);
-            buddyGPTApplication.setCurrentState("");
+        buddyGPTApplication.setNotYet(true);
+        buddyGPTApplication.setActivityClosed(false);
+        buddyGPTApplication.setStartRecording(false);
+        buddyGPTApplication.setQuestionNumber(0);
+        buddyGPTApplication.setCurrentQuestionNubmer(0);
+        buddyGPTApplication.setAlreadyGetAnswer(false);
+        buddyGPTApplication.setOpenaialreadySwitchEmotion(false);
+        buddyGPTApplication.setTimeoutExpired(false);
+        buddyGPTApplication.setQuestionTime(0);
+        buddyGPTApplication.setStoredResponse("");
+        buddyGPTApplication.setBuddyFaceisTired(false);
+        buddyGPTApplication.setShouldPlayEmotion(false);
+        buddyGPTApplication.setCurrentEmotion("");
+        buddyGPTApplication.setMessageError(false);
+        buddyGPTApplication.setCurrentIndexText(0);
+        buddyGPTApplication.setAllTextPronoucedSuccess(true);
+        buddyGPTApplication.setStopTTSReadSpeaker(false);
+        buddyGPTApplication.setInitSharedpreferences(true);
+        buddyGPTApplication.setLanguageDetected("");
+        buddyGPTApplication.setAlreadyCalled(false);
+        buddyGPTApplication.setRecording(false);
+        buddyGPTApplication.setCurrentState("");
 
 
-            buddyGPTApplication.setStopProcessus(false);
-            buddyGPTApplication.setAlReadyHadSpoke(false);
+        buddyGPTApplication.setStopProcessus(false);
+        buddyGPTApplication.setAlReadyHadSpoke(false);
 
-            buddyGPTApplication.setResponseTime(0);
-            buddyGPTApplication.setAnswerHasExceededTimeOut(false);
-            buddyGPTApplication.setPreviousVolume(Float.valueOf(0));
-            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-            buddyGPTApplication.setChosenTTS("");
-            buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
-            buddyGPTApplication.setBIExecution(false);
-            buddyGPTApplication.setAlreadyChatting(false);
-            Log.i(TAG_TRACKING, "First launch of application");
+        buddyGPTApplication.setResponseTime(0);
+        buddyGPTApplication.setAnswerHasExceededTimeOut(false);
+        buddyGPTApplication.setPreviousVolume(Float.valueOf(0));
+        buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+        buddyGPTApplication.setChosenTTS("");
+        buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
+        buddyGPTApplication.setBIExecution(false);
+        buddyGPTApplication.setAlreadyChatting(false);
+        Log.i(TAG_TRACKING, "First launch of application");
     }
 
     @Override
@@ -358,13 +281,13 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     @Override
     public void update(String message) {
         if (message != null && message.contains("properties file done")) {
-                Log.i(TAG, "update: properties file done");
-                buddyGPTApplication.setNotYet(false);
-                runOnUiThread(() -> getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, new MainFragment())
-                        .commit());
-            }
+            Log.i(TAG, "update: properties file done");
+            buddyGPTApplication.setNotYet(false);
+            runOnUiThread(() -> getSupportFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new MainFragment())
+                    .commit());
+        }
 
 
     }
@@ -415,14 +338,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
         return imei;
     }
-
-    private void stopListeningFreeSpeech() {
-        isListeningFreeSpeech = false;
-        Log.d(TAG, " --- stopListeningFreeSpeech() ---");
-        if (timerEcoute != null) timerEcoute.cancel();
-        buddyGPTApplication.stopListening(this);
-    }
-
 
     /**
      * -------------------------------  Gestion des permissions  ---------------------------------------------------------------

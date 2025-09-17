@@ -3,10 +3,6 @@ package com.robotique.aevaweb.buddygpt.fragments;
 import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
-
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
@@ -33,6 +29,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.adapters.LangueSpinnerAdapter;
@@ -45,7 +44,6 @@ import com.robotique.aevaweb.buddygpt.models.Setting;
 import com.robotique.aevaweb.buddygpt.models.SttModel;
 import com.robotique.aevaweb.buddygpt.models.TtsModel;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
-import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
 import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 
@@ -215,6 +213,218 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         }
     };
 
+    public SettingsFragment() {
+        // Required empty public constructor
+    }
+
+    public static SettingsFragment newInstance(String param1, String param2) {
+        SettingsFragment fragment = new SettingsFragment();
+        Bundle args = new Bundle();
+        args.putString(ARG_PARAM1, param1);
+        args.putString(ARG_PARAM2, param2);
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (getArguments() != null) {
+            mParam1 = getArguments().getString(ARG_PARAM1);
+            mParam2 = getArguments().getString(ARG_PARAM2);
+        }
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+        View view= inflater.inflate(R.layout.fragment_settings, container, false);
+
+        Switch switchLanguageDetection;
+        Switch switchEmotion;
+        Switch switchVisibility;
+        LinearLayout popupLanguageListContent;
+        RelativeLayout popupLanguageList;
+        Log.d(TAG, " --- onCreate() ---");
+
+        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
+        buddyGPTApplication.hideSystemUI(getActivity());
+        buddyGPTApplication.setInitSharedpreferences(false);
+
+
+
+        menuTitle = view.findViewById(R.id.menu_title);
+        popupLanguageList = view.findViewById(R.id.popup_Languages_List);
+        popupLanguageListContent = view.findViewById(R.id.popup_Languages_List_linearLayout);
+        lytCloseMenuSettings = view.findViewById(R.id.lyt_close_menu_settings);
+        menuOptionSttLyt = view.findViewById(R.id.menu_option_stt_lyt);
+        menuOptionTtsLyt = view.findViewById(R.id.menu_option_tts_lyt);
+        menuOptionChatbotLyt = view.findViewById(R.id.menu_option_chatbot_lyt);
+
+        menuOptionLangueTextView= view.findViewById(R.id.menu_option_langue_textView);
+        menuOptionChatbotTextView = view.findViewById(R.id.menu_option_chatbot_textView);
+        menuOptionSttTextView = view.findViewById(R.id.menu_option_stt_textView);
+        menuOptionTtsTextView = view.findViewById(R.id.menu_option_tts_textView);
+
+        menuOptionVolumeTextView = view.findViewById(R.id.menu_option_volume_textView);
+        menuOptionAffichageTextViewiew = view.findViewById(R.id.menu_option_affichage_textView);
+        menuOptionEmotionTextView = view.findViewById(R.id.menu_option_emotion_textView);
+        menuOptionDetectLanguageTextView = view.findViewById(R.id.menu_option_language_detection_textView);
+        menuApiKeyTextView = view.findViewById(R.id.api_key_txt);
+        menuNameTextView = view.findViewById(R.id.name_txt);
+        menuHeaderTextView = view.findViewById(R.id.header_txt);
+        menuOptionLangueSpinner = view.findViewById(R.id.menu_option_langue_spinner);
+        menuOptionSttSpinner = view.findViewById(R.id.menu_option_stt_spinner);
+        menuOptionTtsSpinner = view.findViewById(R.id.menu_option_tts_spinner);
+        menuOptionChatbotSpinner = view.findViewById(R.id.menu_option_chatbot_spinner);
+        menuApiKeyEditText = view.findViewById(R.id.api_key_editText);
+        menuNameText = view.findViewById(R.id.user_name);
+        copyRight = view.findViewById(R.id.copyright_texte);
+        identifiers = view.findViewById(R.id.identifiers_texte);
+        menuHeaderEditText = view.findViewById(R.id.header_editText);
+
+        volumeSeekbar = view.findViewById(R.id.volume_seekbar);
+        volumeSeekbarValue = view.findViewById(R.id.volume_seekbar_value);
+        switchVisibility = view.findViewById(R.id.switchVisibility);
+        switchEmotion = view.findViewById(R.id.switchEmotion);
+        switchLanguageDetection = view.findViewById(R.id.switchLanguageDetection);
+        launch_view = view.findViewById(R.id.launch_view);
+        noNetwork = view.findViewById(R.id.noNetwork);
+        downloadingBar = view.findViewById(R.id.progressBar_MLKitDownload);
+        set = new Setting();
+        setting = new Setting();
+        buddyGPTApplication.registerObserver(this);
+        wifiBroadCastReceiver.setAct(getActivity().getApplicationContext());
+
+        /**
+         *  Gestion de l'api key
+         */
+
+        handlerApiKey();
+
+
+        /**
+         *  Gestion des chatbots
+         */
+
+        menuOptionChatbotLyt.setVisibility(View.VISIBLE);
+
+        handlerChatbot();
+
+        /**
+         *  Gestion du seekbar de volume de parole
+         */
+
+
+        handlerSpeakVolume();
+        /**
+         *  Gestion de la liste déroulante pour le choix de langue [ Français | Anglais ]
+         */
+
+        handlerLangue();
+
+        /**
+         *  Gestion de l'affichage des paroles
+         */
+
+        switchVisibility.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(visibilityString)));
+        set.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
+        setting.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
+        buddyGPTApplication.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
+        switchVisibility.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
+            buddyGPTApplication.setSwitchVisibility(String.valueOf(b));
+            buddyGPTApplication.setparam(visibilityString, String.valueOf(b));
+            set.setSwitchVisibility(String.valueOf(b));
+
+        });
+
+        /**
+         *  Gestion de l'affichage des émotions
+         */
+
+        switchEmotion.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(emotionString)));
+        set.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
+        setting.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
+        buddyGPTApplication.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
+        switchEmotion.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
+            buddyGPTApplication.setSwitchEmotion(String.valueOf(b));
+            buddyGPTApplication.setparam(emotionString, String.valueOf(b));
+            set.setSwitchEmotion(String.valueOf(b));
+        });
+        /**
+         *  Gestion de la detection des langues
+         */
+
+        switchLanguageDetection.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(detectionLanguageString)));
+        set.setSwitchLanguageDetection(buddyGPTApplication.getparam(detectionLanguageString));
+        setting.setSwitchLanguageDetection(buddyGPTApplication.getparam(detectionLanguageString));
+        buddyGPTApplication.setSwitchdetectLanguage(buddyGPTApplication.getparam(detectionLanguageString));
+        switchLanguageDetection.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
+            buddyGPTApplication.setSwitchdetectLanguage(String.valueOf(b));
+            buddyGPTApplication.setparam(detectionLanguageString, String.valueOf(b));
+            set.setSwitchLanguageDetection(String.valueOf(b));
+        });
+
+        if (responseFromTeamGPT != null) {
+            responseFromTeamGPT.reset();
+        }
+        responseFromTeamGPT = new ResponseFromTeamGPT(buddyGPTApplication);
+        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
+            buddyGPTApplication.getResponseFromTeamGPT().reset();
+        buddyGPTApplication.setResponseFromTeamGPT(responseFromTeamGPT);
+
+        /**
+         *  Gestion de l'entete
+         */
+        handlerHeader();
+
+
+        /**
+         *  Gestion du choix STT
+         */
+        if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
+            menuOptionSttLyt.setVisibility(View.VISIBLE);
+        if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local"))
+            menuOptionTtsLyt.setVisibility(View.VISIBLE);
+
+        handlerSTT();
+        handlerTTS();
+        handlerSupport();
+        handlerNameAndEmail();
+        /**
+         * Gestion Tracking
+         */
+        setupClickListeners();
+        popupLanguageList.setOnClickListener(v -> {
+            // Vérifier si le popup_add_mail est visible et si le clic est en dehors de celui-ci
+            if (popupLanguageList.getVisibility() == View.VISIBLE) {
+                MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, 0, 0);
+                if (!isViewInsideBounds(popupLanguageListContent, (int) event.getRawX(), (int) event.getRawY())) {
+                    // Si le clic est en dehors, rendre le popup invisible
+                    popupLanguageList.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
+        popupLanguageListContent.setOnClickListener(v -> {
+            // Ne rien faire pour empêcher la propagation du clic aux éléments enfants du popup
+        });
+        return view;
+    }
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // stop any pending progress runnable / timers to avoid callbacks after detach
+        handlerProgressBar.removeCallbacksAndMessages(null);
+        handlerProgressBar.removeCallbacks(runnableProgressBar);
+        if (timerEcoute != null) {
+            timerEcoute.cancel();
+            timerEcoute = null;
+        }
+        modelDownloading = false;
+        buddyGPTApplication.removeObserver(this);
+    }
+
     public static void avoidSpinnerDropdownFocus(Spinner spinner) {
         try {
             Field listPopupField = Spinner.class.getDeclaredField("mPopup");
@@ -230,8 +440,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             e.printStackTrace();
         }
     }
-
-
 
     private void setupClickListeners() {
         lytCloseMenuSettings.setOnClickListener(v -> btnCloseSettingsFragment());
@@ -253,7 +461,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         selectChosenLanguage();
         setupSpinnerListener();
     }
-
 
 
     private void initLangues() {
@@ -826,20 +1033,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         }
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        // stop any pending progress runnable / timers to avoid callbacks after detach
-        handlerProgressBar.removeCallbacksAndMessages(null);
-        handlerProgressBar.removeCallbacks(runnableProgressBar);
-        if (timerEcoute != null) {
-            timerEcoute.cancel();
-            timerEcoute = null;
-        }
-        modelDownloading = false;
-        buddyGPTApplication.removeObserver(this);
-    }
-
     public void btnCloseSettingsFragment() {
 
         // If a model is downloading, block closing and inform the user
@@ -870,205 +1063,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                     .replace(R.id.fragment_container, new MainFragment())
                     .commit();
         }
-    }
-
-    public SettingsFragment() {
-        // Required empty public constructor
-    }
-
-    public static SettingsFragment newInstance(String param1, String param2) {
-        SettingsFragment fragment = new SettingsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        View view= inflater.inflate(R.layout.fragment_settings, container, false);
-
-        Switch switchLanguageDetection;
-        Switch switchEmotion;
-        Switch switchVisibility;
-        LinearLayout popupLanguageListContent;
-        RelativeLayout popupLanguageList;
-        Log.d(TAG, " --- onCreate() ---");
-
-        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.hideSystemUI(getActivity());
-        buddyGPTApplication.setInitSharedpreferences(false);
-
-
-
-        menuTitle = view.findViewById(R.id.menu_title);
-        popupLanguageList = view.findViewById(R.id.popup_Languages_List);
-        popupLanguageListContent = view.findViewById(R.id.popup_Languages_List_linearLayout);
-        lytCloseMenuSettings = view.findViewById(R.id.lyt_close_menu_settings);
-        menuOptionSttLyt = view.findViewById(R.id.menu_option_stt_lyt);
-        menuOptionTtsLyt = view.findViewById(R.id.menu_option_tts_lyt);
-        menuOptionChatbotLyt = view.findViewById(R.id.menu_option_chatbot_lyt);
-
-        menuOptionLangueTextView= view.findViewById(R.id.menu_option_langue_textView);
-        menuOptionChatbotTextView = view.findViewById(R.id.menu_option_chatbot_textView);
-        menuOptionSttTextView = view.findViewById(R.id.menu_option_stt_textView);
-        menuOptionTtsTextView = view.findViewById(R.id.menu_option_tts_textView);
-
-        menuOptionVolumeTextView = view.findViewById(R.id.menu_option_volume_textView);
-        menuOptionAffichageTextViewiew = view.findViewById(R.id.menu_option_affichage_textView);
-        menuOptionEmotionTextView = view.findViewById(R.id.menu_option_emotion_textView);
-        menuOptionDetectLanguageTextView = view.findViewById(R.id.menu_option_language_detection_textView);
-        menuApiKeyTextView = view.findViewById(R.id.api_key_txt);
-        menuNameTextView = view.findViewById(R.id.name_txt);
-        menuHeaderTextView = view.findViewById(R.id.header_txt);
-        menuOptionLangueSpinner = view.findViewById(R.id.menu_option_langue_spinner);
-        menuOptionSttSpinner = view.findViewById(R.id.menu_option_stt_spinner);
-        menuOptionTtsSpinner = view.findViewById(R.id.menu_option_tts_spinner);
-        menuOptionChatbotSpinner = view.findViewById(R.id.menu_option_chatbot_spinner);
-        menuApiKeyEditText = view.findViewById(R.id.api_key_editText);
-        menuNameText = view.findViewById(R.id.user_name);
-        copyRight = view.findViewById(R.id.copyright_texte);
-        identifiers = view.findViewById(R.id.identifiers_texte);
-        menuHeaderEditText = view.findViewById(R.id.header_editText);
-
-        volumeSeekbar = view.findViewById(R.id.volume_seekbar);
-        volumeSeekbarValue = view.findViewById(R.id.volume_seekbar_value);
-        switchVisibility = view.findViewById(R.id.switchVisibility);
-        switchEmotion = view.findViewById(R.id.switchEmotion);
-        switchLanguageDetection = view.findViewById(R.id.switchLanguageDetection);
-        launch_view = view.findViewById(R.id.launch_view);
-        noNetwork = view.findViewById(R.id.noNetwork);
-        downloadingBar = view.findViewById(R.id.progressBar_MLKitDownload);
-        set = new Setting();
-        setting = new Setting();
-        buddyGPTApplication.registerObserver(this);
-        wifiBroadCastReceiver.setAct(getActivity().getApplicationContext());
-
-        /**
-         *  Gestion de l'api key
-         */
-
-        handlerApiKey();
-
-
-        /**
-         *  Gestion des chatbots
-         */
-
-        menuOptionChatbotLyt.setVisibility(View.VISIBLE);
-
-        handlerChatbot();
-
-        /**
-         *  Gestion du seekbar de volume de parole
-         */
-
-
-        handlerSpeakVolume();
-        /**
-         *  Gestion de la liste déroulante pour le choix de langue [ Français | Anglais ]
-         */
-
-        handlerLangue();
-
-        /**
-         *  Gestion de l'affichage des paroles
-         */
-
-        switchVisibility.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(visibilityString)));
-        set.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
-        setting.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
-        buddyGPTApplication.setSwitchVisibility(buddyGPTApplication.getparam(visibilityString));
-        switchVisibility.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
-            buddyGPTApplication.setSwitchVisibility(String.valueOf(b));
-            buddyGPTApplication.setparam(visibilityString, String.valueOf(b));
-            set.setSwitchVisibility(String.valueOf(b));
-
-        });
-
-        /**
-         *  Gestion de l'affichage des émotions
-         */
-
-        switchEmotion.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(emotionString)));
-        set.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
-        setting.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
-        buddyGPTApplication.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
-        switchEmotion.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
-            buddyGPTApplication.setSwitchEmotion(String.valueOf(b));
-            buddyGPTApplication.setparam(emotionString, String.valueOf(b));
-            set.setSwitchEmotion(String.valueOf(b));
-        });
-        /**
-         *  Gestion de la detection des langues
-         */
-
-        switchLanguageDetection.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam(detectionLanguageString)));
-        set.setSwitchLanguageDetection(buddyGPTApplication.getparam(detectionLanguageString));
-        setting.setSwitchLanguageDetection(buddyGPTApplication.getparam(detectionLanguageString));
-        buddyGPTApplication.setSwitchdetectLanguage(buddyGPTApplication.getparam(detectionLanguageString));
-        switchLanguageDetection.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
-            buddyGPTApplication.setSwitchdetectLanguage(String.valueOf(b));
-            buddyGPTApplication.setparam(detectionLanguageString, String.valueOf(b));
-            set.setSwitchLanguageDetection(String.valueOf(b));
-        });
-
-        if (responseFromTeamGPT != null) {
-            responseFromTeamGPT.reset();
-        }
-        responseFromTeamGPT = new ResponseFromTeamGPT(buddyGPTApplication);
-        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-            buddyGPTApplication.getResponseFromTeamGPT().reset();
-        buddyGPTApplication.setResponseFromTeamGPT(responseFromTeamGPT);
-
-        /**
-         *  Gestion de l'entete
-         */
-        handlerHeader();
-
-
-        /**
-         *  Gestion du choix STT
-         */
-        if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
-            menuOptionSttLyt.setVisibility(View.VISIBLE);
-        if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local"))
-            menuOptionTtsLyt.setVisibility(View.VISIBLE);
-
-        handlerSTT();
-        handlerTTS();
-        handlerSupport();
-        handlerNameAndEmail();
-        /**
-         * Gestion Tracking
-         */
-        setupClickListeners();
-        popupLanguageList.setOnClickListener(v -> {
-            // Vérifier si le popup_add_mail est visible et si le clic est en dehors de celui-ci
-            if (popupLanguageList.getVisibility() == View.VISIBLE) {
-                MotionEvent event = MotionEvent.obtain(0, 0, MotionEvent.ACTION_DOWN, 0, 0, 0);
-                if (!isViewInsideBounds(popupLanguageListContent, (int) event.getRawX(), (int) event.getRawY())) {
-                    // Si le clic est en dehors, rendre le popup invisible
-                    popupLanguageList.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-        popupLanguageListContent.setOnClickListener(v -> {
-            // Ne rien faire pour empêcher la propagation du clic aux éléments enfants du popup
-        });
-        return view;
     }
 
 }
