@@ -127,10 +127,10 @@ public class ConfigurationFile {
             setProperty("ReadSpeaker_pitch_en", "180");
             setProperty("ReadSpeaker_speed_fr", "100");
             setProperty("ReadSpeaker_speed_en", "100");
-            setProperty("TTS_Android_pitch_fr", "130");
-            setProperty("TTS_Android_pitch_en", "130");
-            setProperty("TTS_Android_speed_fr", "100");
-            setProperty("TTS_Android_speed_en", "100");
+            setProperty("TTS_Android_pitch_fr","115");
+            setProperty("TTS_Android_pitch_en","87");
+            setProperty("TTS_Android_speed_fr","100");
+            setProperty("TTS_Android_speed_en","70");
 
             props.addPropertyComment("hotword_fr", "");
             props.addPropertyComment("hotword_fr", "List of hot words in French, English, Spanish and German");

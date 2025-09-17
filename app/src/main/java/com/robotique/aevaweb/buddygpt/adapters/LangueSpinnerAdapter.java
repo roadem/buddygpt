@@ -18,6 +18,7 @@ import java.util.List;
 
 public class LangueSpinnerAdapter extends BaseAdapter {
 
+    private static final String TAG = "ADAPTER";
     private final LayoutInflater layoutInflater;
     private final int listItemLayoutResource;
     private final int itemNameId;
@@ -113,14 +114,14 @@ public class LangueSpinnerAdapter extends BaseAdapter {
             checkedIcon.setVisibility(View.GONE);
             return rowView;
         } else {
-            Log.e("MRA", "nameToDisplay else" + nameToDisplay);
+            Log.e(TAG, "nameToDisplay else" + nameToDisplay);
             buddyGPTApplication.getFrenchLanguageSelectedTranslator().translate(nameToDisplay)
                     .addOnSuccessListener(translatedText -> {
-                        Log.e("MRA", "nameToDisplay else translatedText" + translatedText);
+                        Log.e(TAG, "nameToDisplay else translatedText" + translatedText);
                         translatedLanguageName = translatedText;
                         updateView(rowView, textViewItemName);
                     })
-                    .addOnFailureListener(e -> Log.e("MRA", "translatedText exception  " + e));
+                    .addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
 
         }
         return rowView;
@@ -154,11 +155,11 @@ public class LangueSpinnerAdapter extends BaseAdapter {
         String nameToDisplay = langue.getNom();
         buddyGPTApplication.getFrenchLanguageSelectedTranslator().translate(nameToDisplay)
                 .addOnSuccessListener(translatedText -> {
-                    Log.e("MRA", "nameToDisplay else translatedText" + translatedText);
+                    Log.e(TAG, "nameToDisplay else translatedText" + translatedText);
                     translatedLanguageName = translatedText;
                     updateDropDownView(rowView, textViewItemName, langue);
                 })
-                .addOnFailureListener(e -> Log.e("MRA", "translatedText exception  " + e));
+                .addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
 
         return rowView;
     }

@@ -1,5 +1,7 @@
 package com.robotique.aevaweb.buddygpt.models;
 
+import android.util.Log;
+
 import java.util.Objects;
 
 public class Setting {
@@ -26,6 +28,7 @@ public class Setting {
     private String projectID;
     public Setting() {
         // Method left empty intentionally because no specific action is needed for this update.
+        Log.i("SETTINGS", "Setting: ");
     }
 
     public String getSwitchEmotion() {

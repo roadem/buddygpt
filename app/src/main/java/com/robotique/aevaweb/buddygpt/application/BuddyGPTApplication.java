@@ -746,7 +746,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void onCreate() {
         super.onCreate();
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+        am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
         SettingsContentObserver mSettingsContentObserver = new SettingsContentObserver(new Handler(), getApplicationContext());
         getContentResolver().registerContentObserver(
                 Settings.System.CONTENT_URI, true,
@@ -765,8 +765,16 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void init() {
-        Log.e("MRAA", "init");
-        remainingAttempts = Integer.parseInt(getParamFromFile("Number_listens", configurationFilePseudo).trim()) - 1;
+        Log.e(TAG, "init");
+
+        String number_attempt = getParamFromFile("Number_listens",configurationFilePseudo);
+        if(number_attempt.equals("")||Integer.parseInt(number_attempt)<=0){
+            remainingAttempts= Integer.parseInt("1")-1;
+        }
+        else{
+            remainingAttempts= Integer.parseInt(number_attempt)-1;
+        }
+
         if (getparam("firstLaunch").isEmpty()) {
             setparam("firstLaunch", "true");
         }
@@ -868,6 +876,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         setparam("NomCompte", "");
         setparam("SelectedChatbot", "");
+        setparam("chatbotModel", "");
         setparam("STT-TeamGPT", "");
         setparam("TTS-TeamGPT", "");
         setparam("Header", "");
@@ -878,11 +887,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         setparam("Smtp_host", "");
         setparam("Password_mail_sender", "");
         setparam("Smtp_port", "");
-        setparam("show_price", "");
-        setparam("CustomGPT_model", "");
-        setparam("Modele_Mistral", "");
-        setparam("Modele_Openai", "");
-        setparam("Modele_gemini", "");
         setparam("IMEI_ID_Device", "_");
         setparam("IdCompte", "_");
         setparam("email_support", "_");
@@ -1001,7 +1005,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         for (Locale locale : locales) {
             if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())) {
-                Log.e("MMMM", "getFirstFullLanguageCode " + locale.getLanguage() + "-" + locale.getCountry());
+                Log.e(TAG, "getFirstFullLanguageCode " + locale.getLanguage() + "-" + locale.getCountry());
                 return locale.getLanguage() + "-" + locale.getCountry();
             }
         }
@@ -1280,12 +1284,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         try {
             sttTask.initialize();
         } catch (Exception e) {
-            Log.e("MRRR", "Runnable : Erreur pendant l'initialisation du STT Task : " + e);
+            Log.e(TAG, "Runnable : Erreur pendant l'initialisation du STT Task : " + e);
         }
     }
 
     public STTTask startListeningCerence(Activity activity) {
-        Log.e("MRRR", "startListeningFreeSpeechStt fonction start");
+        Log.e(TAG, "startListeningFreeSpeechStt fonction start");
         alreadyGetAnswer = false;
         questionNumber++;
         currentEmotion = "";
@@ -1296,7 +1300,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask();
             } else {
                 if (getCurrentLanguage().equals("en")) {
-                    Log.e("MRRR", "init ENfreeSpeechSttTask");
+                    Log.e(TAG, "init ENfreeSpeechSttTask");
                     freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.ENGLISH);
                 } else {
                     freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.FRENCH);
@@ -1312,10 +1316,10 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         initializeSTT(freeSpeechSttTask);
 
-        Log.w("MRRR", "startListeningfreeSpeechStt : cerence");
+        Log.w(TAG, "startListeningfreeSpeechStt : cerence");
 
         try {
-            Log.w("MRRR", "startListeningfreeSpeechStt :try ");
+            Log.w(TAG, "startListeningfreeSpeechStt :try ");
             freeSpeechSttTask.start(true, new ISTTCallback.Stub() {
                 @Override
                 public void onSuccess(STTResultsData sttResultsData) throws RemoteException {
@@ -1325,7 +1329,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                         STTResult result = sttResultsData.getResults().get(0);
 
-                        Log.e("MRRR", "Listening cerence Free Speech : " +
+                        Log.e(TAG, "Listening cerence Free Speech : " +
                                 "\nScore : " + result.getConfidence() + //the recognition score
                                 "\nUtterance: " + result.getUtterance() +  //actual phrase pronounced by the user and recognised by free speech (google/cerence)
                                 "\nRule: " + result.getRule()); //the respective tag of the Uterrance, as described in the grammar
@@ -1337,12 +1341,12 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                 @Override
                 public void onError(String s) throws RemoteException {
-                    Log.e("MRRR", "onError cerence " + s);
+                    Log.e(TAG, "onError cerence " + s);
 
                 }
             });
         } catch (Exception e) {
-            Log.e("MRRR", "onError cerence " + e);
+            Log.e(TAG, "onError cerence " + e);
 
         }
 
@@ -1412,7 +1416,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         activity.runOnUiThread(() -> {
             try {
+                Log.i(TAG, "startListeningQuestion: test");
                 speechRecognizer.startListening(speechRecognizerIntent);
+                
                 if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
                     showToast(toastSttAndroidIndispo);
                 }
@@ -1447,6 +1453,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                     @Override
                     public void onError(int i) {
+
+                        Log.i(TAG, "onError listening");
                         switch (i) {
                             case SpeechRecognizer.ERROR_AUDIO:
                                 Log.d(TAG, "Audio recording error");

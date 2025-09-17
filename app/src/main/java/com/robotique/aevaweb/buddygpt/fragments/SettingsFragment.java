@@ -1,5 +1,6 @@
 package com.robotique.aevaweb.buddygpt.fragments;
 
+import android.content.Context;
 import android.media.AudioManager;
 import android.os.Bundle;
 
@@ -44,6 +45,7 @@ import com.robotique.aevaweb.buddygpt.models.Setting;
 import com.robotique.aevaweb.buddygpt.models.SttModel;
 import com.robotique.aevaweb.buddygpt.models.TtsModel;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
+import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
 import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 
@@ -59,7 +61,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
     private String mParam1;
     private String mParam2;
-    private static final String TAG = "BuddyGPT_SettingsActivity";
+    private static final String TAG = "BuddyGPT_SettingsFragment";
     private static final String EMAIL = "Email";
     private static final String speakVolume = "speak_volume";
     private static final String visibilityString = "switch_visibility";
@@ -126,35 +128,90 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private final Runnable runnableProgressBar = new Runnable() {
         @Override
         public void run() {
+            FragmentActivity activity = getActivity();
+            if (activity == null || !isAdded()) {
+                Log.w(TAG, "runnableProgressBar aborted: fragment not attached");
+                return;
+            }
             launch_view.setVisibility(View.VISIBLE);
             timerEcoute = new CountDownTimer((long) Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", "BuddyGPT.properties")) * 1000, 1000) {
                 @Override
                 public void onTick(long l) {
-                    Log.e("MRAA", "onTick response");
+                    Log.e(TAG, "onTick response");
                     // Method left empty intentionally because no action needed on each tick.
                 }
 
                 @Override
                 public void onFinish() {
-                    Log.e("MIDO", "onfinish timer mlkit");
+                    Log.e(TAG, "onfinish timer mlkit");
                     if (Boolean.TRUE.equals(modelDownloading)) {
-                        if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
-                            Toast.makeText(getActivity(), R.string.mlkit_model_is_downloading_en, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
-                            Toast.makeText(getActivity(), R.string.mlkit_model_is_downloading_fr, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(langueES)) {
-                            Toast.makeText(getActivity(), R.string.mlkit_model_is_downloading_es, Toast.LENGTH_SHORT).show();
-                        } else if (buddyGPTApplication.getLangue().getNom().equals(langueDE)) {
-                            Toast.makeText(getActivity(), R.string.mlkit_model_is_downloading_de, Toast.LENGTH_SHORT).show();
+                        Context ctx = (buddyGPTApplication != null) ? buddyGPTApplication : activity;
+                        String currentLang = null;
+                        if (buddyGPTApplication != null && buddyGPTApplication.getLangue() != null) {
+                            currentLang = buddyGPTApplication.getLangue().getNom();
+                        }
+                        if (langueEN.equals(currentLang)) {
+                            Toast.makeText(ctx, ctx.getString(R.string.mlkit_model_is_downloading_en), Toast.LENGTH_SHORT).show();
+                        } else if (langueFR.equals(currentLang)) {
+                            Toast.makeText(ctx, ctx.getString(R.string.mlkit_model_is_downloading_fr), Toast.LENGTH_SHORT).show();
+                        } else if (langueES.equals(currentLang)) {
+                            Toast.makeText(ctx, ctx.getString(R.string.mlkit_model_is_downloading_es), Toast.LENGTH_SHORT).show();
+                        } else if (langueDE.equals(currentLang)) {
+                            Toast.makeText(ctx, ctx.getString(R.string.mlkit_model_is_downloading_de), Toast.LENGTH_SHORT).show();
                         } else {
-                            Log.e("MIDO", "onfinish affichage toast else");
-                            Toast.makeText(getActivity(), R.string.mlkit_model_is_downloading_en, Toast.LENGTH_SHORT).show();
+                            Log.e(TAG, "onfinish affichage toast else");
+                            Toast.makeText(ctx, ctx.getString(R.string.mlkit_model_is_downloading_en), Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
             };
 
             timerEcoute.start();
+        }
+    };
+    private final IMLKitDownloadCallback imlKitDownloadCallback = new IMLKitDownloadCallback() {
+        @Override
+        public void onDownloadEnd(boolean success, String englishOrFrench) {
+            if (success) {
+                // mark the specific language as downloaded
+                if ("english".equalsIgnoreCase(englishOrFrench)) {
+                    englishIsDownloaded = true;
+                } else if ("french".equalsIgnoreCase(englishOrFrench)) {
+                    french_is_downloaded = true;
+                }
+
+                // Stop progress UI and consider download finished for closing the fragment
+                handlerProgressBar.removeCallbacksAndMessages(null);
+                handlerProgressBar.removeCallbacks(runnableProgressBar);
+                modelDownloading = false;
+
+                FragmentActivity activity = getActivity();
+                if (activity != null && isAdded()) {
+                    launch_view.setVisibility(View.INVISIBLE);
+                    setLanguageText();
+                    if (langueSpinnerAdapter != null) {
+                        langueSpinnerAdapter.notifyDataSetChanged();
+                    }
+                } else {
+                    Log.w(TAG, "imlKitDownloadCallback: fragment not attached, skipping UI update");
+                }
+            } else {
+                // download failed for that language: reset corresponding flag
+                if ("english".equalsIgnoreCase(englishOrFrench)) {
+                    englishIsDownloaded = false;
+                } else if ("french".equalsIgnoreCase(englishOrFrench)) {
+                    french_is_downloaded = false;
+                }
+
+                // restart UI/work only if fragment still attached
+                if (getActivity() != null && isAdded()) {
+                    String languageCode = buddyGPTApplication.getLangue().getLanguageCode().split("-")[0].trim();
+                    buddyGPTApplication.downloadModel(imlKitDownloadCallback, languageCode);
+                    handlerProgressBar.postDelayed(runnableProgressBar, 500);
+                } else {
+                    Log.w(TAG, "imlKitDownloadCallback: fragment not attached, not restarting model download UI");
+                }
+            }
         }
     };
 
@@ -307,7 +364,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
         Log.i(TAG, "handlerChatbot: HOU" + buddyGPTApplication.getparam("SelectedChatbot"));
 
-        menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getModel());//
+        menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getparam("chatbotModel"));//
     }
 
     private void handlerSTT() {
@@ -592,7 +649,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 else if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase(""))
                     menuOptionTtsLyt.setVisibility(View.GONE);
 
-                menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getModel());
+                menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getparam("chatbotModel"));
                 menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
                 if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
                     buddyGPTApplication.setparam("Mail_Destination", buddyGPTApplication.getparam(EMAIL));
@@ -665,7 +722,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
 
             }
-            modelDownloading = true;
 
         }
     }
@@ -693,32 +749,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                     }
                 })
                 .addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
-    }    private final IMLKitDownloadCallback imlKitDownloadCallback = new IMLKitDownloadCallback() {
-        @Override
-        public void onDownloadEnd(boolean success, String englishOrFrench) {
-            if (success) {
-                if (englishOrFrench.equals("english")) {
-                    englishIsDownloaded = true;
-                } else if (englishOrFrench.equals("french")) {
-                    french_is_downloaded = true;
-                }
-                if (englishIsDownloaded && french_is_downloaded) {
-                    handlerProgressBar.removeCallbacksAndMessages(null);
-                    handlerProgressBar.removeCallbacks(runnableProgressBar);
+    }
 
-                    launch_view.setVisibility(View.INVISIBLE);
-                    modelDownloading = false;
-                    setLanguageText();
-                    langueSpinnerAdapter.notifyDataSetChanged();
-                }
-            } else {
-                french_is_downloaded = false;
-                englishIsDownloaded = false;
-                buddyGPTApplication.downloadModel(imlKitDownloadCallback, buddyGPTApplication.getLangue().getLanguageCode().split("-")[0].trim());
-                handlerProgressBar.postDelayed(runnableProgressBar, 500);
-            }
-        }
-    };
 
     @Override
     public void update(String message) {
@@ -749,7 +781,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 int speakVolumeValue = buddyGPTApplication.getVolume();
                 int max = buddyGPTApplication.getMaxVolume();
                 int defaultVolume = buddyGPTApplication.getClosestInt((double) (speakVolumeValue * 100) / max);
-                Log.e("FCH", "volumeMedia  " + defaultVolume);
+                Log.e(TAG, "volumeMedia  " + defaultVolume);
                 buddyGPTApplication.setparam(speakVolume, String.valueOf(defaultVolume));
                 buddyGPTApplication.setVolume(defaultVolume, AudioManager.FLAG_REMOVE_SOUND_AND_VIBRATE);
                 volumeSeekbarValue.setText(defaultVolume + " %");
@@ -794,14 +826,44 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         }
     }
 
-
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        // stop any pending progress runnable / timers to avoid callbacks after detach
+        handlerProgressBar.removeCallbacksAndMessages(null);
+        handlerProgressBar.removeCallbacks(runnableProgressBar);
+        if (timerEcoute != null) {
+            timerEcoute.cancel();
+            timerEcoute = null;
+        }
+        modelDownloading = false;
+        buddyGPTApplication.removeObserver(this);
+    }
 
     public void btnCloseSettingsFragment() {
+
+        // If a model is downloading, block closing and inform the user
+        if (Boolean.TRUE.equals(modelDownloading)) {
+            Context ctx = (buddyGPTApplication != null) ? buddyGPTApplication : getActivity();
+            String currentLang = null;
+            if (buddyGPTApplication != null && buddyGPTApplication.getLangue() != null) {
+                currentLang = buddyGPTApplication.getLangue().getNom();
+            }
+            String msg;
+            if (langueEN.equals(currentLang)) {
+                msg = ctx != null ? ctx.getString(R.string.mlkit_model_is_downloading_en) : "Model is downloading";
+            } else if (langueFR.equals(currentLang)) {
+                msg = ctx != null ? ctx.getString(R.string.mlkit_model_is_downloading_fr) : "Téléchargement en cours";
+            } else {
+                msg = ctx != null ? ctx.getString(R.string.mlkit_model_is_downloading_en) : "Model is downloading";
+            }
+            if (ctx != null) Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show();
+            return;
+        }
         // Save settings if needed
         buddyGPTApplication.setSetting(set);
         buddyGPTApplication.setFileCreate(true);
-
-        // Replace SettingsFragment with MainFragment
+        // Replace SettingsFragment with MainFragment (only if still attached)
         if (getActivity() != null && isAdded()) {
             getActivity().getSupportFragmentManager()
                     .beginTransaction()

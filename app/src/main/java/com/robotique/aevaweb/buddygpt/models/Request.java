@@ -5,7 +5,7 @@ public class Request {
     @SerializedName("Text_input")
     private String textInput;
 
-    @SerializedName("IMEI_ID_Device")
+    @SerializedName("ID_DEVICE")
     private String imeiIdDevice;
 
     @SerializedName("EMOTION")

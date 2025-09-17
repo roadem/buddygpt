@@ -3,68 +3,35 @@ package com.robotique.aevaweb.buddygpt.models;
 import com.google.gson.annotations.SerializedName;
 
 public class Parameters {
-    @SerializedName("Mail_sender")
-    private String mailSender;
-
-    @SerializedName("Smtp_host")
-    private String smtpHost;
-
-    @SerializedName("Stream_mode")
-    private String streamMode;
-
-    @SerializedName("TeamGPT_Key")
-    private String teamGptKey;
-
-    @SerializedName("Header")
-    private String header;
-
-    @SerializedName("IMEI_ID_Device")
-    private String imeiDevice;
 
     @SerializedName("IdCompte")
     private String idCompte;
 
-    @SerializedName("Password_mail_sender")
-    private String passwordMailSender;
-
-    @SerializedName("Smtp_port")
-    private String smtpPort;
-
-    @SerializedName("show_price")
-    private String showPrice;
-
-    @SerializedName("Entete")
-    private String entete;
-
-    @SerializedName("NomCompte")
-    private String nomCompte;
-
-    @SerializedName("Email")
-    private String email;
-
-    @SerializedName("CustomGPT_model")
-    private String customGptModel;
-
-    @SerializedName("Modele_Mistral")
-    private String modeleMistral;
-
-    @SerializedName("selected_chatbot")
-    private String selectedChatbot;
-
-    @SerializedName("Modele_Openai")
-    private String modeleOpenai;
-
-    @SerializedName("STT")
-    private String stt;
+    @SerializedName("IMEI_ID_Device")
+    private String imeiIdDevice;
 
     @SerializedName("TTS")
     private String tts;
 
-    @SerializedName("Modele_gemini")
-    private String modeleGemini;
+    @SerializedName("STT")
+    private String stt;
+
+    @SerializedName("Header")
+    private String header;
+
+    @SerializedName("Entete")
+    private String entete;
+
+    @SerializedName("Stream_mode")
+    private String streamMode;
+
+
 
     @SerializedName("email_support")
     private String emailSupport;
+
+    @SerializedName("Mail_sender")
+    private String mailSender;
 
     @SerializedName("Mail_Subject_fr")
     private String mailSubjectFr;
@@ -84,181 +51,94 @@ public class Parameters {
     @SerializedName("username_Password")
     private String usernamePassword;
 
+    @SerializedName("Smtp_port")
+    private int smtpPort;
+
+    @SerializedName("Smtp_host")
+    private String smtpHost;
+
+    @SerializedName("show_price")
+    private boolean showPrice;
+
+    @SerializedName("selected_chatbot")
+    private String selectedChatbot;
+
     @SerializedName("isEncryptionRequired")
-    private Boolean isEncryptionRequired;
+    private boolean isEncryptionRequired;
 
     @SerializedName("allow_conversation_storage")
-    private Boolean allowConversationStorage;
-
-    @SerializedName("teamgpt_version")
-    private String teamGptVersion;
+    private boolean allowConversationStorage;
 
     @SerializedName("project_id_TeamRAG")
     private String projectIdTeamRag;
 
-    @SerializedName("Cohere_key")
-    private String cohereKey;
+    @SerializedName("Password_mail_sender")
+    private String passwordMailSender;
 
-    // Getters et Setters
-    public String getMailSender() {
-        return mailSender;
-    }
+    @SerializedName("Response_format_fr")
+    private String responseFormatFr;
 
-    public void setMailSender(String mailSender) {
-        this.mailSender = mailSender;
-    }
+    @SerializedName("Response_format_en")
+    private String responseFormatEn;
 
-    public String getSmtpHost() {
-        return smtpHost;
-    }
+    @SerializedName("Response_filter")
+    private String responseFilter;
 
-    public void setSmtpHost(String smtpHost) {
-        this.smtpHost = smtpHost;
-    }
+    @SerializedName("Language_detection")
+    private String languageDetection;
 
-    public String getStreamMode() {
-        return streamMode;
-    }
+    @SerializedName("Number_of_words")
+    private int numberOfWords;
 
-    public void setStreamMode(String streamMode) {
-        this.streamMode = streamMode;
-    }
+    @SerializedName("Detection_confidence_rate")
+    private double detectionConfidenceRate;
 
-    public String getImeiDevice() {
-        return imeiDevice;
-    }
+    @SerializedName("TeamRAG_Header")
+    private String teamRagHeader;
 
-    public void setImeiDevice(String imeiDevice) {
-        this.imeiDevice = imeiDevice;
-    }
+    @SerializedName("TeamRAG_Entete")
+    private String teamRagEntete;
 
-    public String getIdCompte() {
-        return idCompte;
-    }
+    @SerializedName("Modele_STT")
+    private String modeleStt;
 
-    public void setIdCompte(String idCompte) {
-        this.idCompte = idCompte;
-    }
+    @SerializedName("NomCompte")
+    private String nomCompte;
 
-    public String getTeamGptKey() {
-        return teamGptKey;
-    }
+    @SerializedName("Email")
+    private String email;
 
-    public void setTeamGptKey(String teamGptKey) {
-        this.teamGptKey = teamGptKey;
-    }
+    @SerializedName("TeamGPT_Key")
+    private String teamGptKey;
 
-    public String getHeader() {
-        return header;
-    }
+    @SerializedName("teamgpt_version")
+    private String teamGptVersion;
 
-    public void setHeader(String header) {
-        this.header = header;
-    }
+    @SerializedName("chatbot_model")
+    private String chatbotModel;
 
-    public String getPasswordMailSender() {
-        return passwordMailSender;
-    }
+    // --------- GETTERS & SETTERS ---------
 
-    public void setPasswordMailSender(String passwordMailSender) {
-        this.passwordMailSender = passwordMailSender;
-    }
+    public String getIdCompte() { return idCompte; }
+    public void setIdCompte(String idCompte) { this.idCompte = idCompte; }
 
-    public String getSmtpPort() {
-        return smtpPort;
-    }
+    public String getImeiIdDevice() { return imeiIdDevice; }
+    public void setImeiIdDevice(String imeiIdDevice) { this.imeiIdDevice = imeiIdDevice; }
 
-    public void setSmtpPort(String smtpPort) {
-        this.smtpPort = smtpPort;
-    }
+    public String getTts() { return tts; }
+    public void setTts(String tts) { this.tts = tts; }
 
-    public String getShowPrice() {
-        return showPrice;
-    }
+    public String getStt() { return stt; }
+    public void setStt(String stt) { this.stt = stt; }
 
-    public void setShowPrice(String showPrice) {
-        this.showPrice = showPrice;
-    }
+    public String getHeader() { return header; }
+    public void setHeader(String header) { this.header = header; }
 
-    public String getEntete() {
-        return entete;
-    }
+    public String getEntete() { return entete; }
+    public void setEntete(String entete) { this.entete = entete; }
 
-    public void setEntete(String entete) {
-        this.entete = entete;
-    }
-
-    public String getNomCompte() {
-        return nomCompte;
-    }
-
-    public void setNomCompte(String nomCompte) {
-        this.nomCompte = nomCompte;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getCustomGptModel() {
-        return customGptModel;
-    }
-
-    public void setCustomGptModel(String customGptModel) {
-        this.customGptModel = customGptModel;
-    }
-
-    public String getModeleMistral() {
-        return modeleMistral;
-    }
-
-    public void setModeleMistral(String modeleMistral) {
-        this.modeleMistral = modeleMistral;
-    }
-
-    public String getSelectedChatbot() {
-        return selectedChatbot;
-    }
-
-    public void setSelectedChatbot(String selectedChatbot) {
-        this.selectedChatbot = selectedChatbot;
-    }
-
-    public String getModeleOpenai() {
-        return modeleOpenai;
-    }
-
-    public void setModeleOpenai(String modeleOpenai) {
-        this.modeleOpenai = modeleOpenai;
-    }
-
-    public String getStt() {
-        return stt;
-    }
-
-    public void setStt(String stt) {
-        this.stt = stt;
-    }
-
-    public String getTts() {
-        return tts;
-    }
-
-    public void setTts(String tts) {
-        this.tts = tts;
-    }
-
-    public String getModeleGemini() {
-        return modeleGemini;
-    }
-
-    public void setModeleGemini(String modeleGemini) {
-        this.modeleGemini = modeleGemini;
-    }
+    public String getStreamMode() { return streamMode; }
+    public void setStreamMode(String streamMode) { this.streamMode = streamMode; }
 
     public String getEmailSupport() {
         return emailSupport;
@@ -267,92 +147,90 @@ public class Parameters {
     public void setEmailSupport(String emailSupport) {
         this.emailSupport = emailSupport;
     }
+    public String getMailSender() { return mailSender; }
+    public void setMailSender(String mailSender) { this.mailSender = mailSender; }
 
-    public String getMailSubjectFr() {
-        return mailSubjectFr;
-    }
+    public String getMailSubjectFr() { return mailSubjectFr; }
+    public void setMailSubjectFr(String mailSubjectFr) { this.mailSubjectFr = mailSubjectFr; }
 
-    public void setMailSubjectFr(String mailSubjectFr) {
-        this.mailSubjectFr = mailSubjectFr;
-    }
+    public String getMailSubjectEn() { return mailSubjectEn; }
+    public void setMailSubjectEn(String mailSubjectEn) { this.mailSubjectEn = mailSubjectEn; }
 
-    public String getMailSubjectEn() {
-        return mailSubjectEn;
-    }
+    public String getMessageMailSendFr() { return messageMailSendFr; }
+    public void setMessageMailSendFr(String messageMailSendFr) { this.messageMailSendFr = messageMailSendFr; }
 
-    public void setMailSubjectEn(String mailSubjectEn) {
-        this.mailSubjectEn = mailSubjectEn;
-    }
+    public String getMessageMailSendEn() { return messageMailSendEn; }
+    public void setMessageMailSendEn(String messageMailSendEn) { this.messageMailSendEn = messageMailSendEn; }
 
-    public String getMessageMailSendFr() {
-        return messageMailSendFr;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public void setMessageMailSendFr(String messageMailSendFr) {
-        this.messageMailSendFr = messageMailSendFr;
-    }
+    public String getUsernamePassword() { return usernamePassword; }
+    public void setUsernamePassword(String usernamePassword) { this.usernamePassword = usernamePassword; }
 
-    public String getMessageMailSendEn() {
-        return messageMailSendEn;
-    }
+    public int getSmtpPort() { return smtpPort; }
+    public void setSmtpPort(int smtpPort) { this.smtpPort = smtpPort; }
 
-    public void setMessageMailSendEn(String messageMailSendEn) {
-        this.messageMailSendEn = messageMailSendEn;
-    }
+    public String getSmtpHost() { return smtpHost; }
+    public void setSmtpHost(String smtpHost) { this.smtpHost = smtpHost; }
 
-    public String getUsername() {
-        return username;
-    }
+    public boolean isShowPrice() { return showPrice; }
+    public void setShowPrice(boolean showPrice) { this.showPrice = showPrice; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    public String getSelectedChatbot() { return selectedChatbot; }
+    public void setSelectedChatbot(String selectedChatbot) { this.selectedChatbot = selectedChatbot; }
 
-    public String getUsernamePassword() {
-        return usernamePassword;
-    }
+    public boolean isEncryptionRequired() { return isEncryptionRequired; }
+    public void setEncryptionRequired(boolean encryptionRequired) { isEncryptionRequired = encryptionRequired; }
 
-    public void setUsernamePassword(String usernamePassword) {
-        this.usernamePassword = usernamePassword;
-    }
+    public boolean isAllowConversationStorage() { return allowConversationStorage; }
+    public void setAllowConversationStorage(boolean allowConversationStorage) { this.allowConversationStorage = allowConversationStorage; }
 
-    public Boolean getIsEncryptionRequired() {
-        return isEncryptionRequired;
-    }
+    public String getProjectIdTeamRag() { return projectIdTeamRag; }
+    public void setProjectIdTeamRag(String projectIdTeamRag) { this.projectIdTeamRag = projectIdTeamRag; }
 
-    public void setIsEncryptionRequired(Boolean isEncryptionRequired) {
-        this.isEncryptionRequired = isEncryptionRequired;
-    }
+    public String getPasswordMailSender() { return passwordMailSender; }
+    public void setPasswordMailSender(String passwordMailSender) { this.passwordMailSender = passwordMailSender; }
 
-    public Boolean getAllowConversationStorage() {
-        return allowConversationStorage;
-    }
+    public String getResponseFormatFr() { return responseFormatFr; }
+    public void setResponseFormatFr(String responseFormatFr) { this.responseFormatFr = responseFormatFr; }
 
-    public void setAllowConversationStorage(Boolean allowConversationStorage) {
-        this.allowConversationStorage = allowConversationStorage;
-    }
+    public String getResponseFormatEn() { return responseFormatEn; }
+    public void setResponseFormatEn(String responseFormatEn) { this.responseFormatEn = responseFormatEn; }
 
-    public String getTeamGptVersion() {
-        return teamGptVersion;
-    }
+    public String getResponseFilter() { return responseFilter; }
+    public void setResponseFilter(String responseFilter) { this.responseFilter = responseFilter; }
 
-    public void setTeamGptVersion(String teamGptVersion) {
-        this.teamGptVersion = teamGptVersion;
-    }
+    public String getLanguageDetection() { return languageDetection; }
+    public void setLanguageDetection(String languageDetection) { this.languageDetection = languageDetection; }
 
-    public String getProjectIdTeamRag() {
-        return projectIdTeamRag;
-    }
+    public int getNumberOfWords() { return numberOfWords; }
+    public void setNumberOfWords(int numberOfWords) { this.numberOfWords = numberOfWords; }
 
-    public void setProjectIdTeamRag(String projectIdTeamRag) {
-        this.projectIdTeamRag = projectIdTeamRag;
-    }
+    public double getDetectionConfidenceRate() { return detectionConfidenceRate; }
+    public void setDetectionConfidenceRate(double detectionConfidenceRate) { this.detectionConfidenceRate = detectionConfidenceRate; }
 
-    public String getCohereKey() {
-        return cohereKey;
-    }
+    public String getTeamRagHeader() { return teamRagHeader; }
+    public void setTeamRagHeader(String teamRagHeader) { this.teamRagHeader = teamRagHeader; }
 
-    public void setCohereKey(String cohereKey) {
-        this.cohereKey = cohereKey;
-    }
+    public String getTeamRagEntete() { return teamRagEntete; }
+    public void setTeamRagEntete(String teamRagEntete) { this.teamRagEntete = teamRagEntete; }
+
+    public String getModeleStt() { return modeleStt; }
+    public void setModeleStt(String modeleStt) { this.modeleStt = modeleStt; }
+
+    public String getNomCompte() { return nomCompte; }
+    public void setNomCompte(String nomCompte) { this.nomCompte = nomCompte; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getTeamGptKey() { return teamGptKey; }
+    public void setTeamGptKey(String teamGptKey) { this.teamGptKey = teamGptKey; }
+
+    public String getTeamGptVersion() { return teamGptVersion; }
+    public void setTeamGptVersion(String teamGptVersion) { this.teamGptVersion = teamGptVersion; }
+
+    public String getChatbotModel() { return chatbotModel; }
+    public void setChatbotModel(String chatbotModel) { this.chatbotModel = chatbotModel; }
 }

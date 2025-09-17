@@ -1,51 +1,38 @@
 package com.robotique.aevaweb.buddygpt.fragments;
 
 
-import static androidx.camera.core.impl.utils.ContextUtil.getApplicationContext;
+import static java.lang.String.format;
+import static java.lang.String.valueOf;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.drawable.AnimationDrawable;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.os.SystemClock;
-import android.telephony.TelephonyManager;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
-import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 
 import com.bfr.buddy.ui.shared.FaceTouchData;
 import com.bfr.buddy.ui.shared.FacialExpression;
-import com.bfr.buddy.ui.shared.GazePosition;
 import com.bfr.buddy.ui.shared.IUIFaceTouchCallback;
 import com.bfr.buddy.ui.shared.LabialExpression;
-
-import com.bfr.buddy.utils.values.FloatingWidgetVisibility;
-import com.bfr.buddy.vision.shared.IVisionRsp;
-import com.bfr.buddysdk.BuddyCompatActivity;
 import com.bfr.buddysdk.BuddySDK;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
-import com.robotique.aevaweb.buddygpt.activities.MainActivity;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
 import com.robotique.aevaweb.buddygpt.models.Langue;
@@ -57,26 +44,14 @@ import com.robotique.aevaweb.buddygpt.utilis.BIPlayer;
 import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
 import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
 import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
-import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 import com.robotique.aevaweb.buddygpt.utilis.tracking.PoseTracking;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
-import static java.lang.String.format;
-import static java.lang.String.valueOf;
-
-import androidx.fragment.app.Fragment;
-
-import android.view.LayoutInflater;
-import android.view.ViewGroup;
-
-import com.robotique.aevaweb.buddygpt.activities.ChatWindow;
-import com.robotique.aevaweb.buddygpt.activities.SettingsActivity;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -84,30 +59,16 @@ import com.robotique.aevaweb.buddygpt.activities.SettingsActivity;
  * create an instance of this fragment.
  */
 public class MainFragment extends Fragment implements IDBObserver{
-
-
-
-    private static final String TAG = "BuddyGPT_MainActivity";
+    private static final String TAG = "BuddyGPT_MainFragment";
     private static final String TAG_TRACKING = "BuddyGPT_TRACKING_INFO";
     private static final String ANDROID_STT = "Android";
     private static final String CERENCE_STT = "Cerence";
-    private static final String[] REQUESTED_PERMISSIONS = new String[]{
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.RECORD_AUDIO,
-            Manifest.permission.CAMERA,
-            Manifest.permission.READ_PHONE_STATE
-
-    };
-    private static final int PERMISSION_REQ_ID = 22;
     private static final String LANGUE_FR = "Français";
     private static final String LANGUE_EN = "Anglais";
     private static final String LANGUE_ES = "Espagnol";
     private static final String LANGUE_DE = "Allemand";
     private static final String configFile = "BuddyGPT.properties";
-    private final WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
     private BuddyGPTApplication buddyGPTApplication;
-    private View decorView;
     private final Random random = new Random();
     //views
     private RelativeLayout buddyTexteQstLyt;
@@ -121,7 +82,6 @@ public class MainFragment extends Fragment implements IDBObserver{
     private ImageView noNetwork;
     private ProgressBar downloadingBar;
     private String infoToast = "";
-    private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private boolean isListeningFreeSpeech = false;
     private Boolean mlKitIsDownloading = false;
     private boolean englishIsDownloaded = false;
@@ -138,7 +98,6 @@ public class MainFragment extends Fragment implements IDBObserver{
     private PoseTracking poseTracking;
     private ExecutorService backgroundExecutor;
 
-    private ProcessCameraProvider cameraProvider;
     private String initOrMajOrNone = "";
     private final Handler handlerProgressBar = new Handler(Looper.getMainLooper());
     private final IMLKitDownloadCallback imlKitDownloadCallback = new IMLKitDownloadCallback() {
@@ -157,6 +116,7 @@ public class MainFragment extends Fragment implements IDBObserver{
                     handlerProgressBar.removeCallbacksAndMessages(null);
                     handlerProgressBar.removeCallbacks(runnableProgressBar);
                     launchView.setVisibility(View.INVISIBLE);
+
                     if (initOrMajOrNone.equals("INIT")) {
                         if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
                             infoToast = getString(R.string.toast_config_file_init_en);
@@ -269,8 +229,6 @@ public class MainFragment extends Fragment implements IDBObserver{
             timerDownloading.start();
         }
     };
-    private Handler handlerForSensor;
-    private Runnable runnableForSensor;
     private final Handler handlerTTSError = new Handler();
     private Runnable runnableTTSError;
     private final Handler handlerPauseTime = new Handler();
@@ -279,7 +237,7 @@ public class MainFragment extends Fragment implements IDBObserver{
     private Runnable runnable;
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
+        private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
         @Override
         public void onTouch(FaceTouchData faceTouchData) {
 
@@ -323,12 +281,12 @@ public class MainFragment extends Fragment implements IDBObserver{
 
             //eyes
             else if (faceTouchData.getY() > 250 && faceTouchData.getY() < 568) {
-                Log.e("FCHH", "click1");
+                Log.e(TAG, "click1");
                 if (buddyGPTApplication.getparam("Stimulis").equals("true")) {
-                    Log.e("FCHH", "click");
+                    Log.e(TAG, "click");
                     if (Boolean.TRUE.equals(!buddyGPTApplication.getAppIsCurrentlyDealingWithTheQuestion()) && Boolean.TRUE.equals(!mlKitIsDownloading)) {
-                        //
-                    }
+                    //
+                        }
                 }
             }
 
@@ -432,11 +390,13 @@ public class MainFragment extends Fragment implements IDBObserver{
             // comment
         }
     };
+
     private String mParam1;
     private String mParam2;
 
     public MainFragment() {
         // Required empty public constructor
+        Log.i(TAG, "MainFragment: constructeur");
     }
 
     /**
@@ -458,12 +418,14 @@ public class MainFragment extends Fragment implements IDBObserver{
 
     @Override
     public void onDestroyView() {
-        Log.d(TAG, " --- onDestroy() ---");
+        Log.d(TAG, " --- onDestroyView() ---");
+
         BuddySDK.UI.removeFaceTouchListener(iuiFaceTouchCallback);
         buddyGPTApplication.setparam("firstLaunch", "true");
         if (buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing())
             buddyGPTApplication.getDialog().dismiss();
         buddyGPTApplication.setFileCreate(true);
+        buddyGPTApplication.removeObserver(this);
         buddyGPTApplication.notifyObservers("main destroy");
         if (poseTracking != null) poseTracking.stopMovingAndCancelRunnables();
         if (backgroundExecutor != null) backgroundExecutor.shutdownNow();
@@ -474,9 +436,13 @@ public class MainFragment extends Fragment implements IDBObserver{
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView: --------------");
         View view = inflater.inflate(R.layout.fragment_main, container, false);
-      buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-      buddyGPTApplication.setInitSharedpreferences(true);
+
+        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
+        buddyGPTApplication.registerObserver(this);
+        getData();
+        buddyGPTApplication.setInitSharedpreferences(true);
         if (BuddySDK.UI != null) {
             BuddySDK.UI.addFaceTouchListener(iuiFaceTouchCallback);
         } else {
@@ -601,23 +567,58 @@ public class MainFragment extends Fragment implements IDBObserver{
 
     }
 
-
-
-        /**
+    /**
          * ------------------ App LifeCycle ---------------------
          */
 
-        @SuppressLint("UseCompatLoadingForDrawables")
-        @Override
-        public void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
-            Log.d(TAG, " --- onCreate() ---");
-
-        }
+    @SuppressLint("UseCompatLoadingForDrawables")
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, " --- onCreate() ---");
+    }
 
 
 
     public void btnOpenSettingsFragment() {
+        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
+                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
+                || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            buddyGPTApplication.setStartRecording(false);
+            buddyGPTApplication.setSpeaking(false);
+            buddyGPTApplication.setActivityClosed(true);
+            isListeningFreeSpeech = false;
+            buddyGPTApplication.stopTTS();
+            buddyGPTApplication.setStoredResponse("");
+            if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
+                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
+                buddyTexteRespLyt.setVisibility(View.INVISIBLE);
+                buddyTexteQst.setMovementMethod(null);
+                buddyTexteResp.setMovementMethod(null);
+            }
+            lytOpenMenuSettings.setVisibility(View.VISIBLE);
+            lytOpenMenuChat.setVisibility(View.VISIBLE);
+            try {
+                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            } catch (Exception e) {
+                Log.e(TAG, "BuddySDK Exception  " + e);
+            }
+            buddyGPTApplication.notifyObservers("end of timer");
+        } else {
+            buddyGPTApplication.setLed("Neutral");
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            try {
+                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                BuddySDK.UI.stopListenAnimation();
+            } catch (Exception e) {
+                Log.e(TAG, "BuddySDK Exception  " + e);
+            }
+            BuddySDK.UI.stopListenAnimation();
+            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+            buddyGPTApplication.traitementAudio();
+        }
         if (Boolean.FALSE.equals(mlKitIsDownloading)) {
             if (getActivity() != null && isAdded()) {
                 getActivity().getSupportFragmentManager()
@@ -638,6 +639,44 @@ public class MainFragment extends Fragment implements IDBObserver{
     }
 
     public void btnOpenChatFragment() {
+        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
+                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
+                || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            buddyGPTApplication.setStartRecording(false);
+            buddyGPTApplication.setSpeaking(false);
+            buddyGPTApplication.setActivityClosed(true);
+            isListeningFreeSpeech = false;
+            buddyGPTApplication.stopTTS();
+            buddyGPTApplication.setStoredResponse("");
+            if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
+                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
+                buddyTexteRespLyt.setVisibility(View.INVISIBLE);
+                buddyTexteQst.setMovementMethod(null);
+                buddyTexteResp.setMovementMethod(null);
+            }
+            lytOpenMenuSettings.setVisibility(View.VISIBLE);
+            lytOpenMenuChat.setVisibility(View.VISIBLE);
+            try {
+                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            } catch (Exception e) {
+                Log.e(TAG, "BuddySDK Exception  " + e);
+            }
+            buddyGPTApplication.notifyObservers("end of timer");
+        } else {
+            buddyGPTApplication.setLed("Neutral");
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            try {
+                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                BuddySDK.UI.stopListenAnimation();
+            } catch (Exception e) {
+                Log.e(TAG, "BuddySDK Exception  " + e);
+            }
+            BuddySDK.UI.stopListenAnimation();
+            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+            buddyGPTApplication.traitementAudio();
+        }
         if (Boolean.FALSE.equals(mlKitIsDownloading)) {
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
@@ -654,7 +693,7 @@ public class MainFragment extends Fragment implements IDBObserver{
         }
     }
 
-        private void showStream(String responseTitle, String response) {
+    private void showStream(String responseTitle, String response) {
             if (!buddyGPTApplication.isActivityClosed()) {
                 buddyTexteResp.setText(String.format("%s : %s", responseTitle, response));
                 buddyTexteRespLyt.setVisibility(View.VISIBLE);
@@ -672,15 +711,15 @@ public class MainFragment extends Fragment implements IDBObserver{
             }
         }
 
-        private void refreshSTTLangue() {
+    private void refreshSTTLangue() {
             buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(), getActivity());
         }
 
-        /**
+    /**
          * ------------------------------------------ STT  -------------------------------------------
          */
 
-        private void startListeningFreeSpeech(int duration) {
+    private void startListeningFreeSpeech(int duration) {
 
             isListeningFreeSpeech = true;
             buddyGPTApplication.setMessageError(false);
@@ -730,14 +769,14 @@ public class MainFragment extends Fragment implements IDBObserver{
 
         }
 
-        private void stopListeningFreeSpeech() {
+    private void stopListeningFreeSpeech() {
             isListeningFreeSpeech = false;
             Log.d(TAG, " --- stopListeningFreeSpeech() ---");
             if (timerEcoute != null) timerEcoute.cancel();
             buddyGPTApplication.stopListening(getActivity());
         }
 
-        private void startCycle() {
+    private void startCycle() {
             Log.e(TAG, "startCycle  after handler ");
             isListeningFreeSpeech = true;
             buddyGPTApplication.setMessageError(false);
@@ -786,7 +825,7 @@ public class MainFragment extends Fragment implements IDBObserver{
             timerEcoute.start();
         }
 
-        private void startNextCycle() {
+    private void startNextCycle() {
             Log.e(TAG, "startNextCycle  remainingattempts= " + buddyGPTApplication.getRemainingAttempts());
             if (buddyGPTApplication.getRemainingAttempts() > 0) {
                 buddyGPTApplication.setRemainingAttempts(buddyGPTApplication.getRemainingAttempts() - 1);
@@ -801,7 +840,7 @@ public class MainFragment extends Fragment implements IDBObserver{
          * ------------------------------------------ TTS  -------------------------------------------
          */
 
-        private void speak(final String texte, String type) {
+    private void speak(final String texte, String type) {
             Log.d(TAG, " --- speak(" + texte + ") ---");
             isSpeaking = true;
             getActivity().runOnUiThread(() -> {
@@ -885,12 +924,14 @@ public class MainFragment extends Fragment implements IDBObserver{
                 }
             });
         }
+
     private void getData() {
 
         buddyGPTApplication.initTTSAndroid();
 
+        Log.i(TAG, "getData: settingClass");
         //init Settings
-        settingClass = new Setting();
+            settingClass = new Setting();
         settingClass.setDuration(buddyGPTApplication.getparam("listening_duration"));
         settingClass.setAttempt(buddyGPTApplication.getparam("listening_attempt"));
         settingClass.setChatbot(buddyGPTApplication.getparam("SelectedChatbot"));
@@ -899,6 +940,8 @@ public class MainFragment extends Fragment implements IDBObserver{
         settingClass.setSwitchVisibility(buddyGPTApplication.getparam("switch_visibility"));
         settingClass.setSwitchEmotion(buddyGPTApplication.getparam("switch_emotion"));
         Log.i(TAG, settingClass.toString());
+
+        Log.i(TAG, "getData: settingClass end");
 
 
         refreshSTTLangue();
@@ -922,8 +965,6 @@ public class MainFragment extends Fragment implements IDBObserver{
         buddyGPTApplication.setActivityClosed(false);
 
     }
-
-
 
     /**
      * ----------------- Gestion de notifications ---------------------------
@@ -1244,6 +1285,7 @@ public class MainFragment extends Fragment implements IDBObserver{
                 });
             }
             else if (message.contains("properties file done")) {
+                Log.i(TAG, "update: properties file done");
                 buddyGPTApplication.setNotYet(false);
                 getData();
             }
