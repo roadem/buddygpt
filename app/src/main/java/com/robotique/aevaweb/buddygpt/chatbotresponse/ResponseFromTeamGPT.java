@@ -7,7 +7,6 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.util.Log;
 
-import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.LabialExpression;
 import com.bfr.buddysdk.BuddySDK;
 import com.google.gson.Gson;

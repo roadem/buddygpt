@@ -5,16 +5,11 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.RemoteException;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
-import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.Toast;
 
@@ -36,14 +31,11 @@ import com.chaquo.python.android.AndroidPlatform;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.fragments.MainFragment;
-import com.robotique.aevaweb.buddygpt.models.Replica;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 import com.robotique.aevaweb.buddygpt.utilis.tracking.PoseTracking;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 
 public class MainActivity extends BuddyCompatActivity implements IDBObserver {

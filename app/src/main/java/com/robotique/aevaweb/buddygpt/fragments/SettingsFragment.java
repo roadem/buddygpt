@@ -29,12 +29,9 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.adapters.LangueSpinnerAdapter;
