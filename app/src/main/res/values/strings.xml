@@ -277,6 +277,7 @@
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
     <string name="toast_teamgpt_id_invalid_fr">Seul le STT/TTS local est pris en charge dans cette version. Ceux du serveur ne sont pas encore disponibles.</string>
     <string name="toast_teamgpt_params_invalid_fr">Les paramètres reçus du serveur TeamGPT sont invalides.</string>
+    <string name="toast_teamgpt_env_invalid_fr">Connexion à TeamGPT échouée \nImpossible de se connecter. Veuillez vérifier la configuration.</string>
     <string name="toast_teamgpt_session_fr">Une nouvelle session a été créée</string>
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
     <!--english-->
@@ -293,6 +294,8 @@
     <string name="toast_teamgpt_id_invalid_en">Only local STT/TTS is supported in this version. Server-based ones are not yet available.</string>
     <string name="toast_teamgpt_params_invalid_en">The parameters received from the TeamGPT server are invalid.</string>
     <string name="toast_teamgpt_session_en">A new session has been created</string>
+    <string name="toast_teamgpt_env_invalid_en">Connection to TeamGPT failed.\nUnable to connect. Please check your configuration.</string>
+
     <!-- spanish -->
     <string name="consommation_title_es">Consumo OpenAI</string>
     <string name="consommation_title_2_es">Consumo openAI en $</string>

@@ -29,9 +29,12 @@ import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.adapters.LangueSpinnerAdapter;
@@ -45,6 +48,7 @@ import com.robotique.aevaweb.buddygpt.models.SttModel;
 import com.robotique.aevaweb.buddygpt.models.TtsModel;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
+import com.robotique.aevaweb.buddygpt.utilis.ResponseCallback;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 
 import java.lang.reflect.Field;
@@ -378,15 +382,19 @@ public class SettingsFragment extends Fragment implements IDBObserver {
          *  Gestion de l'entete
          */
         handlerHeader();
-
-
         /**
          *  Gestion du choix STT
          */
-        if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
-            menuOptionSttLyt.setVisibility(View.VISIBLE);
-        if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local"))
-            menuOptionTtsLyt.setVisibility(View.VISIBLE);
+        String can_change_stt = buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties");
+        if(can_change_stt != null && can_change_stt.trim().equalsIgnoreCase("Yes")){
+            if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
+                menuOptionSttLyt.setVisibility(View.VISIBLE);
+
+        }
+        else{
+            menuOptionSttLyt.setVisibility(View.GONE);
+        }
+
 
         handlerSTT();
         handlerTTS();
@@ -795,8 +803,17 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                         }
                         if (buddyGPTApplication.getResponseFromTeamGPT() != null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null ");
-                            buddyGPTApplication.getResponseFromTeamGPT().getParameters();
-                        }
+                            buddyGPTApplication.getResponseFromTeamGPT().getParameters(new ResponseCallback() {
+                                @Override
+                                public void onSuccess() {
+                                    Log.i(TAG, "onSuccess getParameters ");
+                                }
+
+                                @Override
+                                public void onFailure() {
+                                    Log.i(TAG, "onFailure: getParameters");
+                                }
+                            });                        }
                         refresh(1);
                     }
 
@@ -821,7 +838,17 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                         buddyGPTApplication.setparam("Mail_Destination", "");
                     }
                     if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                        buddyGPTApplication.getResponseFromTeamGPT().getParameters();
+                        buddyGPTApplication.getResponseFromTeamGPT().getParameters(new ResponseCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Log.i(TAG, "onSuccess getParameters ");
+                            }
+
+                            @Override
+                            public void onFailure() {
+                                Log.i(TAG, "onFailure getParameters: ");
+                            }
+                        });
                     refresh(1);
                 }
             }
@@ -1029,7 +1056,20 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                             .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
                 }
             }
+            if (message.contains("ENV_ERROR")){
 
+                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
+                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
+                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                } else {
+                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en))
+                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(getActivity(), translatedText,"Attention !"))
+                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
+                }
+
+            }
         }
     }
 

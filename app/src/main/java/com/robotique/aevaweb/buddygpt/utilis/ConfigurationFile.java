@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 5; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 7; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -110,6 +110,14 @@ public class ConfigurationFile {
             setProperty("TeamGPT_ApiEndpoint_Response", "get-response");
 
             setProperty("TeamGPT_ID_Device", "");
+            props.addPropertyComment("Speech_To_Text_List","");
+            props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/Cerence");
+            setProperty("Speech_To_Text_List","SpeechRecognizer/Cerence");
+            setProperty("Speech_To_Text","SpeechRecognizer");
+
+            props.addPropertyComment("Change_STT","");
+            props.addPropertyComment("Change_STT","Possibility of changing the STT (Yes/No)");
+            setProperty("Change_STT","Yes");
 
             props.addPropertyComment("Android_Speech_minimum_length", "");
             props.addPropertyComment("Android_Speech_minimum_length", "Android Speech To Text config in seconds");

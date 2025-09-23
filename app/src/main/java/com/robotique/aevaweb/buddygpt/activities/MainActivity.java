@@ -66,14 +66,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private View decorView;
     //views
     private RelativeLayout viewFace;
-    private RelativeLayout launchView;
-    private RelativeLayout reGroup;
-    private ImageView noNetwork;
-    private ProgressBar downloadingBar;
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
-    private boolean isListeningFreeSpeech = false;
-    private CountDownTimer responseTimeout;
-    private ArrayList<Replica> listRep = new ArrayList<>();
     private PoseTracking poseTracking;
     private ExecutorService backgroundExecutor;
     private ProcessCameraProvider cameraProvider;
@@ -105,11 +98,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             }
         });
         viewFace = findViewById(R.id.view_face);
-        launchView = findViewById(R.id.launch_view);
-        noNetwork = findViewById(R.id.noNetwork);
-        downloadingBar = findViewById(R.id.progressBar_MLKitDownload);
-        reGroup = findViewById(R.id.reGroup);
-
+        buddyGPTApplication.setparam("session_id", "");
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
 
@@ -120,32 +109,16 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.setQuestionNumber(0);
         buddyGPTApplication.setCurrentQuestionNubmer(0);
         buddyGPTApplication.setAlreadyGetAnswer(false);
-        buddyGPTApplication.setOpenaialreadySwitchEmotion(false);
         buddyGPTApplication.setTimeoutExpired(false);
         buddyGPTApplication.setQuestionTime(0);
         buddyGPTApplication.setStoredResponse("");
-        buddyGPTApplication.setBuddyFaceisTired(false);
-        buddyGPTApplication.setShouldPlayEmotion(false);
-        buddyGPTApplication.setCurrentEmotion("");
         buddyGPTApplication.setMessageError(false);
-        buddyGPTApplication.setCurrentIndexText(0);
-        buddyGPTApplication.setAllTextPronoucedSuccess(true);
-        buddyGPTApplication.setStopTTSReadSpeaker(false);
         buddyGPTApplication.setInitSharedpreferences(true);
         buddyGPTApplication.setLanguageDetected("");
-        buddyGPTApplication.setAlreadyCalled(false);
-        buddyGPTApplication.setRecording(false);
-        buddyGPTApplication.setCurrentState("");
-
-
-        buddyGPTApplication.setStopProcessus(false);
-        buddyGPTApplication.setAlReadyHadSpoke(false);
 
         buddyGPTApplication.setResponseTime(0);
         buddyGPTApplication.setAnswerHasExceededTimeOut(false);
-        buddyGPTApplication.setPreviousVolume(Float.valueOf(0));
         buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-        buddyGPTApplication.setChosenTTS("");
         buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(false);
         buddyGPTApplication.setBIExecution(false);
         buddyGPTApplication.setAlreadyChatting(false);
@@ -167,7 +140,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     protected void onPause() {
         super.onPause();
         Log.d(TAG, " --- onPause() ---");
-        if (responseTimeout != null) responseTimeout.cancel();
         if (handlerTTSError != null && runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
             handlerTTSError.removeCallbacksAndMessages(null);
@@ -185,8 +157,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             handler.removeCallbacksAndMessages(null);
         }
         onSdkReadyIsAlreadyCalledOnce = false;
-        isListeningFreeSpeech = false;
-        listRep = new ArrayList<>();
         buddyGPTApplication.stopTTS();
         buddyGPTApplication.setActivityClosed(true);
         CustomToast.getInstance().hideToast();
@@ -260,11 +230,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     checkSelfPermission(REQUESTED_PERMISSIONS[4], PERMISSION_REQ_ID)
 
             ) {
-                try {
-                    init();
-                } catch (IOException e) {
-                    Log.i(TAG, "onSDKReady: " + e.getMessage());
-                }
+                init();
             }
         }
         onSdkReadyIsAlreadyCalledOnce = true;
@@ -296,47 +262,14 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
      * ----------------- Utils ---------------------------
      */
 
-    private void init() throws IOException {
+    private void init() {
         Log.e(TAG, "init() ");
-        String imei = getIMEI();
-        Log.i(TAG, "init: imei device " + imei);
-        buddyGPTApplication.setImeiRobot(imei);
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
         Log.i(TAG, "init: isFirstLaunch " + isFirstLaunch);
-        if (isFirstLaunch) {
-            buddyGPTApplication.initTeamGPTSettings();
-            buddyGPTApplication.setparam("session_id", "");
-            if (buddyGPTApplication.getparam("IMEI_ID_Device").equals("")) {
-                buddyGPTApplication.setparam("IMEI_ID_Device", " _ ");
-            }
-            if (buddyGPTApplication.getparam("email_support").equals("")) {
-                buddyGPTApplication.setparam("email_support", " _ ");
-            }
-            if (buddyGPTApplication.getparam("IdCompte").equals("")) {
-                buddyGPTApplication.setparam("IdCompte", " _ ");
-            }
-        }
 
 
-    }
 
-    public String getIMEI() {
-        String imei = "";
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // For Android 8.0 and above
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                imei = telephonyManager.getImei();
-            }
 
-        } else {
-            // For Android versions below 8.0
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null) {
-                imei = telephonyManager.getDeviceId();
-            }
-        }
-        return imei;
     }
 
     /**
@@ -376,11 +309,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             finish();
             return;
         }
-        try {
-            init();
-        } catch (IOException e) {
-            Log.i(TAG, "onRequestPermissionsResult: " + e);
-        }
+        init();
     }
 
     /**

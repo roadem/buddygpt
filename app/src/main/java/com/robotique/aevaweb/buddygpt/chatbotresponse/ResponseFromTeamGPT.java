@@ -22,6 +22,7 @@ import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.models.Parameters;
 import com.robotique.aevaweb.buddygpt.models.Request;
+import com.robotique.aevaweb.buddygpt.utilis.ResponseCallback;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -86,7 +87,7 @@ public class ResponseFromTeamGPT {
 
     }
 
-    public void getParameters() {
+    public void getParameters(ResponseCallback responseCallback) {
         final CountDownLatch latch = new CountDownLatch(1); // Initialize the latch with count 1
 
         new Thread(() -> {
@@ -104,8 +105,10 @@ public class ResponseFromTeamGPT {
 
                 int responseCode = con.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    responseCallback.onSuccess();
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+                    buddyGPTApplication.setparam("ENV_ERROR","FALSE");
                     BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
                     String inputLine;
                     StringBuilder response = new StringBuilder();
@@ -169,6 +172,11 @@ public class ResponseFromTeamGPT {
                                     if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
                                             && buddyGPTApplication.getparam("STT").equalsIgnoreCase(""))
                                         buddyGPTApplication.setparam("STT", "Android");
+                                    if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
+                                            && buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties").equalsIgnoreCase("no")) {
+                                        buddyGPTApplication.setparam("STT", buddyGPTApplication.getparam("STT_chosen"));
+                                        Log.i("USED_STT", " USED_STT : "+buddyGPTApplication.getparam("STT"));
+                                    }
                                     if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local")
                                             && buddyGPTApplication.getparam("TTS").equalsIgnoreCase(""))
                                         buddyGPTApplication.setparam("TTS", "ReadSpeaker");
@@ -178,6 +186,7 @@ public class ResponseFromTeamGPT {
 
                     }
                 } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+                    responseCallback.onSuccess();
                     Log.i(TAG_PARAM, "run: notifyObservers response msg " + con.getResponseMessage());
                     Log.i(TAG_PARAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
                     buddyGPTApplication.setparam(TeamGPTKey, gptKey);
@@ -186,8 +195,27 @@ public class ResponseFromTeamGPT {
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                 }
+                else if (responseCode== HttpURLConnection.HTTP_NOT_FOUND){
+                    responseCallback.onSuccess();
+                    buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
+                    buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.setparam("session_id","");
+                    buddyGPTApplication.setparam("ENV_ERROR","TRUE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+                }
+                else {
+                    responseCallback.onFailure();
+                    Log.e(TAG_PARAM, "Unexpected response code: " + responseCode);
+                    buddyGPTApplication.setparam("session_id", "");
+                    buddyGPTApplication.setparam("ENV_ERROR","FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+                }
                 con.disconnect();
             } catch (Exception e) {
+                responseCallback.onFailure();
                 Log.e(TAG_STREAM, "Exception in getParameters: ", e);
             } finally {
                 latch.countDown(); // Ensure latch is counted down regardless of success or failure
@@ -271,6 +299,7 @@ public class ResponseFromTeamGPT {
                 } else if (responseCode == 404) {
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("ENV_ERROR");
+                    buddyGPTApplication.setparam("ENV_ERROR","TRUE");
                     buddyGPTApplication.setparam("session_id", "");
                 } else {
                     handleError();
@@ -465,6 +494,7 @@ public class ResponseFromTeamGPT {
             if (jsonObject.has("session_id")) {
                 String sessionId = jsonObject.getString("session_id");
                 Log.i(TAG_STREAM, "handleStreamingResponse: session " + sessionId);
+                Log.i(TAG_STREAM, "handleStreamingResponse: session " + buddyGPTApplication.getparam("session_id"));
 
                 if (!buddyGPTApplication.getparam("session_id").equalsIgnoreCase(sessionId)) {
                     Handler mainHandler2 = new Handler(Looper.getMainLooper());
@@ -482,7 +512,7 @@ public class ResponseFromTeamGPT {
             String jsonArrayString = buddyGPTApplication.getparam(historicMessages);
             existingHistoryArray = new JSONArray(jsonArrayString);
             JSONObject newSessionObject = new JSONObject();
-            newSessionObject.put("Session", buddyGPTApplication.getparam("SelectedChatbot") + " - " + buddyGPTApplication.getModel());
+            newSessionObject.put("Session", buddyGPTApplication.getparam("SelectedChatbot") + " - " + buddyGPTApplication.getparam("chatbotModel"));
             existingHistoryArray.put(newSessionObject);
             buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
         } catch (Exception e) {
@@ -519,8 +549,11 @@ public class ResponseFromTeamGPT {
             long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
             DecimalFormat df = new DecimalFormat("#,###");
             String formattedTime = df.format(responseTime);
-            newRespObject.put("Response", answer + ";SPLIT;" + formattedTime + " ms");
-            existingHistoryArray.put(newRespObject);
+            if (!buddyGPTApplication.isTimeoutExpired() && !answer.isEmpty()) {
+                    newRespObject.put("Response", answer + ";SPLIT;" + formattedTime + " ms");
+                    existingHistoryArray.put(newRespObject);
+                }
+
             buddyGPTApplication.setparam(historicMessages, existingHistoryArray.toString());
         } catch (Exception e) {
             Log.e(TAG_STREAM, "Error updating history with response", e);
@@ -661,7 +694,6 @@ public class ResponseFromTeamGPT {
             }
 
             buddyGPTApplication.setMessageError(true);
-            setTiredFacialExpressionIfNeeded();
             processPhrasesWithDelay();
             pronouncePhrase(errorMsg);
         }
@@ -797,15 +829,7 @@ public class ResponseFromTeamGPT {
         }
     }
 
-    private void setTiredFacialExpressionIfNeeded() {
-        if (!buddyGPTApplication.isOpenaialreadySwitchEmotion()) {
-            try {
-                BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
-            } catch (Exception e) {
-                Log.e(TAG_STREAM, "BuddySDK Exception  " + e);
-            }
-        }
-    }
+
 
     public void reset() {
         Log.i(TAG_STREAM, "------------------reset-------------------");

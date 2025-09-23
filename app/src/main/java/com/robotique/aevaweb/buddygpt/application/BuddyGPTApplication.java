@@ -2,11 +2,13 @@ package com.robotique.aevaweb.buddygpt.application;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -16,6 +18,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -29,6 +32,7 @@ import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -38,6 +42,8 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.core.content.ContextCompat;
 
 import com.bfr.buddy.speech.shared.ISTTCallback;
 import com.bfr.buddy.speech.shared.ITTSCallback;
@@ -108,10 +114,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final String langueEn = "Anglais";
     private static final String langueEs = "Espagnol";
     private static final String langueDe = "Allemand";
-    private static final String header = "header";
-    private static final String entete = "entete";
-    private static final String cabecera = "Cabecera";
-    private static final String kopfzeile = "Kopfzeile";
     private static final String TAG_STREAMING = "AudioCapture";
     public final IUsbCommadRsp iUsbLedCommandRsp = new IUsbCommadRsp.Stub() {
         @Override
@@ -254,13 +256,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.remainingAttempts = remainingAttempts;
     }
 
-    public String getChosenTTS() {
-        return chosenTTS;
-    }
 
-    public void setChosenTTS(String chosenTTS) {
-        this.chosenTTS = chosenTTS;
-    }
 
     public EncodingRegistry getRegistry() {
         return registry;
@@ -274,30 +270,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.dialog = dialog;
     }
 
-    public String getModel() {
-        String model = "";
-        String selectedChatbot = getparam("SelectedChatbot").toLowerCase();
-
-        switch (selectedChatbot) {
-            case "openai":
-                model = getparam("Modele_Openai");
-                break;
-            case "customgpt":
-                model = getparam("CustomGPT_model");
-                break;
-            case "mistral":
-                model = getparam("Modele_Mistral");
-                break;
-            case "gemini":
-                model = getparam("Modele_gemini");
-                break;
-            default:
-                // Handle the case where the chatbot is unknown
-                model = "";
-                break;
-        }
-        return model;
-    }
 
     public Boolean getAppIsListeningToTheQuestion() {
         return appIsListeningToTheQuestion;
@@ -371,14 +343,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.listeningAttempt = listeningAttempt;
     }
 
-    public File getFileupdate() {
-        return fileupdate;
-    }
-
-    public void setFileupdate(File fileupdate) {
-        this.fileupdate = fileupdate;
-    }
-
     public int getSpeakVolume() {
         return speakVolume;
     }
@@ -404,14 +368,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.fileCreate = fileCreate;
     }
 
-    public Session getSession() {
-        return session;
-    }
-
-    public void setSession(Session session) {
-        this.session = session;
-    }
-
     public ArrayList<Session> getListSession() {
         return listSession;
     }
@@ -432,78 +388,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.switchVisibility = switchVisibility;
     }
 
-    public int getCurrentIndexText() {
-        return currentIndexText;
-    }
-
-    public void setCurrentIndexText(int currentIndexText) {
-        this.currentIndexText = currentIndexText;
-    }
-
-    public boolean isAllTextPronoucedSuccess() {
-        return allTextPronoucedSuccess;
-    }
-
-    public void setAllTextPronoucedSuccess(boolean allTextPronoucedSuccess) {
-        this.allTextPronoucedSuccess = allTextPronoucedSuccess;
-    }
-
-    public boolean isStopTTSReadSpeaker() {
-        return stopTTSReadSpeaker;
-    }
-
-    public void setStopTTSReadSpeaker(boolean stopTTSReadSpeaker) {
-        this.stopTTSReadSpeaker = stopTTSReadSpeaker;
-    }
-
-    public boolean isAlreadyCalled() {
-        return alreadyCalled;
-    }
-
-    public void setAlreadyCalled(boolean alreadyCalled) {
-        this.alreadyCalled = alreadyCalled;
-    }
-
-    public boolean isRecording() {
-        return isRecording;
-    }
-
-    public void setRecording(boolean recording) {
-        isRecording = recording;
-    }
-
-    public String getCurrentState() {
-        return currentState;
-    }
-
-    public void setCurrentState(String currentState) {
-        this.currentState = currentState;
-    }
-
-    public Boolean getStopProcessus() {
-        return stopProcessus;
-    }
-
-    public void setStopProcessus(Boolean stopProcessus) {
-        this.stopProcessus = stopProcessus;
-    }
-
-    public Boolean getAlReadyHadSpoke() {
-        return alReadyHadSpoke;
-    }
-
-    public void setAlReadyHadSpoke(Boolean alReadyHadSpoke) {
-        this.alReadyHadSpoke = alReadyHadSpoke;
-    }
-
-    public Float getPreviousVolume() {
-        return previousVolume;
-    }
-
-    public void setPreviousVolume(Float previousVolume) {
-        this.previousVolume = previousVolume;
-    }
-
     public String getSwitchEmotion() {
         return switchEmotion;
     }
@@ -520,21 +404,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.switchdetectLanguage = switchdetectLanguage;
     }
 
-    public String getSwitchCommande() {
-        return switchCommande;
-    }
-
-    public void setSwitchCommande(String switchCommande) {
-        this.switchCommande = switchCommande;
-    }
-
-    public Uri getFileup() {
-        return fileup;
-    }
-
-    public void setFileup(Uri fileup) {
-        this.fileup = fileup;
-    }
 
     public Boolean getSpeaking() {
         return isSpeaking;
@@ -542,14 +411,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setSpeaking(Boolean speaking) {
         isSpeaking = speaking;
-    }
-
-    public List<IDBObserver> getObservers() {
-        return observers;
-    }
-
-    public void setObservers(List<IDBObserver> observers) {
-        this.observers = observers;
     }
 
     public Boolean getNotYet() {
@@ -584,14 +445,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.startRecording = startRecording;
     }
 
-    public ConnectivityManager getCm() {
-        return cm;
-    }
-
-    public void setCm(ConnectivityManager cm) {
-        this.cm = cm;
-    }
-
     public int getQuestionNumber() {
         return questionNumber;
     }
@@ -616,13 +469,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.alreadyGetAnswer = alreadyGetAnswer;
     }
 
-    public boolean isOpenaialreadySwitchEmotion() {
-        return openaialreadySwitchEmotion;
-    }
-
-    public void setOpenaialreadySwitchEmotion(boolean openaialreadySwitchEmotion) {
-        this.openaialreadySwitchEmotion = openaialreadySwitchEmotion;
-    }
 
     public boolean isTimeoutExpired() {
         return timeoutExpired;
@@ -664,14 +510,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.storedResponse = storedResponse;
     }
 
-    public Boolean getBuddyFaceisTired() {
-        return buddyFaceisTired;
-    }
-
-    public void setBuddyFaceisTired(Boolean buddyFaceisTired) {
-        this.buddyFaceisTired = buddyFaceisTired;
-    }
-
     public int getBestTextSize() {
         return bestTextSize;
     }
@@ -680,21 +518,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.bestTextSize = bestTextSize;
     }
 
-    public Boolean getShouldPlayEmotion() {
-        return shouldPlayEmotion;
-    }
 
-    public void setShouldPlayEmotion(Boolean shouldPlayEmotion) {
-        this.shouldPlayEmotion = shouldPlayEmotion;
-    }
-
-    public String getCurrentEmotion() {
-        return currentEmotion;
-    }
-
-    public void setCurrentEmotion(String currentEmotion) {
-        this.currentEmotion = currentEmotion;
-    }
 
     public Boolean getMessageError() {
         return messageError;
@@ -711,24 +535,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void setLangue(Langue langue) {
         this.langue = langue;
     }
-
-    public TtsGoogleC getGoogleCloudTTS() {
-        return googleCloudTTS;
-    }
-
-    public void setGoogleCloudTTS(TtsGoogleC googleCloudTTS) {
-        this.googleCloudTTS = googleCloudTTS;
-    }
-
-    public VoicesList getVoiceList() {
-        return voiceList;
-    }
-
-    public void setVoiceList(VoicesList voiceList) {
-        this.voiceList = voiceList;
-    }
-
-
 
     /**
      * initialisations
@@ -779,6 +585,25 @@ public class BuddyGPTApplication extends BuddyApplication {
         notifyObservers("properties file done");
     }
 
+    public String getIMEI() {
+        String imei = "";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // For Android 8.0 and above
+            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+            if (telephonyManager != null && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
+                imei = telephonyManager.getImei();
+            }
+
+        } else {
+            // For Android versions below 8.0
+            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+            if (telephonyManager != null) {
+                imei = telephonyManager.getDeviceId();
+            }
+        }
+        return imei;
+    }
+
     private void initListeningSettings() {
         if (getparam(listeningDurationPseudo).isEmpty()) {
             setparam(listeningDurationPseudo, getParamFromFile("Listening_time", configurationFilePseudo));
@@ -800,66 +625,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         Log.i(TAG, "initListeningSettings: HOU " + getParamFromFile("Listening_time", configurationFilePseudo));
     }
 
-    public void initTeamGPTSettings() throws IOException {
-        if (responseFromTeamGPT != null) {
-            responseFromTeamGPT.reset();
-        }
-        responseFromTeamGPT = new ResponseFromTeamGPT(this);
 
-        setparam("TeamGPT_url", getParamFromFile("TeamGPT_url", configurationFilePseudo));
-        setparam("TeamGPT_ApiEndpoint_Params", getParamFromFile("TeamGPT_ApiEndpoint_Params", configurationFilePseudo));
-        setparam("TeamGPT_ApiEndpoint_Response", getParamFromFile("TeamGPT_ApiEndpoint_Response", configurationFilePseudo));
-        if (getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo).equalsIgnoreCase("")) {
-            setparam("TeamGPT_ID_Device", getImeiRobot());
-        } else {
-            setparam("TeamGPT_ID_Device", getParamFromFile("TeamGPT_ID_Device", configurationFilePseudo));
-        }
-
-        if (getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-
-            setparam("TeamGPT_Key", getParamFromFile("TeamGPT_Key", configurationFilePseudo));
-            Log.i(TAG, "run: getParameters 4");
-            if (!getparam("TeamGPT_Key").equalsIgnoreCase(""))
-                responseFromTeamGPT.getParameters();
-            else {
-                if (Objects.equals(getLangue().getNom(), langueEn)) {
-                    showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                } else if (getLangue().getNom().equals(langueFr)) {
-                    showToast(getString(R.string.toast_teamgpt_key_indispo_fr));
-                } else {
-                    getEnglishLanguageSelectedTranslator()
-                            .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                            .addOnSuccessListener(this::showToast)
-                            .addOnFailureListener(e -> showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
-                }
-            }
-        } else
-            responseFromTeamGPT.getParameters();
-
-
-        if (getparam("firstLaunch").equals("true")) {
-
-            if (getparam(header).isEmpty()) {
-                setparam(header, getParamFromFile(header, configurationFilePseudo));
-            }
-            if (getparam(entete).isEmpty()) {
-                setparam(entete, getParamFromFile(entete, configurationFilePseudo));
-            }
-            if (getparam(cabecera).isEmpty()) {
-                setparam(cabecera, getParamFromFile(cabecera, configurationFilePseudo));
-            }
-            if (getparam(kopfzeile).isEmpty()) {
-                setparam(kopfzeile, getParamFromFile(kopfzeile, configurationFilePseudo));
-            }
-
-
-            setparam("firstLaunch", "false");
-        }
-
-        // TeamGPT
-
-
-    }
 
     public void resetSharedPreferences() {
         if (getparam("Mail_Destination").equalsIgnoreCase(getparam("Email"))) {
