@@ -59,6 +59,8 @@ import com.chaquo.python.PyException;
 import com.chaquo.python.PyObject;
 import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.gson.Gson;
 import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.nl.translate.TranslateLanguage;
@@ -827,8 +829,9 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     }
 
+
     private void initEmotionSetting() {
-        if (getparam(emotionString).isEmpty()) {
+        if (getparam(emotionString).equals("")) {
             if (getParamFromFile("Activation_of_emotions", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
                 setparam(emotionString, "false");
             } else {
@@ -839,7 +842,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     private void initLanguageDetectionSetting() {
-        if (getparam(detectionLanguageString).isEmpty()) {
+        if (getparam(detectionLanguageString).equals("")) {
             if (getParamFromFile("Language_detection", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
                 setparam(detectionLanguageString, "false");
             } else {
@@ -848,21 +851,11 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         switchdetectLanguage = getparam(detectionLanguageString);
     }
-    //#region ******************************************************* STT **********************************************************************
 
-    //#region ******************************************************* blue mic *******************************************************
-
-
-    //#endregion ******************************************************* blue mic *******************************************************
-
-    //#region ******************************************************* STT Cerence Local fcf **********************************************************************
 
     public ResponseFromTeamGPT getResponseFromTeamGPT() {
         return responseFromTeamGPT;
     }
-
-
-    //#region ******************************************************* STT Free Speech **********************************************************************
 
     public void setResponseFromTeamGPT(ResponseFromTeamGPT responseFromTeamGPT) {
         this.responseFromTeamGPT = responseFromTeamGPT;
@@ -870,7 +863,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public List<String> separator(String hotword) {
         StringTokenizer st = new StringTokenizer(hotword, "/", false);
-        List<String> list = new ArrayList<>();
+        List<String> list = new ArrayList<String>();
         while (st.hasMoreTokens()) {
             String result = st.nextToken();
             list.add(result.trim());
@@ -1175,7 +1168,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             try {
                 Log.i(TAG, "startListeningQuestion: test");
                 speechRecognizer.startListening(speechRecognizerIntent);
-                
+
                 if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
                     showToast(toastSttAndroidIndispo);
                 }
@@ -1408,6 +1401,31 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.imeiRobot = imeiRobot;
     }
 
+    private String getFirstFullLanguageCode(String shortLanguageCode) {
+        Locale[] locales = Locale.getAvailableLocales();
+        Boolean hasThesame = false;
+        boolean firstLanguageCode = true;
+        String fullLanguageCode = "";
+        for (Locale locale : locales) {
+            if (shortLanguageCode.equalsIgnoreCase(locale.getLanguage()) && !locale.getCountry().isEmpty()) {
+                if (firstLanguageCode) {
+                    firstLanguageCode = false;
+                    fullLanguageCode = locale.getLanguage() + "-" + locale.getCountry();
+                }
+                if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())) {
+                    hasThesame = true;
+                    break;
+                }
+                Log.e("MMMM", "getFirstFullLanguageCode if " + locale.getLanguage() + "-" + locale.getCountry());
+
+            }
+        }
+        if (Boolean.TRUE.equals(hasThesame)) {
+            fullLanguageCode = shortLanguageCode.toLowerCase() + "-" + shortLanguageCode.toUpperCase();
+        }
+        return fullLanguageCode;
+    }
+
     public void stopRecording() {
         if (handler2 != null && periodicTask != null) {
             handler2.removeCallbacks(periodicTask);
@@ -1543,6 +1561,27 @@ public class BuddyGPTApplication extends BuddyApplication {
         BuddySDK.UI.stopListenAnimation();
         setLed("neutral");
 
+    }
+    /**
+     * Cette méthode permet de personaliser l'affichage de toast
+     * @param message est le message à afficher dans le toast
+     */
+    public void showToast(String message) {
+        if (mToast != null) {
+            mToast.cancel();
+        }
+        new Handler(Looper.getMainLooper()).post(() -> {
+            mToast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
+            mToast.setDuration(Toast.LENGTH_LONG);
+            mToast.show();
+        });
+    }
+    /**
+     * cette fonction permet de récupérer le volume du device
+     */
+    public int getVolume() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
     }
 
     /**
@@ -1682,6 +1721,49 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
+    public boolean isAppInstalled(Context context, String packageName) {
+        try {
+            context.getPackageManager().getApplicationInfo(packageName, 0);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+    /**
+     * Cette fonction permet de récupérer le volume max du device
+     */
+    public int getMaxVolume() {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager.isBluetoothScoOn())
+            return audioManager.getStreamMaxVolume(6);
+        else
+            return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+    }
+
+    /**
+     * Cette fonction permet de récupérer l'entier le plus proche au double passé en argument
+     */
+    public int getClosestInt(double x) {
+        return (int) Math.rint(x);
+    }
+
+    /**
+     * la fonction notifyObservers() permet d'envoyer un message "notification" aux classes qui implémentent IDBObserver.
+     *
+     * @param message : le message à envoyer
+     */
+    public void notifyObservers(String message) {
+        Log.i(TAG, "notifyObservers: " + message);
+        for (int i = 0; i < observers.size(); i++) {
+            try {
+                IDBObserver ob = observers.get(i);
+                ob.update(message);
+            } catch (IOException e) {
+                Log.e(TAG, "Erreur lors de l'envoi de la notification aux observateurs [ " + message + " ] :" + e);
+            }
+        }
+    }
+
     /**
      * Cette fonction permet de prononcer le texte passé en argument.
      *
@@ -1795,6 +1877,55 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
         }
     }
+    /**
+     * La fonction setLed() permet de changer la couleur des LEDs.
+     *
+     * @param state : "listening" : pour la couleur GREEN #53B300
+     *              "neutral"   : pour la couleur BLUE  #00D4D0
+     *              "off"       : pour la couleur BLACK #000000
+     */
+    public void setLed(String state) {
+        SystemClock.sleep(200);
+        try {
+            switch (state) {
+                case "listening":
+                    BuddySDK.USB.updateAllLed("#53B300", iUsbLedCommandRsp);
+                    break;
+                case "neutral":
+                    BuddySDK.USB.updateAllLed("#00D4D0", iUsbLedCommandRsp);
+                    break;
+                case "off":
+                    BuddySDK.USB.updateAllLed("#000000", iUsbLedCommandRsp);
+                    break;
+                default:
+                    BuddySDK.USB.updateAllLed("#00D4D0", iUsbLedCommandRsp);
+            }
+            Log.i(TAG, "Changement de couleurs des LEDs [" + state + "]");
+        } catch (Exception e) {
+            Log.e(TAG, "Erreur pendant le changement de couleurs des LEDs [" + state + "]: " + e);
+        }
+    }
+
+    /**
+     * Cette méthode permet d'inialiser le TTS selon la langue du robot
+     */
+    public void setTTSAfterDetectingLanguage() {
+        if (!getLanguageDetected().equals("")) {
+            setTTSLanguage(getLanguageDetected());
+        } else {
+            setTTSLanguage(getCurrentLanguage());
+        }
+    }
+
+    /**
+     * Cette fonction permet de récupérer un paramètre depuis le fichier de configuration
+     */
+    public String getParamFromFile(String param, String fileName) {
+        File directory = new File(getString(R.string.path), "BuddyGPT");
+        CustomProperties props = ConfigurationFile.props;
+        CustomProperties newProps = ConfigurationFile.loadproperties(directory, fileName, props);
+        return newProps.getProperty(param);
+    }
 
     private void handleAndroidTTS(final String texteToSpeak, String type) {
         int result = ttsAndroid.speak(texteToSpeak, TextToSpeech.QUEUE_FLUSH, null, "TTS_UTTERANCE_ID");
@@ -1903,16 +2034,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         setLanguageDetected("");
     }
 
-    /**
-     * Cette méthode permet d'inialiser le TTS selon la langue du robot
-     */
-    public void setTTSAfterDetectingLanguage() {
-        if (!getLanguageDetected().equals("")) {
-            setTTSLanguage(getLanguageDetected());
-        } else {
-            setTTSLanguage(getCurrentLanguage());
-        }
-    }
+
 
     public void setTTSLanguage(String language) {
         Log.e("TEST", "setTTSLanguage " + language);
@@ -2096,30 +2218,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     }
 
-    private String getFirstFullLanguageCode(String shortLanguageCode) {
-        Locale[] locales = Locale.getAvailableLocales();
-        Boolean hasThesame = false;
-        boolean firstLanguageCode = true;
-        String fullLanguageCode = "";
-        for (Locale locale : locales) {
-            if (shortLanguageCode.equalsIgnoreCase(locale.getLanguage()) && !locale.getCountry().isEmpty()) {
-                if (firstLanguageCode) {
-                    firstLanguageCode = false;
-                    fullLanguageCode = locale.getLanguage() + "-" + locale.getCountry();
-                }
-                if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())) {
-                    hasThesame = true;
-                    break;
-                }
-                Log.e("MMMM", "getFirstFullLanguageCode if " + locale.getLanguage() + "-" + locale.getCountry());
 
-            }
-        }
-        if (Boolean.TRUE.equals(hasThesame)) {
-            fullLanguageCode = shortLanguageCode.toLowerCase() + "-" + shortLanguageCode.toUpperCase();
-        }
-        return fullLanguageCode;
-    }
 
     /**
      * Cette méthode permet d'inialiser le TTS d'android
@@ -2275,27 +2374,6 @@ public class BuddyGPTApplication extends BuddyApplication {
      *              "neutral"   : pour la couleur BLUE  #00D4D0
      *              "off"       : pour la couleur BLACK #000000
      */
-    public void setLed(String state) {
-        SystemClock.sleep(200);
-        try {
-            switch (state) {
-                case "listening":
-                    BuddySDK.USB.updateAllLed("#53B300", iUsbLedCommandRsp);
-                    break;
-                case "neutral":
-                    BuddySDK.USB.updateAllLed("#00D4D0", iUsbLedCommandRsp);
-                    break;
-                case "off":
-                    BuddySDK.USB.updateAllLed("#000000", iUsbLedCommandRsp);
-                    break;
-                default:
-                    BuddySDK.USB.updateAllLed("#00D4D0", iUsbLedCommandRsp);
-            }
-            Log.i(TAG, "Changement de couleurs des LEDs [" + state + "]");
-        } catch (Exception e) {
-            Log.e(TAG, "Erreur pendant le changement de couleurs des LEDs [" + state + "]: " + e);
-        }
-    }
 
     //#endregion ******************************************************* LEDs **********************************************************************
 
@@ -2305,16 +2383,6 @@ public class BuddyGPTApplication extends BuddyApplication {
      * Cette méthode permet de personaliser l'affichage de toast
      * @param message est le message à afficher dans le toast
      */
-    public void showToast(String message) {
-        if (mToast != null) {
-            mToast.cancel();
-        }
-        new Handler(Looper.getMainLooper()).post(() -> {
-            mToast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT);
-            mToast.setDuration(Toast.LENGTH_LONG);
-            mToast.show();
-        });
-    }
 
     public void showInputDialog(Activity activity, String message, String attention) {
 
@@ -2499,14 +2567,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public boolean isAppInstalled(Context context, String packageName) {
-        try {
-            context.getPackageManager().getApplicationInfo(packageName, 0);
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
     public boolean nombreDeMotsCheck(String chaine) {
         // Utilisation d'une expression régulière pour vérifier si la chaîne contient au moins 3 mots
@@ -2591,22 +2651,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         return prefs.getString(a, "");
     }
 
-    /**
-     * la fonction notifyObservers() permet d'envoyer un message "notification" aux classes qui implémentent IDBObserver.
-     *
-     * @param message : le message à envoyer
-     */
-    public void notifyObservers(String message) {
-        Log.i(TAG, "notifyObservers: " + message);
-        for (int i = 0; i < observers.size(); i++) {
-            try {
-                IDBObserver ob = observers.get(i);
-                ob.update(message);
-            } catch (IOException e) {
-                Log.e(TAG, "Erreur lors de l'envoi de la notification aux observateurs [ " + message + " ] :" + e);
-            }
-        }
-    }
 
     /**
      * la fonction registerObserver() permet de s'enregistrer au pattern Observer afin de recevoir les notifications
@@ -2642,15 +2686,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                 | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
-    /**
-     * Cette fonction permet de récupérer un paramètre depuis le fichier de configuration
-     */
-    public String getParamFromFile(String param, String fileName) {
-        File directory = new File(getString(R.string.path), "BuddyGPT");
-        CustomProperties props = ConfigurationFile.props;
-        CustomProperties newProps = ConfigurationFile.loadproperties(directory, fileName, props);
-        return newProps.getProperty(param);
-    }
 
     /**
      * Cette fonction permet de créer le fichier de configuration
@@ -2685,33 +2720,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    /**
-     * cette fonction permet de récupérer le volume du device
-     */
-    public int getVolume() {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        return audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
-    }
-
-    /**
-     * Cette fonction permet de récupérer le volume max du device
-     */
-    public int getMaxVolume() {
-        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
-        if (audioManager.isBluetoothScoOn())
-            return audioManager.getStreamMaxVolume(6);
-        else
-            return audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-    }
-
-    /**
-     * Cette fonction permet de récupérer l'entier le plus proche au double passé en argument
-     */
-    public int getClosestInt(double x) {
-        return (int) Math.rint(x);
-    }
-
-    //fonction pour push files
 
 
 
