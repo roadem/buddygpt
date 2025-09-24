@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 7; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 8; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -175,6 +175,7 @@ public class ConfigurationFile {
             setProperty("Display_of_speech", "Yes");
             setProperty("Activation_of_emotions", "Yes");
             setProperty("Language_detection", "Yes");
+            setProperty("Tracking","No");
 
             props.addPropertyComment("Number_of_words", "");
             props.addPropertyComment("Number_of_words", "Minimum number of words in the response for activating language detection");
@@ -205,6 +206,24 @@ public class ConfigurationFile {
             setProperty("username_Password", "1c15d6edab43d80dc53a30319c29364e");
             setProperty("mail.smtp.host", "in-v3.mailjet.com");
             setProperty("mail.smtp.port", "587");
+            //-------------------------- Tracking ---------------------------
+            props.addPropertyComment("TRACKING_Camera","");
+            props.addPropertyComment("TRACKING_Camera", "Tracking parameters");
+            props.addPropertyComment("TRACKING_Camera", "Enabling tracking with/without the camera.");
+            setProperty("TRACKING_Camera","No");
+
+            props.addPropertyComment("TRACKING_watch","");
+            props.addPropertyComment("TRACKING_watch", "Tracking is performed as soon as the robot detects that the target is looking at it.");
+            setProperty("TRACKING_watch","Yes");
+
+            props.addPropertyComment("TRACKING_listening", "Start listening when someone watchs");
+            setProperty("TRACKING_listening","Yes");
+
+            props.addPropertyComment("TRACKING_delay_startlisten", "Delay in seconds for listening when someone watchs");
+            setProperty("TRACKING_delay_startlisten","2");
+
+            props.addPropertyComment("TRACKING_delay_stoplisten", "Delay in seconds to stop listening when no one watchs");
+            setProperty("TRACKING_delay_stoplisten","3");
 
             FileOutputStream fileOut = new FileOutputStream(configFile);
             props.store(fileOut, "BuddyGPT configuration file");

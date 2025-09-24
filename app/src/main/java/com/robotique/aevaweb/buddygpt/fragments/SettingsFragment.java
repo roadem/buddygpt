@@ -112,6 +112,16 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private TextView identifiers;
     private TextView volumeSeekbarValue;
     private SeekBar volumeSeekbar;
+    private Switch switchTrackingActivation;
+    private Switch switchTrackingCameraDisplay;
+    private Switch switchTrackingAutoListen;
+    private LinearLayout menu_option_tracking_camera_display_lyt;
+
+    private LinearLayout menu_option_tracking_auto_listen_lyt;
+
+    private TextView menu_option_tracking_activation_textView;
+    private TextView menu_option_tracking_camera_display_textView;
+    private TextView menu_option_tracking_auto_listen_textView;
     private Setting set;
     private Setting setting;
     private List<Langue> langues;
@@ -293,6 +303,15 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         launch_view = view.findViewById(R.id.launch_view);
         noNetwork = view.findViewById(R.id.noNetwork);
         downloadingBar = view.findViewById(R.id.progressBar_MLKitDownload);
+        menu_option_tracking_camera_display_lyt = view.findViewById(R.id.menu_option_tracking_camera_display_lyt);
+        menu_option_tracking_auto_listen_lyt = view.findViewById(R.id.menu_option_tracking_auto_listen_lyt);
+        menu_option_tracking_activation_textView = view.findViewById(R.id.menu_option_tracking_activation_textView);
+        menu_option_tracking_camera_display_textView = view.findViewById(R.id.menu_option_tracking_camera_display_textView);
+        menu_option_tracking_auto_listen_textView = view.findViewById(R.id.menu_option_tracking_auto_listen_textView);
+        switchTrackingActivation = view.findViewById(R.id.switchTrackingActivation);
+        switchTrackingCameraDisplay = view.findViewById(R.id.switchTrackingCameraDisplay);
+        switchTrackingAutoListen = view.findViewById(R.id.switchTrackingAutoListen);
+
         set = new Setting();
         setting = new Setting();
         buddyGPTApplication.registerObserver(this);
@@ -400,6 +419,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         /**
          * Gestion Tracking
          */
+        handlerTracking();
+
         setupClickListeners();
         popupLanguageList.setOnClickListener(v -> {
             // Vérifier si le popup_add_mail est visible et si le clic est en dehors de celui-ci
@@ -678,6 +699,45 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         });
     }
 
+    private void handlerTracking(){
+
+        //Tracking activation
+        if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
+            menu_option_tracking_camera_display_lyt.setVisibility(View.VISIBLE);
+            menu_option_tracking_auto_listen_lyt.setVisibility(View.VISIBLE);
+
+        }
+        else{
+            menu_option_tracking_camera_display_lyt.setVisibility(View.GONE);
+            menu_option_tracking_auto_listen_lyt.setVisibility(View.GONE);
+        }
+        switchTrackingActivation.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation")));
+        switchTrackingActivation.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) ->{
+            buddyGPTApplication.setparam("Tracking_Activation",String.valueOf(b));
+            if(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation"))){
+                menu_option_tracking_camera_display_lyt.setVisibility(View.VISIBLE);
+                menu_option_tracking_auto_listen_lyt.setVisibility(View.VISIBLE);
+
+            }
+            else{
+                menu_option_tracking_camera_display_lyt.setVisibility(View.GONE);
+
+                menu_option_tracking_auto_listen_lyt.setVisibility(View.GONE);
+
+            }
+        });
+
+        //Tracking camera display
+        switchTrackingCameraDisplay.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Camera_Display")));
+        switchTrackingCameraDisplay.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> buddyGPTApplication.setparam("Tracking_Camera_Display",String.valueOf(b)));
+
+        //Tracking auto listen
+        switchTrackingAutoListen.setChecked(Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen")));
+        switchTrackingAutoListen.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> buddyGPTApplication.setparam("Tracking_Auto_Listen",String.valueOf(b)));
+
+
+    }
+
     private void handlerNameAndEmail() {
 
         Log.i(TAG, "handlerName: HOU" + buddyGPTApplication.getparam("NomCompte"));
@@ -916,6 +976,9 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             menuApiKeyTextView.setText(R.string.menu_api_key_en);
             menuNameTextView.setText(R.string.menu_name_en);
             menuHeaderTextView.setText(R.string.menu_header_en);
+            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_en);
+            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_en);
+            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_en);
             menuHeaderEditText.setText(buddyGPTApplication.getparam(header));
         } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
             menuTitle.setText(R.string.menu_title_fr);
@@ -931,7 +994,9 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             menuApiKeyTextView.setText(R.string.menu_api_key_fr);
             menuNameTextView.setText(R.string.menu_name_fr);
             menuHeaderTextView.setText(R.string.menu_header_fr);
-
+            menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_fr);
+            menu_option_tracking_camera_display_textView.setText(R.string.menu_option_tracking_camera_display_fr);
+            menu_option_tracking_auto_listen_textView.setText(R.string.menu_option_tracking_auto_listen_fr);
             menuHeaderEditText.setText(buddyGPTApplication.getparam(entete));
 
 
@@ -950,9 +1015,11 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 translateAndSetTextView(R.string.menu_name_en, menuNameTextView, "");
                 translateAndSetTextView(R.string.menu_header_en, menuHeaderTextView, "");
                 translateAndSetTextView(0, menuHeaderEditText, buddyGPTApplication.getparam(header));
-
-
+                translateAndSetTextView(R.string.menu_option_tracking_activation_en,menu_option_tracking_activation_textView,"");
+                translateAndSetTextView(R.string.menu_option_tracking_camera_display_en,menu_option_tracking_camera_display_textView,"");
+                translateAndSetTextView(R.string.menu_option_tracking_auto_listen_en,menu_option_tracking_auto_listen_textView,"");
             }
+
 
         }
     }

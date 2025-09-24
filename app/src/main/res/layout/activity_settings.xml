@@ -48,29 +48,6 @@
                     android:layout_marginHorizontal="20dp"
                     android:orientation="horizontal">
 
-                    <!-- Blue Mic Icon -->
-<!--                    <ImageView-->
-<!--                        android:id="@+id/blue_mic_lyt"-->
-<!--                        android:layout_width="100px"-->
-<!--                        android:layout_height="100px"-->
-<!--                        android:visibility="invisible"-->
-<!--                        android:src="@drawable/micro_bluetooth"-->
-<!--                        android:onClick="btnOpenBlueMic"-->
-<!--                        android:layout_centerInParent="true"-->
-<!--                        android:layout_alignParentStart="true"/>-->
-                    <!-- Android language STT Icon -->
-<!--                    <ImageView-->
-<!--                        android:id="@+id/Android_STT_language_lyt"-->
-<!--                        android:layout_width="100px"-->
-<!--                        android:layout_height="100px"-->
-<!--                        android:src="@drawable/list_of_languages"-->
-<!--                        android:onClick="btnAfficheLanguageList"-->
-<!--                        android:layout_toEndOf="@id/blue_mic_lyt"-->
-<!--                        android:layout_marginStart="20dp"-->
-<!--                        android:layout_centerVertical="true"-->
-<!--                        android:visibility="invisible"/>-->
-
-
                     <TextView
                         android:id="@+id/menu_title"
                         android:layout_width="wrap_content"

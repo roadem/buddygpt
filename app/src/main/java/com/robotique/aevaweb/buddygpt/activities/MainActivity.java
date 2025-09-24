@@ -1,5 +1,7 @@
 package com.robotique.aevaweb.buddygpt.activities;
 
+import static com.bfr.buddysdk.BuddySDK.USB;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -187,11 +189,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     @Override
     public void onSDKReady() {
         Log.w(TAG, "onSDKReady");
-        if (!onSdkReadyIsAlreadyCalledOnce) {
+        if(!onSdkReadyIsAlreadyCalledOnce){
             //initialisation du visage de Buddy
             BuddySDK.UI.setFaceEnergy(1.0f);
             BuddySDK.UI.setFacePositivity(1.0f);
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
             BuddySDK.UI.lookAt(GazePosition.CENTER, true);
             BuddySDK.UI.stopListenAnimation();
             BuddySDK.UI.setViewAsFace(viewFace);
@@ -208,7 +210,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                 public void onSuccess(String s) throws RemoteException {
                     Log.i(TAG_TRACKING, "stopCamera(0) onSuccess : " + s);
                 }
-
                 @Override
                 public void onFailed(String s) throws RemoteException {
                     Log.e(TAG_TRACKING, "stopCamera(0) onFailed : " + s);
@@ -218,15 +219,15 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             if (checkSelfPermission(REQUESTED_PERMISSIONS[0], PERMISSION_REQ_ID) &&
                     checkSelfPermission(REQUESTED_PERMISSIONS[1], PERMISSION_REQ_ID) &&
                     checkSelfPermission(REQUESTED_PERMISSIONS[2], PERMISSION_REQ_ID) &&
-                    checkSelfPermission(REQUESTED_PERMISSIONS[3], PERMISSION_REQ_ID) &&
-                    checkSelfPermission(REQUESTED_PERMISSIONS[4], PERMISSION_REQ_ID)
+                    checkSelfPermission(REQUESTED_PERMISSIONS[3], PERMISSION_REQ_ID)
 
-            ) {
+            ){
                 init();
             }
         }
         onSdkReadyIsAlreadyCalledOnce = true;
     }
+
 
     @Override
     public void onEvent(EventItem iEvent) {

@@ -14,8 +14,8 @@ import com.google.mediapipe.tasks.vision.poselandmarker.PoseLandmarkerResult;
 import java.util.List;
 
 public class PoseTracking {
-    private static final String TAG_TRACKING = "BuddyGPT_TRACKING_INFO";
-    private static final String TAG_TRACKING_DEBUG = "BuddyGPT_DEBUG_TRACKING";
+    public static final String TAG_TRACKING = "BuddyGPT_TRACKING_INFO";
+    public static final String TAG_TRACKING_DEBUG = "BuddyGPT_DEBUG_TRACKING";
     private float x0, x1, x2, x3, x4, x5, x6, x7, x8, x11, x12, x23, x24, y0, y1, y2, y3, y4, y5, y6, y7, y8, y11, y12, y23, y24, Eod, eog, degx, degy, b1, z7, z8, centreDuVisageX, centreDuVisageY, dLeft, dRight;
     private Handler handler = new Handler();
     private Runnable runnable;

@@ -48,28 +48,6 @@
                     android:layout_marginHorizontal="20dp"
                     android:orientation="horizontal">
 
-                    <!-- Blue Mic Icon -->
-                    <!--                    <ImageView-->
-                    <!--                        android:id="@+id/blue_mic_lyt"-->
-                    <!--                        android:layout_width="100px"-->
-                    <!--                        android:layout_height="100px"-->
-                    <!--                        android:visibility="invisible"-->
-                    <!--                        android:src="@drawable/micro_bluetooth"-->
-                    <!--                        android:onClick="btnOpenBlueMic"-->
-                    <!--                        android:layout_centerInParent="true"-->
-                    <!--                        android:layout_alignParentStart="true"/>-->
-                    <!-- Android language STT Icon -->
-                    <!--                    <ImageView-->
-                    <!--                        android:id="@+id/Android_STT_language_lyt"-->
-                    <!--                        android:layout_width="100px"-->
-                    <!--                        android:layout_height="100px"-->
-                    <!--                        android:src="@drawable/list_of_languages"-->
-                    <!--                        android:onClick="btnAfficheLanguageList"-->
-                    <!--                        android:layout_toEndOf="@id/blue_mic_lyt"-->
-                    <!--                        android:layout_marginStart="20dp"-->
-                    <!--                        android:layout_centerVertical="true"-->
-                    <!--                        android:visibility="invisible"/>-->
-
 
                     <TextView
                         android:id="@+id/menu_title"
@@ -124,82 +102,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="248dp"
                         android:orientation="vertical">
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_listening_duration_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="35dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_listening_duration_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_listening_duration_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <LinearLayout-->
-                        <!--                                android:id="@+id/menu_option_listening_duration_editText_lyt"-->
-                        <!--                                android:layout_width="350dp"-->
-                        <!--                                android:layout_height="30dp"-->
-                        <!--                                android:layout_gravity="end|center_vertical"-->
-                        <!--                                android:gravity="center_vertical"-->
-                        <!--                                android:background="@drawable/button_black_bg">-->
-                        <!--                                <EditText-->
-                        <!--                                    android:id="@+id/menu_option_listening_duration_editText"-->
-                        <!--                                    android:layout_width="match_parent"-->
-                        <!--                                    android:layout_height="match_parent"-->
-                        <!--                                    android:layout_gravity="center_horizontal|center_vertical"-->
-                        <!--                                    android:textAlignment="center"-->
-                        <!--                                    android:layout_marginStart="10dp"-->
-                        <!--                                    android:textSize="15sp"-->
-                        <!--                                    android:background="@null"-->
-                        <!--                                    android:hint="@string/menu_option_listening_duration_hint_fr"-->
-                        <!--                                    android:inputType="number"-->
-                        <!--                                    android:importantForAutofill="noExcludeDescendants"-->
-                        <!--                                    android:textColor="#FFFFFF"-->
-                        <!--                                    android:textColorHint="#FFFFFF"/>-->
-                        <!--                            </LinearLayout>-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; listening_attempt &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_listening_attempt_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="30dp"-->
-                        <!--                            android:layout_marginTop="5dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_listening_attempt_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_listening_attempt_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <LinearLayout-->
-                        <!--                                android:id="@+id/menu_option_listening_attempt_editText_lyt"-->
-                        <!--                                android:layout_width="350dp"-->
-                        <!--                                android:layout_height="30dp"-->
-                        <!--                                android:layout_gravity="end|center_vertical"-->
-                        <!--                                android:gravity="center_vertical"-->
-                        <!--                                android:background="@drawable/button_black_bg">-->
-                        <!--                                <EditText-->
-                        <!--                                    android:id="@+id/menu_option_listening_attempt_editText"-->
-                        <!--                                    android:layout_width="match_parent"-->
-                        <!--                                    android:layout_height="match_parent"-->
-                        <!--                                    android:layout_gravity="center_horizontal|center_vertical"-->
-                        <!--                                    android:textAlignment="center"-->
-                        <!--                                    android:layout_marginStart="10dp"-->
-                        <!--                                    android:textSize="15sp"-->
-                        <!--                                    android:background="@null"-->
-                        <!--                                    android:hint="@string/menu_option_listening_attempt_hint_fr"-->
-                        <!--                                    android:inputType="number"-->
-                        <!--                                    android:importantForAutofill="noExcludeDescendants"-->
-                        <!--                                    android:textColor="#FFFFFF"-->
-                        <!--                                    android:textColorHint="#FFFFFF"/>-->
-                        <!--                            </LinearLayout>-->
-                        <!--                        </LinearLayout>-->
+
 
                         <!-- Name/E-mail Section -->
                         <LinearLayout
@@ -606,261 +509,100 @@
                             </LinearLayout>
                         </LinearLayout>
 
+                        <!-- Ligne de séparation -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="2dp"
+                            android:layout_marginTop="10dp"
+                            android:layout_marginBottom="5dp"
+                            android:background="@drawable/rounded_bg" />
+                        <!-- options_Tracking -->
+                        <!-- option_tracking_activation -->
+                        <LinearLayout
+                            android:id="@+id/menu_option_tracking_activation_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_tracking_activation_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_tracking_activation_fr"
+                                android:textColor="#000000" />
+                            <Switch
+                                android:id="@+id/switchTrackingActivation"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginRight="30dp"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+                        </LinearLayout>
+                        <!--                         option_tracking_camera_display-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_tracking_camera_display_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_tracking_camera_display_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_tracking_camera_display_fr"
+                                android:textColor="#000000" />
+                            <Switch
+                                android:id="@+id/switchTrackingCameraDisplay"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginRight="30dp"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+                        </LinearLayout>
+<!--                        option_tracking_auto_listen-->
+                        <LinearLayout
+                            android:id="@+id/menu_option_tracking_auto_listen_lyt"
+                            android:layout_width="match_parent"
+                            android:layout_height="50dp"
+                            android:layout_gravity="center_vertical"
+                            android:orientation="horizontal">
+                            <TextView
+                                android:id="@+id/menu_option_tracking_auto_listen_textView"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center_vertical"
+                                android:layout_weight="2"
+                                android:text="@string/menu_option_tracking_auto_listen_fr"
+                                android:textColor="#000000" />
+                            <Switch
+                                android:id="@+id/switchTrackingAutoListen"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_alignParentEnd="true"
+                                android:layout_centerVertical="true"
+                                android:layout_marginRight="30dp"
+                                android:layout_marginTop="10dp"
+                                android:background="@drawable/switch_track_selector"
+                                android:thumb="@android:color/transparent"
+                                android:track="@android:color/transparent" />
+                        </LinearLayout>
 
 
 
 
 
-                        <!-- Mode Commande -->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_commande_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_commande_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_commande_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchCommande"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_BI &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_BI_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal"-->
-                        <!--                            >-->
-
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_BI_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_BI_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-
-
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchBI"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-
-                        <!--                        </LinearLayout>-->
-
-                        <!--                        &lt;!&ndash; options_Tracking &ndash;&gt;-->
-                        <!--                        &lt;!&ndash; option_tracking_activation &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_activation_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_activation_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_activation_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingActivation"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_tracking_camera_display &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_camera_display_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_camera_display_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_camera_display_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingCameraDisplay"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_tracking_head &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_head_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_head_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_head_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingHead"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_tracking_body &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_body_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_body_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_body_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingBody"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_tracking_auto_listen &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_auto_listen_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_auto_listen_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_auto_listen_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingAutoListen"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!--                        &lt;!&ndash; option_tracking_invitation &ndash;&gt;-->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_invitation_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_invitation_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_invitation_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingInvitation"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
-                        <!-- option_tracking_invitation_chatGpt -->
-                        <!--                        <LinearLayout-->
-                        <!--                            android:id="@+id/menu_option_tracking_invitation_chatGpt_lyt"-->
-                        <!--                            android:layout_width="match_parent"-->
-                        <!--                            android:layout_height="50dp"-->
-                        <!--                            android:layout_gravity="center_vertical"-->
-                        <!--                            android:orientation="horizontal">-->
-                        <!--                            <TextView-->
-                        <!--                                android:id="@+id/menu_option_tracking_invitation_chatGpt_textView"-->
-                        <!--                                android:layout_width="0dp"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_gravity="center_vertical"-->
-                        <!--                                android:layout_weight="2"-->
-                        <!--                                android:text="@string/menu_option_tracking_invitation_chatGpt_fr"-->
-                        <!--                                android:textColor="#000000" />-->
-                        <!--                            <Switch-->
-                        <!--                                android:id="@+id/switchTrackingInvitationChatGpt"-->
-                        <!--                                android:layout_width="wrap_content"-->
-                        <!--                                android:layout_height="wrap_content"-->
-                        <!--                                android:layout_alignParentEnd="true"-->
-                        <!--                                android:layout_centerVertical="true"-->
-                        <!--                                android:layout_marginRight="30dp"-->
-                        <!--                                android:layout_marginTop="10dp"-->
-                        <!--                                android:background="@drawable/switch_track_selector"-->
-                        <!--                                android:thumb="@android:color/transparent"-->
-                        <!--                                android:track="@android:color/transparent" />-->
-                        <!--                        </LinearLayout>-->
 
 
                     </LinearLayout>
@@ -917,11 +659,6 @@
                 android:text="Title"
                 android:textAppearance="?android:attr/textAppearanceLarge" />
 
-            <!--            <ListView-->
-            <!--                android:id="@+id/dialogListView"-->
-            <!--                android:layout_width="match_parent"-->
-            <!--                android:layout_height="wrap_content"-->
-            <!--                android:layout_marginTop="10dp" />-->
 
 
 
