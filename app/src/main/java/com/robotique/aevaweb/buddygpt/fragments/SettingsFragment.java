@@ -1165,7 +1165,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new MainFragment())
-                    .commit();
+                    .commitAllowingStateLoss();
         }
     }
 

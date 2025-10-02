@@ -2,7 +2,7 @@
     <string name="app_name">BuddyGPT</string>
     <string name="path">/storage/emulated/0/</string>
     <string name="pathConfig">/storage/emulated/0/BuddyGPT/</string>
-    <string name="copyright">[Ver. 1.4.2] 2025©Teamnet</string>
+    <string name="copyright">[Ver. 1.4.5] 2025©Teamnet</string>
     <!-- Menu de paramètres -->
     <!-- Menu de paramètres french-->
     <string name="menu_title_fr">PARAMETRES</string>
@@ -245,15 +245,8 @@
     <string name="toast_stt_android_indispo_de">STT Android nicht verfügbar</string>
 
 
-    <!-- Page openAi -->
-
     <!--french-->
-    <string name="consommation_title_fr">Consommation OpenAI</string>
-    <string name="consommation_title_2_fr">Consommation d\'openAI en $</string>
-    <string name="model_fr">Modèle</string>
-    <string name="input_fr">Entrée ($)</string>
-    <string name="output_fr">Sortie ($)</string>
-    <string name="toast_pricing_indispo_fr">Prix OpenAi non disponible</string>
+    
     <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
     <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
@@ -263,12 +256,6 @@
     <string name="toast_teamgpt_session_fr">Une nouvelle session a été créée</string>
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
     <!--english-->
-    <string name="consommation_title_en">OpenAI Consumption</string>
-    <string name="consommation_title_2_en">OpenAI consumption in $</string>
-    <string name="model_en">Model</string>
-    <string name="input_en">Input ($)</string>
-    <string name="output_en">Ouput ($)</string>
-    <string name="toast_pricing_indispo_en">OpenAI price not available</string>
     <string name="toast_teamgpt_key_indispo_en">TeamGPT key not inserted</string>
     <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
     <string name="toast_teamgpt_invalid_en">Attention !</string>
@@ -279,28 +266,16 @@
     <string name="toast_teamgpt_env_invalid_en">Connection to TeamGPT failed.\nUnable to connect. Please check your configuration.</string>
 
     <!-- spanish -->
-    <string name="consommation_title_es">Consumo OpenAI</string>
-    <string name="consommation_title_2_es">Consumo openAI en $</string>
-    <string name="model_es">Modelo</string>
-    <string name="input_es">Entrada ($)</string>
-    <string name="output_es">Salida ($)</string>
-    <string name="toast_pricing_indispo_es">Precio de OpenAI no disponible</string>
+   
     <string name="toast_teamgpt_key_indispo_es">la clave teamgpt no insertada</string>
     <string name="toast_teamgpt_key_invalid_es">La clave no es válida</string>
     <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
     <string name="toast_teamgpt_invalid_es">Atención !</string>
     <!-- allemand -->
-    <string name="consommation_title_de">OpenAI Konsum</string>
-    <string name="consommation_title_2_de">OpenAI-Verbrauch in $</string>
-    <string name="model_de">Modell</string>
-    <string name="input_de">Eingabe ($)</string>
-    <string name="output_de">Ausgabe ($)</string>
-    <string name="toast_pricing_indispo_de">OpenAI-Preis nicht verfügbar</string>
+    
     <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
     <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
     <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>
     <string name="toast_teamgpt_invalid_de">Aufmerksamkeit !</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
 
 </resources>

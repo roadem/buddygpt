@@ -194,11 +194,11 @@
     <!--  Custom Toasts  -->
     <RelativeLayout
         android:id="@+id/custom_toast_info"
-        android:layout_width="760px"
+        android:layout_width="740px"
         android:layout_height="100px"
         android:layout_marginTop="20px"
+        android:layout_marginStart="260px"
         android:background="@drawable/toast_bg"
-        android:layout_centerHorizontal="true"
         android:visibility="gone">
         <ImageView
             android:layout_width="36px"

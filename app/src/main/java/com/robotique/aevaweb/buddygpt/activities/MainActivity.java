@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
 
 import com.bfr.buddy.ui.shared.FacialExpression;
 import com.bfr.buddy.ui.shared.GazePosition;
@@ -32,7 +33,9 @@ import com.chaquo.python.Python;
 import com.chaquo.python.android.AndroidPlatform;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
+import com.robotique.aevaweb.buddygpt.fragments.ChatFragment;
 import com.robotique.aevaweb.buddygpt.fragments.MainFragment;
+import com.robotique.aevaweb.buddygpt.fragments.SettingsFragment;
 import com.robotique.aevaweb.buddygpt.observers.IDBObserver;
 import com.robotique.aevaweb.buddygpt.utilis.CustomToast;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
@@ -63,7 +66,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private PoseTracking poseTracking;
     private ExecutorService backgroundExecutor;
-    private ProcessCameraProvider cameraProvider;
     private String initOrMajOrNone = "";
     private Handler handlerForSensor;
     private Runnable runnableForSensor;
@@ -159,7 +161,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         } catch (Exception e) {
             Log.e(TAG, "BuddySDK Exception  " + e);
         }
-        if (cameraProvider != null) cameraProvider.unbindAll();
     }
 
     @Override
@@ -241,11 +242,33 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     public void update(String message) {
         if (message != null && message.contains("properties file done")) {
             Log.i(TAG, "update: properties file done");
+            Log.i(TAG, "mainactivity initOrMajOrNone "+message.split(";SPLIT;")[1] );
+
             buddyGPTApplication.setNotYet(false);
-            runOnUiThread(() -> getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new MainFragment())
-                    .commit());
+
+            runOnUiThread(() -> {
+                Fragment current = getSupportFragmentManager().findFragmentById(R.id.fragment_container);
+
+                if (current instanceof SettingsFragment) {
+                    Log.i(TAG, "update: properties file done but SettingsFragment is active -> skip replace");
+                    return;
+                }
+                if (current instanceof ChatFragment) {
+                    Log.i(TAG, "update: properties file done but ChatFragment is active -> skip replace");
+                    return;
+                }
+                if (!isFinishing() && !getSupportFragmentManager().isStateSaved()) {
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
+                            .commit();
+                } else {
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
+                            .commitAllowingStateLoss();
+                }
+            });
         }
 
 
@@ -316,6 +339,5 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             buddyGPTApplication.hideSystemUI(this);
         }
     }
-
 
 }

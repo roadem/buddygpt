@@ -848,7 +848,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new MainFragment())
-                    .commit();
+                    .commitAllowingStateLoss();
             getActivity().overridePendingTransition(0, 0);
         }
 
@@ -1529,4 +1529,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
         adapter.setData(mDataset);
         scroll();
     }
+
+
 }

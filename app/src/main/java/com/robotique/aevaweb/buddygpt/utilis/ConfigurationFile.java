@@ -171,7 +171,7 @@ public class ConfigurationFile {
             setProperty("Message_Timeout_NotRespected_de", "Es dauert ein wenig, die Verbindung ist ein wenig langsam./ohh! Das Internet ist heute nicht sehr schnell/Einen Moment, ich schließe meine Schaltkreise.");
 
             props.addPropertyComment("Display_of_speech", "");
-            props.addPropertyComment("Display_of_speech", "Speech display, Emotion activation, Language detection");
+            props.addPropertyComment("Display_of_speech", "Speech display, Emotion activation, Language detection ,Tracking");
             setProperty("Display_of_speech", "Yes");
             setProperty("Activation_of_emotions", "Yes");
             setProperty("Language_detection", "Yes");

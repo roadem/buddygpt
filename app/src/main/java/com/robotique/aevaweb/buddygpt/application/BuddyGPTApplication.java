@@ -44,6 +44,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentActivity;
 
 import com.bfr.buddy.speech.shared.ISTTCallback;
 import com.bfr.buddy.speech.shared.ITTSCallback;
@@ -561,7 +562,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public void init() {
+    public void init(String initOrMajOrNone) {
         Log.e(TAG, "init");
 
         String number_attempt = getParamFromFile("Number_listens",configurationFilePseudo);
@@ -583,7 +584,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         initLanguageDetectionSetting();
         initChatTextSize();
         initTracking();
-        notifyObservers("properties file done");
+
+        notifyObservers("properties file done;SPLIT;"+initOrMajOrNone);
     }
 
     public String getIMEI() {
@@ -840,12 +842,18 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     private void initTracking(){
+        Log.i(TAG, "initTracking: init");
 
         //Tracking activation
         if (getparam("Tracking_Activation").equals("")) {
-            setparam("Tracking_Activation", getParamFromFile("Tracking",configurationFilePseudo).toLowerCase());
-        }
+            if(getParamFromFile("Tracking",configurationFilePseudo).equalsIgnoreCase("Yes")){
+                Log.i(TAG, "initTracking: value "+getparam("Tracking_Activation"));
+                setparam("Tracking_Activation","True");
+            }else
+               setparam("Tracking_Activation","False");
 
+
+        }
 
 
 
@@ -886,10 +894,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
     //#region ******************************************************* STT **********************************************************************
 
-    //#region ******************************************************* blue mic *******************************************************
-
-
-    //#endregion ******************************************************* blue mic *******************************************************
 
     //#region ******************************************************* STT Cerence Local fcf **********************************************************************
 
@@ -944,126 +948,132 @@ public class BuddyGPTApplication extends BuddyApplication {
                     .addOnSuccessListener(translatedText -> toastSttAndroidIndispo = translatedText)
                     .addOnFailureListener(e -> toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en));
         }
-        activity.runOnUiThread(() -> {
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(() -> {
+            if (activity != null && !activity.isFinishing()) {
+                activity.runOnUiThread(() -> {
 
-            //USE BLUE MIC
+                    //USE BLUE MIC
 
 
-            try {
-                speechRecognizer.startListening(speechRecognizerIntent2);
-                if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
-                    showToast(toastSttAndroidIndispo);
-                }
-                speechRecognizer.setRecognitionListener(new RecognitionListener() {
-                    @Override
-                    public void onReadyForSpeech(Bundle bundle) {
-                        Log.e(TAG, "onReadyForSpeech");
-                    }
-
-                    @Override
-                    public void onBeginningOfSpeech() {
-                        Log.e(TAG, "onBeginningOfSpeech");
-                    }
-
-                    @Override
-                    public void onRmsChanged(float v) {
-                        Log.e(TAG, "onRmsChanged");
-
-                    }
-
-                    @Override
-                    public void onBufferReceived(byte[] bytes) {
-                        Log.e(TAG, "Hotword onBufferReceived listening  : ");
-                    }
-
-                    @Override
-                    public void onEndOfSpeech() {
-                        Log.e(TAG, "Hotword onEndOfSpeech listening  : ");
-                    }
-
-                    @Override
-                    public void onError(int i) {
-                        switch (i) {
-                            case SpeechRecognizer.ERROR_AUDIO:
-                                Log.d(TAG, "Audio recording error");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_AUDIO", "Audio recording error");
-                                break;
-                            case SpeechRecognizer.ERROR_CLIENT:
-                                Log.d(TAG, "Client side error");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_CLIENT", "Client side error");
-                                break;
-                            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
-                                Log.d(TAG, "Insufficient permissions");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS", "Insufficient permissions");
-                                break;
-                            case SpeechRecognizer.ERROR_NETWORK:
-                                Log.d(TAG, "Network error");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NETWORK", "Network error");
-                                break;
-                            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
-                                Log.d(TAG, "Network timeout");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NETWORK_TIMEOUT", "Network timeout");
-                                break;
-                            case SpeechRecognizer.ERROR_NO_MATCH:
-                                Log.d(TAG, "No match");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NO_MATCH", "No match");
-                                break;
-                            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                                Log.d(TAG, "RecognitionService busy");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_RECOGNIZER_BUSY", "RecognitionService busy");
-                                break;
-                            case SpeechRecognizer.ERROR_SERVER:
-                                Log.d(TAG, "Server error");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_SERVER", "Server error");
-                                break;
-                            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
-                                Log.d(TAG, "No speech input");
-                                logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_SPEECH_TIMEOUT", "No speech input");
-                                break;
-                            default:
-                                Log.d(TAG, "Unknown error");
-                                logErrorSTTAndroid(i, "Unknown error", "Unknown error");
-                                break;
-                        }
+                    try {
                         speechRecognizer.startListening(speechRecognizerIntent2);
-                    }
-
-                    @Override
-                    public void onResults(Bundle bundle) {
-                        ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                        if (data != null && !data.isEmpty()) {
-                            Log.e(TAG, "Hotword result  : " + data.get(0));
-                            checkTheHotword(data.get(0));
-                        } else {
-                            Log.e(TAG, "Hotword result  size = 0 : ");
-                            speechRecognizer.startListening(speechRecognizerIntent2);
+                        if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
+                            showToast(toastSttAndroidIndispo);
                         }
+                        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+                            @Override
+                            public void onReadyForSpeech(Bundle bundle) {
+                                Log.e(TAG, "onReadyForSpeech");
+                            }
+
+                            @Override
+                            public void onBeginningOfSpeech() {
+                                Log.e(TAG, "onBeginningOfSpeech");
+                            }
+
+                            @Override
+                            public void onRmsChanged(float v) {
+                                Log.e(TAG, "onRmsChanged");
+
+                            }
+
+                            @Override
+                            public void onBufferReceived(byte[] bytes) {
+                                Log.e(TAG, "Hotword onBufferReceived listening  : ");
+                            }
+
+                            @Override
+                            public void onEndOfSpeech() {
+                                Log.e(TAG, "Hotword onEndOfSpeech listening  : ");
+                            }
+
+                            @Override
+                            public void onError(int i) {
+                                switch (i) {
+                                    case SpeechRecognizer.ERROR_AUDIO:
+                                        Log.d(TAG, "Audio recording error");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_AUDIO", "Audio recording error");
+                                        break;
+                                    case SpeechRecognizer.ERROR_CLIENT:
+                                        Log.d(TAG, "Client side error");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_CLIENT", "Client side error");
+                                        break;
+                                    case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                                        Log.d(TAG, "Insufficient permissions");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS", "Insufficient permissions");
+                                        break;
+                                    case SpeechRecognizer.ERROR_NETWORK:
+                                        Log.d(TAG, "Network error");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NETWORK", "Network error");
+                                        break;
+                                    case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                                        Log.d(TAG, "Network timeout");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NETWORK_TIMEOUT", "Network timeout");
+                                        break;
+                                    case SpeechRecognizer.ERROR_NO_MATCH:
+                                        Log.d(TAG, "No match");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NO_MATCH", "No match");
+                                        break;
+                                    case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                                        Log.d(TAG, "RecognitionService busy");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_RECOGNIZER_BUSY", "RecognitionService busy");
+                                        break;
+                                    case SpeechRecognizer.ERROR_SERVER:
+                                        Log.d(TAG, "Server error");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_SERVER", "Server error");
+                                        break;
+                                    case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                                        Log.d(TAG, "No speech input");
+                                        logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_SPEECH_TIMEOUT", "No speech input");
+                                        break;
+                                    default:
+                                        Log.d(TAG, "Unknown error");
+                                        logErrorSTTAndroid(i, "Unknown error", "Unknown error");
+                                        break;
+                                }
+                                speechRecognizer.startListening(speechRecognizerIntent2);
+                            }
+
+                            @Override
+                            public void onResults(Bundle bundle) {
+                                ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                                if (data != null && !data.isEmpty()) {
+                                    Log.e(TAG, "Hotword result  : " + data.get(0));
+                                    checkTheHotword(data.get(0));
+                                } else {
+                                    Log.e(TAG, "Hotword result  size = 0 : ");
+                                    speechRecognizer.startListening(speechRecognizerIntent2);
+                                }
+                            }
+
+                            @Override
+                            public void onPartialResults(Bundle bundle) {
+                                Log.e(TAG, "Hotword onPartialResults listening  : ");
+                                ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                                if (data != null && !data.isEmpty()) {
+                                    Log.e(TAG, "Hotword result onPartialResults  : " + data.get(0));
+                                    checkTheHotword(data.get(0));
+                                } else {
+                                    Log.e(TAG, "Hotword result onPartialResults size = 0 : ");
+                                }
+                            }
+
+                            @Override
+                            public void onEvent(int i, Bundle bundle) {
+                                Log.e(TAG, "Hotword onEvent listening  : ");
+                            }
+
+                        });
+                    } catch (Exception e) {
+                        Log.e(TAG, "Runnable : Erreur pendant la vérification [isReadyToListen] - Hotword : " + e);
                     }
 
-                    @Override
-                    public void onPartialResults(Bundle bundle) {
-                        Log.e(TAG, "Hotword onPartialResults listening  : ");
-                        ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                        if (data != null && !data.isEmpty()) {
-                            Log.e(TAG, "Hotword result onPartialResults  : " + data.get(0));
-                            checkTheHotword(data.get(0));
-                        } else {
-                            Log.e(TAG, "Hotword result onPartialResults size = 0 : ");
-                        }
-                    }
-
-                    @Override
-                    public void onEvent(int i, Bundle bundle) {
-                        Log.e(TAG, "Hotword onEvent listening  : ");
-                    }
 
                 });
-            } catch (Exception e) {
-                Log.e(TAG, "Runnable : Erreur pendant la vérification [isReadyToListen] - Hotword : " + e);
             }
-
-
         });
+
 
     }
 
@@ -1520,41 +1530,45 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void stopListening(Activity activity) {
 
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(() -> {
+                    if (activity != null && !activity.isFinishing() ) {
+                        activity.runOnUiThread(() -> {
 
-        activity.runOnUiThread(() -> {
+                            stopProcessus = true;
 
-            stopProcessus = true;
+                            if (handlerListeningHotword != null && runnableListeningHotword != null) {
 
-            if (handlerListeningHotword != null && runnableListeningHotword != null) {
+                                handlerListeningHotword.removeCallbacksAndMessages(null);
+                                handlerListeningHotword.removeCallbacks(runnableListeningHotword);
 
-                handlerListeningHotword.removeCallbacksAndMessages(null);
-                handlerListeningHotword.removeCallbacks(runnableListeningHotword);
-
-            }
-            try {
-                if (speechRecognizer != null) {
-                    speechRecognizer.stopListening();
-                    speechRecognizer.stopListening();
-                    speechRecognizer.destroy();
-                }
-            } catch (Exception e) {
-                Log.i(TAG, "stopListening: " + e);
-            }
-            if (freeSpeechSttTask != null) {
-                Log.w(TAG, "stopListeningFreeSpeechStt");
-                try {
-                    freeSpeechSttTask.stop();
-                } catch (Exception e) {
-                    Log.e(TAG, "Erreur pendant l'arrêt d'écoute STT Free Speech : " + e);
-                }
-            }
+                            }
+                            try {
+                                if (speechRecognizer != null) {
+                                    speechRecognizer.stopListening();
+                                    speechRecognizer.stopListening();
+                                    speechRecognizer.destroy();
+                                }
+                            } catch (Exception e) {
+                                Log.i(TAG, "stopListening: " + e);
+                            }
+                            if (freeSpeechSttTask != null) {
+                                Log.w(TAG, "stopListeningFreeSpeechStt");
+                                try {
+                                    freeSpeechSttTask.stop();
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Erreur pendant l'arrêt d'écoute STT Free Speech : " + e);
+                                }
+                            }
 
 
-            stopRecording();
+                            stopRecording();
 
 
-        });
+                        });
 
+                    }
+                });
         setLed("Neutral");
 
 
@@ -2694,7 +2708,9 @@ public class BuddyGPTApplication extends BuddyApplication {
     public String createPropertiesFile() {
         File directory = new File(getString(R.string.path), "BuddyGPT");
         String initOrMajOrNone = ConfigurationFile.createConfigurationFile(directory);
-        init();
+        Log.i(TAG, "createPropertiesFile: initOrMajOrNone "+initOrMajOrNone );
+
+        init(initOrMajOrNone);
         notYet = false;
         return initOrMajOrNone;
     }
