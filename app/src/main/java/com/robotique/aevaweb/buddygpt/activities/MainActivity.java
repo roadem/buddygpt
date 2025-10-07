@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.RemoteException;
 import android.util.Log;
 import android.view.View;
@@ -56,7 +57,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     };
     private static final int PERMISSION_REQ_ID = 22;
     private final WifiBroadcastReceiver wifiBroadCastReceiver = new WifiBroadcastReceiver();
-    private final boolean isFirstLaunch = true; // Used to init TeamGPT params only once
     private final Handler handlerTTSError = new Handler();
     private final Handler handler = new Handler();
     private BuddyGPTApplication buddyGPTApplication;
@@ -97,7 +97,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.setparam("session_id", "");
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
-
+        buddyGPTApplication.setparam("TeamGPT_ID_Device","");
         buddyGPTApplication.setSpeaking(false);
         buddyGPTApplication.setNotYet(true);
         buddyGPTApplication.setActivityClosed(false);
@@ -242,7 +242,9 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     public void update(String message) {
         if (message != null && message.contains("properties file done")) {
             Log.i(TAG, "update: properties file done");
-            Log.i(TAG, "mainactivity initOrMajOrNone "+message.split(";SPLIT;")[1] );
+            Log.i(TAG, "mainactivity initOrMajOrNone " + message.split(";SPLIT;")[1]);
+            initOrMajOrNone = message.split(";SPLIT;")[1];
+            Log.i(TAG, "onDownloadEnd: initOrMajOrNone " + initOrMajOrNone);
 
             buddyGPTApplication.setNotYet(false);
 
@@ -257,22 +259,25 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     Log.i(TAG, "update: properties file done but ChatFragment is active -> skip replace");
                     return;
                 }
-                if (!isFinishing() && !getSupportFragmentManager().isStateSaved()) {
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
-                            .commit();
-                } else {
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
-                            .commitAllowingStateLoss();
-                }
+
+                // Attendre 2 secondes (2000 ms) avant de changer de fragment
+                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                    if (!isFinishing() && !getSupportFragmentManager().isStateSaved()) {
+                        getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
+                                .commit();
+                    } else {
+                        getSupportFragmentManager()
+                                .beginTransaction()
+                                .replace(R.id.fragment_container, MainFragment.newInstance(initOrMajOrNone))
+                                .commitAllowingStateLoss();
+                    }
+                }, 1000);
             });
         }
-
-
     }
+
 
     /**
      * ----------------- Utils ---------------------------
@@ -281,7 +286,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private void init() {
         Log.e(TAG, "init() ");
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
-        Log.i(TAG, "init: isFirstLaunch " + isFirstLaunch);
 
 
 

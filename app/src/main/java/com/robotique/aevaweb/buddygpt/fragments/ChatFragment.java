@@ -844,7 +844,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
             } catch (Exception e) {
                 Log.e(TAG, BUDDY_SDK_EXCEPTION + e);
             }
-
+            buddyGPTApplication.setFirstLaunch(false);
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new MainFragment())
@@ -1311,18 +1311,8 @@ public class ChatFragment extends Fragment implements IDBObserver {
                 } else {
                     buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                             .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    buddyGPTApplication.showInputDialog(getActivity(), translatedText,"Attention !");
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                                }
-                            });
+                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(getActivity(), translatedText,"Attention !"))
+                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
                 }
 
 

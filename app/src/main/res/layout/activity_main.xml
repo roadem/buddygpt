@@ -11,6 +11,31 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <!--  Custom Toasts  -->
+    <RelativeLayout
+        android:id="@+id/custom_toast_info"
+        android:layout_width="740px"
+        android:layout_height="100px"
+        android:layout_marginTop="20px"
+        android:layout_marginStart="260px"
+        android:background="@drawable/toast_bg"
+        android:visibility="gone">
+        <ImageView
+            android:layout_width="36px"
+            android:layout_height="36px"
+            android:layout_centerVertical="true"
+            android:layout_marginHorizontal="10px"
+            android:src="@drawable/toast_info_icon"/>
+        <TextView
+            android:id="@+id/info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#2B2B2B"
+            android:textSize="36px"
+            android:textAlignment="textStart"
+            android:layout_marginStart="56px"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
     <!--  MLkit Download View  -->
     <RelativeLayout
         android:id="@+id/launch_view"

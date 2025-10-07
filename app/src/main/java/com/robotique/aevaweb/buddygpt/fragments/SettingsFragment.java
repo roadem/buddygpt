@@ -451,21 +451,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         buddyGPTApplication.removeObserver(this);
     }
 
-    public static void avoidSpinnerDropdownFocus(Spinner spinner) {
-        try {
-            Field listPopupField = Spinner.class.getDeclaredField("mPopup");
-            Object listPopup = listPopupField.get(spinner);
-            if (listPopup instanceof ListPopupWindow) {
-                Field popupField = ListPopupWindow.class.getDeclaredField("mPopup");
-                Object popup = popupField.get(listPopup);
-                if (popup instanceof PopupWindow) {
-                    ((PopupWindow) popup).setFocusable(false);
-                }
-            }
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
-        }
-    }
+
 
     private void setupClickListeners() {
         lytCloseMenuSettings.setOnClickListener(v -> btnCloseSettingsFragment());
@@ -513,7 +499,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 langues
         );
         menuOptionLangueSpinner.setAdapter(langueSpinnerAdapter);
-        avoidSpinnerDropdownFocus(menuOptionLangueSpinner);
     }
 
 
@@ -616,7 +601,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 R.id.checked_item_checked,
                 sttList);
         menuOptionSttSpinner.setAdapter(sttSpinnerAdapter);
-        avoidSpinnerDropdownFocus(menuOptionSttSpinner);
         for (int i = 0; i < sttList.size(); i++) {
             if (sttList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("STT"))) {
                 chosenSTTPos = i;
@@ -665,7 +649,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 R.id.checked_item_checked,
                 ttsList);
         menuOptionTtsSpinner.setAdapter(ttsSpinnerAdapter);
-        avoidSpinnerDropdownFocus(menuOptionTtsSpinner);
         for (int i = 0; i < ttsList.size(); i++) {
             if (ttsList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("TTS"))) {
                 chosenTTSPos = i;
@@ -1160,6 +1143,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         // Save settings if needed
         buddyGPTApplication.setSetting(set);
         buddyGPTApplication.setFileCreate(true);
+        buddyGPTApplication.setFirstLaunch(false);
         // Replace SettingsFragment with MainFragment (only if still attached)
         if (getActivity() != null && isAdded()) {
             getActivity().getSupportFragmentManager()

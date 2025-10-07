@@ -133,6 +133,15 @@ public class BuddyGPTApplication extends BuddyApplication {
     private final Intent speechRecognizerIntent2 = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     int max;
     boolean stopTTSReadSpeaker = false;
+
+    boolean isFirstLaunch = true;
+    public boolean isFirstLaunch() {
+        return isFirstLaunch;
+    }
+
+    public void setFirstLaunch(boolean firstLaunch) {
+        isFirstLaunch = firstLaunch;
+    }
     Runnable runnableListeningHotword;
     SpeechRecognizer speechRecognizer;
     int remainingAttempts;
@@ -625,7 +634,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             setparam(listeningAttemptPseudo, String.valueOf(listeningAttempt));
         }
         remainingAttempts = listeningAttempt - 1;
-        Log.i(TAG, "initListeningSettings: HOU " + getParamFromFile("Listening_time", configurationFilePseudo));
+        Log.i(TAG, "initListeningSettings: " + getParamFromFile("Listening_time", configurationFilePseudo));
     }
 
 
@@ -1196,11 +1205,17 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void startListeningQuestion(Activity activity) {
         Log.e(TAG, "startListeningFreeSpeechStt fonction start");
-        activity.runOnUiThread(this::listeningAnimation);
+
+        // Post sur le thread UI de façon sûre (activity peut être null / finishing)
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(this::listeningAnimation);
+
         alreadyGetAnswer = false;
         questionNumber++;
         currentEmotion = "";
         shouldPlayEmotion = false;
+
+        // Arrêter l'écoute précédente (garde l'usage de activity)
         stopListening(activity);
 
         if (getCurrentLanguage().equals("en")) {
@@ -1217,7 +1232,9 @@ public class BuddyGPTApplication extends BuddyApplication {
                     .addOnSuccessListener(translatedText -> toastSttAndroidIndispo = translatedText)
                     .addOnFailureListener(e -> toastSttAndroidIndispo = getString(R.string.toast_stt_android_indispo_en));
         }
-        activity.runOnUiThread(() -> {
+
+        // Exécuter la logique d'initialisation STT sur le thread UI (sans dépendre d'un activity non-null)
+        mainHandler.post(() -> {
             try {
                 Log.i(TAG, "startListeningQuestion: test");
                 speechRecognizer.startListening(speechRecognizerIntent);
@@ -1229,14 +1246,11 @@ public class BuddyGPTApplication extends BuddyApplication {
                     @Override
                     public void onReadyForSpeech(Bundle bundle) {
                         Log.e(TAG, " listen start");
-
                     }
 
                     @Override
                     public void onBeginningOfSpeech() {
                         Log.i(TAG, "start listen");
-
-
                     }
 
                     @Override
@@ -1256,7 +1270,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                     @Override
                     public void onError(int i) {
-
                         Log.i(TAG, "onError listening");
                         switch (i) {
                             case SpeechRecognizer.ERROR_AUDIO:
@@ -1300,8 +1313,12 @@ public class BuddyGPTApplication extends BuddyApplication {
                                 logErrorSTTAndroid(i, "Unknown error", "Unknown error");
                                 break;
                         }
-                        speechRecognizer.startListening(speechRecognizerIntent);
-
+                        // relancer l'écoute
+                        try {
+                            speechRecognizer.startListening(speechRecognizerIntent);
+                        } catch (Exception ex) {
+                            Log.e(TAG, "Failed to restart speechRecognizer after error", ex);
+                        }
                     }
 
                     @Override
@@ -1314,7 +1331,11 @@ public class BuddyGPTApplication extends BuddyApplication {
                             setLed("neutral");
                         } else {
                             Log.e(TAG, "question result onResults size = 0 : ");
-                            speechRecognizer.startListening(speechRecognizerIntent);
+                            try {
+                                speechRecognizer.startListening(speechRecognizerIntent);
+                            } catch (Exception ex) {
+                                Log.e(TAG, "Failed to restart speechRecognizer on empty results", ex);
+                            }
                         }
                     }
 
@@ -1325,7 +1346,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onPartialResults  : " + data.get(0));
                             if (!data.get(0).trim().equals("")) {
-                                Log.e(TAG, "question result onPartialResults  : " + data.get(0));
                                 notifyObservers("STTQuestion_success;" + data.get(0));
                                 BuddySDK.UI.stopListenAnimation();
                                 setLed("neutral");
@@ -1345,12 +1365,9 @@ public class BuddyGPTApplication extends BuddyApplication {
             } catch (Exception e) {
                 Log.e(TAG, "Runnable : Erreur pendant la vérification [isReadyToListen] : " + e);
             }
-
-
         });
-
-
     }
+
 
     public void logErrorSTTAndroid(int code, String type, String message) {
         String errorTXT = new Date() + ", STTAndroidERROR,ERROR CODE= " + code + ", ERROR Body{ type= " + type + ", message= " + message + "}" + System.getProperty("line.separator");

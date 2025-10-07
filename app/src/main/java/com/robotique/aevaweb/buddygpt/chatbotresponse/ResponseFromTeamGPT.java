@@ -829,7 +829,79 @@ public class ResponseFromTeamGPT {
     }
 
 
+    /**
+     * Simple asynchronous HTTP helper using HttpURLConnection.
+     * Usage: asyncHttpRequest(url, "POST", jsonBody, headersMap, new AsyncHttpCallback{...});
+     */
+    public interface AsyncHttpCallback {
+        void onSuccess(String body, int statusCode);
+        void onFailure(Exception e);
+    }
 
+    public void asyncHttpRequest(String urlString,
+                                 String method,
+                                 String jsonBody,
+                                 java.util.Map<String, String> headers,
+                                 AsyncHttpCallback callback) {
+        if (urlString == null || callback == null) return;
+        new Thread(() -> {
+            HttpURLConnection con = null;
+            try {
+                URL url = new URL(urlString);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod(method != null ? method : "GET");
+                con.setConnectTimeout(15000);
+                con.setReadTimeout(15000);
+                // Apply headers
+                if (headers != null) {
+                    for (java.util.Map.Entry<String, String> entry : headers.entrySet()) {
+                        if (entry.getKey() != null && entry.getValue() != null)
+                            con.setRequestProperty(entry.getKey(), entry.getValue());
+                    }
+                }
+                // Write body for POST/PUT
+                if (jsonBody != null && ("POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method))) {
+                    con.setDoOutput(true);
+                    con.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+                    byte[] input = jsonBody.getBytes(StandardCharsets.UTF_8);
+                    try (OutputStream os = con.getOutputStream()) {
+                        os.write(input, 0, input.length);
+                        os.flush();
+                    }
+                }
+                int status = con.getResponseCode();
+                InputStream is = (status >= 200 && status < 400) ? con.getInputStream() : con.getErrorStream();
+                StringBuilder sb = new StringBuilder();
+                if (is != null) {
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            sb.append(line).append('\n');
+                        }
+                    }
+                }
+                final String body = sb.toString();
+                final int finalStatus = status;
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        callback.onSuccess(body, finalStatus);
+                    } catch (Exception e) {
+                        Log.e(TAG_STREAM, "asyncHttpRequest callback onSuccess failed", e);
+                    }
+                });
+            } catch (Exception e) {
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    try {
+                        callback.onFailure(e);
+                    } catch (Exception ex) {
+                        Log.e(TAG_STREAM, "asyncHttpRequest callback onFailure failed", ex);
+                    }
+                });
+            } finally {
+                if (con != null) con.disconnect();
+            }
+        }).start();
+    }
     public void reset() {
         Log.i(TAG_STREAM, "------------------reset-------------------");
         isReset = true;
