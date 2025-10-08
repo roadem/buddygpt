@@ -48,7 +48,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
     private static final String TAG = "BuddyGPT_MainActivity";
     private static final String TAG_TRACKING = "BuddyGPT_TRACKING_INFO";
-    private static final String[] REQUESTED_PERMISSIONS = new String[]{
+    private static final String[] REQUESTED_PERMISSIONS = new String[] {
             Manifest.permission.READ_EXTERNAL_STORAGE,
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.RECORD_AUDIO,
@@ -61,7 +61,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     private final Handler handler = new Handler();
     private BuddyGPTApplication buddyGPTApplication;
     private View decorView;
-    //views
+    // views
     private RelativeLayout viewFace;
     private boolean onSdkReadyIsAlreadyCalledOnce = false;
     private PoseTracking poseTracking;
@@ -76,6 +76,13 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
      * ------------------ App LifeCycle ---------------------
      */
 
+    /**
+     * Appelée lorsque l'activité est créée pour la première fois.
+     * Ici, on initialise l'interface utilisateur et les composants nécessaires.
+     *
+     * @param savedInstanceState Contient l'état sauvegardé de l'activité si elle
+     *                           est recréée.
+     */
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +104,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.setparam("session_id", "");
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
-        buddyGPTApplication.setparam("TeamGPT_ID_Device","");
+        buddyGPTApplication.setparam("TeamGPT_ID_Device", "");
         buddyGPTApplication.setSpeaking(false);
         buddyGPTApplication.setNotYet(true);
         buddyGPTApplication.setActivityClosed(false);
@@ -178,8 +185,10 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             buddyGPTApplication.getDialog().dismiss();
         buddyGPTApplication.setFileCreate(true);
         buddyGPTApplication.notifyObservers("main destroy");
-        if (poseTracking != null) poseTracking.stopMovingAndCancelRunnables();
-        if (backgroundExecutor != null) backgroundExecutor.shutdownNow();
+        if (poseTracking != null)
+            poseTracking.stopMovingAndCancelRunnables();
+        if (backgroundExecutor != null)
+            backgroundExecutor.shutdownNow();
 
         super.onDestroy();
     }
@@ -190,27 +199,27 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     @Override
     public void onSDKReady() {
         Log.w(TAG, "onSDKReady");
-        if(!onSdkReadyIsAlreadyCalledOnce){
-            //initialisation du visage de Buddy
+        if (!onSdkReadyIsAlreadyCalledOnce) {
+            // initialisation du visage de Buddy
             BuddySDK.UI.setFaceEnergy(1.0f);
             BuddySDK.UI.setFacePositivity(1.0f);
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL,1);
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
             BuddySDK.UI.lookAt(GazePosition.CENTER, true);
             BuddySDK.UI.stopListenAnimation();
             BuddySDK.UI.setViewAsFace(viewFace);
             BuddySDK.UI.setMenuWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
             BuddySDK.UI.setCloseWidgetVisibility(FloatingWidgetVisibility.ALWAYS);
 
-            //Désactiver le trigger Companion de la bouche et de OK BUDDY
+            // Désactiver le trigger Companion de la bouche et de OK BUDDY
             BuddySDK.Companion.raiseEvent("disableOkBuddy");
             BuddySDK.Companion.raiseEvent("disableOnMouth");
-
 
             BuddySDK.Vision.stopCamera(0, new IVisionRsp.Stub() {
                 @Override
                 public void onSuccess(String s) throws RemoteException {
                     Log.i(TAG_TRACKING, "stopCamera(0) onSuccess : " + s);
                 }
+
                 @Override
                 public void onFailed(String s) throws RemoteException {
                     Log.e(TAG_TRACKING, "stopCamera(0) onFailed : " + s);
@@ -222,13 +231,12 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
                     checkSelfPermission(REQUESTED_PERMISSIONS[2], PERMISSION_REQ_ID) &&
                     checkSelfPermission(REQUESTED_PERMISSIONS[3], PERMISSION_REQ_ID)
 
-            ){
+            ) {
                 init();
             }
         }
         onSdkReadyIsAlreadyCalledOnce = true;
     }
-
 
     @Override
     public void onEvent(EventItem iEvent) {
@@ -278,7 +286,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         }
     }
 
-
     /**
      * ----------------- Utils ---------------------------
      */
@@ -287,13 +294,11 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         Log.e(TAG, "init() ");
         initOrMajOrNone = buddyGPTApplication.createPropertiesFile();
 
-
-
-
     }
 
     /**
-     * -------------------------------  Gestion des permissions  ---------------------------------------------------------------
+     * ------------------------------- Gestion des permissions
+     * ---------------------------------------------------------------
      */
 
     private boolean checkSelfPermission(String permission, int requestCode) {
@@ -314,15 +319,17 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) throws RuntimeException {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults)
+            throws RuntimeException {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PERMISSION_REQ_ID && checkPermission(grantResults)) {
-            this.runOnUiThread(() -> Toast.makeText(getApplicationContext(), "Need permissions " + Manifest.permission.READ_EXTERNAL_STORAGE +
+            this.runOnUiThread(() -> Toast.makeText(getApplicationContext(),
+                    "Need permissions " + Manifest.permission.READ_EXTERNAL_STORAGE +
                             "/" + Manifest.permission.WRITE_EXTERNAL_STORAGE +
                             "/" + Manifest.permission.RECORD_AUDIO +
                             "/" + Manifest.permission.CAMERA +
-                            "/" + Manifest.permission.READ_PHONE_STATE
-                    , Toast.LENGTH_LONG).show());
+                            "/" + Manifest.permission.READ_PHONE_STATE,
+                    Toast.LENGTH_LONG).show());
             /*
              * Terminer l'activité si l'utilisateur n'a pas activé une autorisation
              */
@@ -333,7 +340,8 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
     }
 
     /**
-     * -------------------------------  Gestion d'affichage des barres du systemUI  ----------------------------------------------
+     * ------------------------------- Gestion d'affichage des barres du systemUI
+     * ----------------------------------------------
      */
 
     @Override
