@@ -105,6 +105,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private Spinner menuOptionSttSpinner;
     private Spinner menuOptionTtsSpinner;
     private TextView menuOptionChatbotSpinner;
+    private TextView menuSTT;
+    private TextView menuTTS;
     private TextView menuHeaderEditText;
     private EditText menuApiKeyEditText;
     private TextView menuNameText;
@@ -289,6 +291,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         menuOptionSttSpinner = view.findViewById(R.id.menu_option_stt_spinner);
         menuOptionTtsSpinner = view.findViewById(R.id.menu_option_tts_spinner);
         menuOptionChatbotSpinner = view.findViewById(R.id.menu_option_chatbot_spinner);
+        menuSTT = view.findViewById(R.id.menuSTT);
+        menuTTS = view.findViewById(R.id.menuTTS);
         menuApiKeyEditText = view.findViewById(R.id.api_key_editText);
         menuNameText = view.findViewById(R.id.user_name);
         copyRight = view.findViewById(R.id.copyright_texte);
@@ -401,16 +405,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         /**
          *  Gestion du choix STT
          */
-        String can_change_stt = buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties");
-        if(can_change_stt != null && can_change_stt.trim().equalsIgnoreCase("Yes")){
-            if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
-                menuOptionSttLyt.setVisibility(View.VISIBLE);
-
-        }
-        else{
-            menuOptionSttLyt.setVisibility(View.GONE);
-        }
-
 
         handlerSTT();
         handlerTTS();
@@ -582,104 +576,136 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
         Log.i(TAG, "handlerChatbot: HOU" + buddyGPTApplication.getparam("SelectedChatbot"));
 
-        menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getparam("chatbotModel"));//
+        menuOptionChatbotSpinner.setText(capitalizeFirst(buddyGPTApplication.getparam("SelectedChatbot") )+ " " + buddyGPTApplication.getparam("chatbotModel"));//
     }
 
     private void handlerSTT() {
+        String can_change_stt = buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties");
+        if (can_change_stt != null && can_change_stt.trim().equalsIgnoreCase("Yes")) {
+
+            menuOptionSttLyt.setVisibility(View.VISIBLE);
+            menuOptionTtsSpinner.setVisibility(View.VISIBLE);
+
+        }else{
+            menuOptionSttLyt.setVisibility(View.GONE);
+            menuOptionTtsSpinner.setVisibility(View.GONE);
+
+        }
+        if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")) {
+            menuTTS.setVisibility(View.GONE);
+
+            final List<SttModel> sttList = new ArrayList<>();
 
 
-        final List<SttModel> sttList = new ArrayList<>();
+            sttList.add(new SttModel(1, "Android", false));
+            sttList.add(new SttModel(2, "Cerence", false));
 
 
-        sttList.add(new SttModel(1, "Android", false));
-        sttList.add(new SttModel(2, "Cerence", false));
+            sttSpinnerAdapter = new SttSpinnerAdapter(getActivity().getApplicationContext(),
+                    R.layout.spinner_item_layout_resource,
+                    R.id.item_name,
+                    R.id.checked_item_checked,
+                    sttList);
+            menuOptionSttSpinner.setAdapter(sttSpinnerAdapter);
+            for (int i = 0; i < sttList.size(); i++) {
+                if (sttList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("STT"))) {
+                    chosenSTTPos = i;
 
-
-        sttSpinnerAdapter = new SttSpinnerAdapter(getActivity().getApplicationContext(),
-                R.layout.spinner_item_layout_resource,
-                R.id.item_name,
-                R.id.checked_item_checked,
-                sttList);
-        menuOptionSttSpinner.setAdapter(sttSpinnerAdapter);
-        for (int i = 0; i < sttList.size(); i++) {
-            if (sttList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("STT"))) {
-                chosenSTTPos = i;
-
-                break;
+                    break;
+                }
             }
+
+            menuOptionSttSpinner.setSelection(chosenSTTPos);
+            menuOptionSttSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                    chosenLanguagePos = position;
+                    for (SttModel stt : sttList) {
+                        stt.setChosen(false);
+                        if (stt.equals(parent.getSelectedItem())) {
+                            stt.setChosen(true);
+
+                            buddyGPTApplication.setparam("STT", stt.getNom());
+                        }
+
+                    }
+                    sttSpinnerAdapter.updateDataSet(sttList);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    // document why this method is empty
+                }
+            });
+        }
+        else {
+            menuSTT.setVisibility(View.VISIBLE);
+            menuOptionSttSpinner.setVisibility(View.GONE);
+            menuSTT.setText(capitalizeFirst(buddyGPTApplication.getparam("STT")));
         }
 
-        menuOptionSttSpinner.setSelection(chosenSTTPos);
-        menuOptionSttSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                chosenLanguagePos = position;
-                for (SttModel stt : sttList) {
-                    stt.setChosen(false);
-                    if (stt.equals(parent.getSelectedItem())) {
-                        stt.setChosen(true);
-
-                        buddyGPTApplication.setparam("STT", stt.getNom());
-                    }
-
-                }
-                sttSpinnerAdapter.updateDataSet(sttList);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // document why this method is empty
-            }
-        });
     }
 
     private void handlerTTS() {
+        Log.i(TAG, "handlerTTS: TTS-TeamGPT "+buddyGPTApplication.getparam("TTS-TeamGPT"));
+        Log.i(TAG, "handlerTTS: TTS "+buddyGPTApplication.getparam("TTS"));
+        menuOptionTtsLyt.setVisibility(View.VISIBLE);
+        if(buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local")){
+            menuTTS.setVisibility(View.GONE);
+            menuOptionTtsSpinner.setVisibility(View.VISIBLE);
+            final List<TtsModel> ttsList = new ArrayList<>();
 
-        final List<TtsModel> ttsList = new ArrayList<>();
+
+            ttsList.add(new TtsModel(1, "ReadSpeaker", false));
+            ttsList.add(new TtsModel(2, "Android", false));
 
 
-        ttsList.add(new TtsModel(1, "ReadSpeaker", false));
-        ttsList.add(new TtsModel(2, "Android", false));
+            ttsSpinnerAdapter = new TtsSpinnerAdapter(getActivity().getApplicationContext(),
+                    R.layout.spinner_item_layout_resource,
+                    R.id.item_name,
+                    R.id.checked_item_checked,
+                    ttsList);
+            menuOptionTtsSpinner.setAdapter(ttsSpinnerAdapter);
+            for (int i = 0; i < ttsList.size(); i++) {
+                if (ttsList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("TTS"))) {
+                    chosenTTSPos = i;
 
-
-        ttsSpinnerAdapter = new TtsSpinnerAdapter(getActivity().getApplicationContext(),
-                R.layout.spinner_item_layout_resource,
-                R.id.item_name,
-                R.id.checked_item_checked,
-                ttsList);
-        menuOptionTtsSpinner.setAdapter(ttsSpinnerAdapter);
-        for (int i = 0; i < ttsList.size(); i++) {
-            if (ttsList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("TTS"))) {
-                chosenTTSPos = i;
-
-                break;
+                    break;
+                }
             }
+
+            menuOptionTtsSpinner.setSelection(chosenTTSPos);
+            menuOptionTtsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+                @Override
+                public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+                    chosenLanguagePos = position;
+                    for (TtsModel tts : ttsList) {
+                        tts.setChosen(false);
+                        if (tts.equals(parent.getSelectedItem())) {
+                            tts.setChosen(true);
+
+                            buddyGPTApplication.setparam("TTS", tts.getNom());
+                        }
+
+                    }
+                    ttsSpinnerAdapter.updateDataSet(ttsList);
+                }
+
+                @Override
+                public void onNothingSelected(AdapterView<?> parent) {
+                    //  why this method is empty
+                }
+            });
+        }
+        else {
+            Log.i(TAG, "handlerTTS: else");
+            menuTTS.setVisibility(View.VISIBLE);
+            menuOptionTtsSpinner.setVisibility(View.GONE);
+            menuTTS.setText(capitalizeFirst(buddyGPTApplication.getparam("TTS")));
         }
 
-        menuOptionTtsSpinner.setSelection(chosenTTSPos);
-        menuOptionTtsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-                chosenLanguagePos = position;
-                for (TtsModel tts : ttsList) {
-                    tts.setChosen(false);
-                    if (tts.equals(parent.getSelectedItem())) {
-                        tts.setChosen(true);
-
-                        buddyGPTApplication.setparam("TTS", tts.getNom());
-                    }
-
-                }
-                ttsSpinnerAdapter.updateDataSet(ttsList);
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                //  why this method is empty
-            }
-        });
     }
 
     private void handlerTracking(){
@@ -724,7 +750,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private void handlerNameAndEmail() {
 
         Log.i(TAG, "handlerName: HOU" + buddyGPTApplication.getparam("NomCompte"));
-        menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
+        menuNameText.setText(capitalizeFirst(buddyGPTApplication.getparam("NomCompte")) + " " + buddyGPTApplication.getparam(EMAIL));
 
     }
 
@@ -914,13 +940,9 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 } else if (buddyGPTApplication.getLangue().getNom().equals(langueDE)) {
                     menuHeaderEditText.setText(buddyGPTApplication.getparam(kopfzeile));
                 }
-                if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local"))
-                    menuOptionSttLyt.setVisibility(View.VISIBLE);
-                else if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase(""))
+                if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase(""))
                     menuOptionSttLyt.setVisibility(View.GONE);
-                if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local"))
-                    menuOptionTtsLyt.setVisibility(View.VISIBLE);
-                else if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase(""))
+                if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase(""))
                     menuOptionTtsLyt.setVisibility(View.GONE);
 
                 menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getparam("chatbotModel"));
@@ -1033,6 +1055,13 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     }
 
 
+    public static String capitalizeFirst(String str) {
+        if (str == null || str.isEmpty()) {
+            return str;
+        }
+        return str.substring(0, 1).toUpperCase() + str.substring(1);
+    }
+
     @Override
     public void update(String message) {
 
@@ -1086,21 +1115,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                             .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en))
                             .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(getActivity(), translatedText, "Attention !"))
                             .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
-                }
-            }
-            if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
-                refresh(0);
-                Log.i(TAG, "afterTextChanged: invalid");
-                if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
-
-                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
-                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
-                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(getActivity(), translatedText, "Attention !"))
-                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
                 }
             }
             if (message.contains("ENV_ERROR")){

@@ -82,7 +82,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
     private static final String SPLITER = ";SPLIT;";
     private static final String NOTHEALYSA = "nothealysa";
     private static final String SESSION_TYPE = "Session";
-    private static final String INVALID_DEVICE_ID = "INVALID_TEAMGPT_DEVICE_ID";
     private static final String INVALID_KEY = "INVALID_TEAMGPT_KEY";
     private static final String TEAMGPT_KEY = "TeamGPT_Key";
     private static final String ANDROID_STT = "Android";
@@ -467,9 +466,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     public void onClickMicro() {
         resetTimeoutsAndHandlers();
 
-        if (isInvalidTeamGPTDeviceId()) {
-            notifyInvalidTeamGPTDeviceId();
-        } else if (isInvalidTeamGPTKey()) {
+        if (isInvalidTeamGPTKey()) {
             notifyInvalidTeamGPTKey();
         } else if (isEnvError()) {
             Log.i(TAG, "run: notifyObservers ENV_ERROR 3");
@@ -491,15 +488,9 @@ public class ChatFragment extends Fragment implements IDBObserver {
         }
     }
 
-    private boolean isInvalidTeamGPTDeviceId() {
-        return buddyGPTApplication.getparam(INVALID_DEVICE_ID).equalsIgnoreCase("TRUE")
-                && !buddyGPTApplication.getparam(TEAMGPT_KEY).equalsIgnoreCase("");
-    }
 
-    private void notifyInvalidTeamGPTDeviceId() {
-        Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
-        buddyGPTApplication.notifyObservers(INVALID_DEVICE_ID);
-    }
+
+
 
     private boolean isInvalidTeamGPTKey() {
         return buddyGPTApplication.getparam(INVALID_KEY).equalsIgnoreCase("TRUE")
@@ -959,10 +950,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                             }
                                             if (Boolean.FALSE.equals(buddyGPTApplication.getSpeaking())) {
                                                 Log.d(TAG, "Mouth touched2");
-                                                if (buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-                                                    Log.i(TAG, "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
-                                                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
-                                                } else if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+                                                if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
                                                     Log.i(TAG, "run: notifyObservers INVALID_TEAMGPT_KEY 3");
                                                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                                                 } else if (buddyGPTApplication.getparam("ENV_ERROR").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
@@ -1212,31 +1200,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                 @Override
                                 public void onFailure(@NonNull Exception e) {
                                     buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                                }
-                            });
-                }
-
-
-            }
-            if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
-                buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "TRUE");
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
-                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
-                } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
-                } else {
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    buddyGPTApplication.showInputDialog(getActivity(), translatedText, "Attention !");
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
                                 }
                             });
                 }

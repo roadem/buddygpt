@@ -2,6 +2,8 @@ package com.robotique.aevaweb.buddygpt.application;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
+import static com.google.android.exoplayer2.audio.OpusUtil.SAMPLE_RATE;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
@@ -12,12 +14,15 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -43,6 +48,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
@@ -70,6 +76,8 @@ import com.ibm.icu.text.BreakIterator;
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.EncodingRegistry;
 import com.konovalov.vad.Vad;
+import com.konovalov.vad.VadConfig;
+import com.konovalov.vad.VadListener;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
 import com.robotique.aevaweb.buddygpt.models.Langue;
@@ -89,6 +97,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -101,6 +110,12 @@ import java.util.Objects;
 import java.util.StringTokenizer;
 
 import darren.googlecloudtts.model.VoicesList;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";
@@ -132,6 +147,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final Intent speechRecognizerIntent2 = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     int max;
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
     boolean stopTTSReadSpeaker = false;
 
     boolean isFirstLaunch = true;
@@ -194,6 +213,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Boolean usingReadSpeaker;
     private boolean alreadyCalled = false;
     private Vad vad;
+    private Boolean endRecordingAudio = false;
     private AudioRecord audioRecord;
     private boolean isRecording = false;
     private String currentState = "";
@@ -217,6 +237,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
     private String imeiRobot;
     private Toast mToast;
+    private TranscribeTask transcribeTask;
 
     public static Locale getLocale(String language) {
 
@@ -528,7 +549,61 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.bestTextSize = bestTextSize;
     }
 
+    private class TranscribeTask extends AsyncTask<byte[], Void, String> {
+        String question = "";
+        @Override
+        protected String doInBackground(byte[]... audioData) {
+            //duration = System.currentTimeMillis();
+            Log.e("MRA","doInBackground stopProcessus---------- "+stopProcessus);
+            if (!stopProcessus) {
+                Log.e("MRA","doInBackground stopProcessus if---------- "+stopProcessus);
+                question = Arrays.toString(audioData[0]);
+                Log.e("MRA","doInBackground stopProcessus question---------- "+question);
+                if (!question.trim().contains("Thank you") && !question.equals("")) {
+                    if (!stopProcessus) {
+                        if (activityTemp!=null){
+                            activityTemp.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.e("MRA","envoie traitement de la question");
+                                    notifyObservers("STTQuestion_success;"+question);
+                                    BuddySDK.UI.stopListenAnimation();
+                                }
+                            });
+                        }
 
+                    }
+
+                } else {
+                    if (!endRecordingAudio) {
+                        if (activityTemp!=null){
+                            activityTemp.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    startListeningQuestionWav(activityTemp);
+                                }
+                            });
+                        }
+
+
+
+                    }
+                }
+            }
+            return question;
+        }
+
+        @Override
+        protected void onPostExecute(String transcription) {
+            if (transcription != null) {
+                // endTime = System.currentTimeMillis(); // Record the end time
+                Log.i("MRA", "------it took: ms");
+            } else {
+                // Gestion des erreurs
+
+            }
+        }
+    }
 
     public Boolean getMessageError() {
         return messageError;
@@ -1385,26 +1460,91 @@ public class BuddyGPTApplication extends BuddyApplication {
             e.printStackTrace();
         }
     }
+    public void stopRecordingSTT(Boolean shouldRestartListening,Boolean shouldRestartNewCycle) {
+        try {
+            byte[] audioDataF = convertPcmToWavByte(); // Read the recorded audio data
+            // Annuler la tâche précédente si elle existe
+            if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
+                transcribeTask.cancel(true);
+            }
+            Log.e("MIDO","start dbfs calcul");
+            if (thread != null && thread.isAlive()) {
+                thread.interrupt();
+            }
+            thread =new Thread(() -> {
+                if (!Python.isStarted()) {
+                    Python.start(new AndroidPlatform(activityTemp));
+                }
+                Python py = Python.getInstance();
+                PyObject pyobj = py.getModule("calculDBFS");
+                try {
+                    PyObject reponse;
+                    JSONObject parameters = new JSONObject();
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
 
-    private void readAudioFile() throws IOException {
-        // Convert PCM data to WAV format
-        String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
-        PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
+                    // Appel de la fonction main avec le chemin du fichier audio
+                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
-        Log.d("FilePath", "File path: " + outputFileWav);
-        File audioFileWav = new File(outputFileWav);
-        if (audioFileWav.exists()) {
-            Files.readAllBytes(audioFileWav.toPath());
-        } else {
-            // Handle the case where the file does not exist
-            Log.e("FileError", "The file does not exist at the specified path.");
+                    //Mettre  le dernier fichier json envoyé à l’API
+
+
+
+                    Log.e("MIDO","result dBFS python "+reponse.toString());
+                    if (!reponse.toString().trim().equals("-inf")) {
+                        if (Float.parseFloat(reponse.toString()) >= Float.parseFloat(getParamFromFile("Seuil_dBFS", configurationFilePseudo))) {
+                            Log.d("MIDO", "volume est bien : " + Float.parseFloat(reponse.toString()));
+                            transcribeTask = new TranscribeTask();
+                            transcribeTask.execute(audioDataF); // Transcribe the audio
+                        } else {
+                            Log.d("MIDO", "volume est trop bas : " + Float.parseFloat(reponse.toString()));
+                            startListeningQuestionWav(activityTemp);
+
+                        }
+                    }
+                    else {
+                        if (shouldRestartListening) {
+                            startListeningQuestionWav(activityTemp);
+                        } else {
+                            if (shouldRestartNewCycle){
+                                activityTemp.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        notifyObservers("restartNewCycle");
+                                    }
+                                });
+                            }
+                            else {
+                                activityTemp.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        notifyObservers("restartListeningHotword");
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        return; // Terminer le thread s'il a été interrompu
+                    }
+
+
+                } catch (PyException | JSONException p) {
+                    Log.e(TAG, "Exception "+p);
+                }
+
+            });
+            thread.start();
+        } catch (Exception e) {
+            Log.e("MRA", "Exception " + e);
         }
+
     }
+
     Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
             try {
-                readAudioFile();
+                convertPcmToWavByte();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -1463,13 +1603,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     };
 
-    public String getImeiRobot() {
-        return imeiRobot;
-    }
-
-    public void setImeiRobot(String imeiRobot) {
-        this.imeiRobot = imeiRobot;
-    }
 
     public void stopRecording() {
         if (handler2 != null && periodicTask != null) {
@@ -1496,7 +1629,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void traitementAudio() {
         currentState = "NOISE";
-
         alReadyHadSpoke = false;
         stopProcessus = false;
         stopRecording();
@@ -2202,6 +2334,299 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
 
         }, "com.google.android.tts");
+    }
+    private AudioRecord initAudioRecordWithFallback() {
+        int[] sampleRates = new int[]{16000, 8000, 44100};
+        int[] audioSources = new int[]{
+                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION
+        };
+
+        for (int sr : sampleRates) {
+            for (int src : audioSources) {
+                int minBuf = AudioRecord.getMinBufferSize(sr, CHANNEL_CONFIG, AUDIO_FORMAT);
+                Log.i(TAG_STREAMING, "Trying AudioRecord sr=" + sr + " src=" + src + " minBuf=" + minBuf);
+                if (minBuf == AudioRecord.ERROR || minBuf == AudioRecord.ERROR_BAD_VALUE) continue;
+                int buf = Math.max(minBuf * 2, sr / 10); // safety margin
+                try {
+                    AudioRecord ar = new AudioRecord(src, sr, CHANNEL_CONFIG, AUDIO_FORMAT, buf);
+                    if (ar.getState() == AudioRecord.STATE_INITIALIZED) {
+                        // update globals used elsewhere
+                        // Note: SAMPLE_RATE constant may be used elsewhere; prefer to use local sr where needed
+                        Log.i(TAG_STREAMING, "AudioRecord initialized (sr=" + sr + ", src=" + src + ", buf=" + buf + ")");
+                        return ar;
+                    } else {
+                        ar.release();
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG_STREAMING, "initAudioRecordWithFallback exception", e);
+                }
+            }
+        }
+        return null;
+    }
+
+    public void startListeningQuestionWav(Activity activity){
+        Log.d(TAG_STREAMING, "startListeningQuestionWav start");
+
+        speechRecognizer.destroy();
+        stopListening(activity);
+
+        if (isRecording) {
+            Log.d(TAG_STREAMING, "Already recording");
+            return;
+        }
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            Log.e(TAG_STREAMING, "RECORD_AUDIO permission not granted");
+            // notify to request permission
+            notifyObservers("RECORD_AUDIO_PERMISSION_NEEDED");
+            return;
+        }
+
+        // init audioRecord with fallback
+        AudioRecord ar = initAudioRecordWithFallback();
+        if (ar == null) {
+            Log.e(TAG_STREAMING, "No valid AudioRecord configuration found");
+            return;
+        }
+        audioRecord = ar;
+
+        // use app-specific path (external files dir) to avoid storage permission issues
+        File outDir = getExternalFilesDir("recordings");
+        if (outDir == null) outDir = Environment.getExternalStorageDirectory();
+        String outputFile = new File(outDir, "audioF.pcm").getAbsolutePath();
+
+        try {
+            setLed("listening");
+            audioRecord.startRecording();
+            Log.i(TAG_STREAMING, "after startRecording: recordingState=" + audioRecord.getRecordingState() + " audioRecord state: " + audioRecord.getState());
+            if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
+                Log.e(TAG_STREAMING, "startRecording did not put AudioRecord into RECORDING state");
+                audioRecord.release();
+                audioRecord = null;
+                return;
+            }
+            isRecording = true;
+            currentState = "";
+            // start VAD (keeps using configured sample rate - VAD expects matching sample rate)
+            startVAD();
+            processAudio(outputFile);
+        } catch (Exception e) {
+            Log.e(TAG_STREAMING, "Failed to start recording", e);
+            if (audioRecord != null) {
+                try { audioRecord.release(); } catch (Exception ignored) {}
+                audioRecord = null;
+            }
+        }
+    }
+
+    /** processAudio — write only numRead samples and feed VAD with valid length */
+    private void processAudio(String outputFile) {
+        Log.i(TAG_STREAMING, "processAudio: start FILE=" + outputFile);
+        if (audioRecord == null) {
+            Log.e(TAG_STREAMING, "processAudio: audioRecord is null");
+            return;
+        }
+
+        new Thread(() -> {
+            short[] buffer = new short[Math.max(160, AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) / 2)];
+            FileOutputStream fos = null;
+            try {
+                fos = new FileOutputStream(outputFile);
+                while (isRecording) {
+                    int numRead = audioRecord.read(buffer, 0, buffer.length);
+                    Log.d(TAG_STREAMING, "processAudio: read samples=" + numRead);
+                    if (numRead > 0) {
+                        // write only read samples
+                        byte[] bytes = shortArrayToByteArray(buffer, numRead);
+                        fos.write(bytes, 0, bytes.length);
+
+                        // feed VAD with valid portion if vad available
+                        if (vad != null) {
+                            try {
+                                // try common public API: process(short[], int)
+                                try {
+                                    java.lang.reflect.Method m = vad.getClass().getMethod("process", short[].class, int.class);
+                                    m.invoke(vad, buffer, numRead);
+                                } catch (NoSuchMethodException ns) {
+                                    // fallback: try addContinuousSpeechListener(short[], VadListener)
+                                    try {
+                                        java.lang.reflect.Method m2 = vad.getClass().getMethod("addContinuousSpeechListener", short[].class, VadListener.class);
+                                        m2.invoke(vad, buffer, vadListener);
+                                    } catch (NoSuchMethodException ns2) {
+                                        // last resort: try process(byte[])
+                                        byte[] b = bytes;
+                                        try {
+                                            java.lang.reflect.Method m3 = vad.getClass().getMethod("process", byte[].class);
+                                            m3.invoke(vad, b);
+                                        } catch (Exception ignored) {}
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.w(TAG_STREAMING, "VAD invoke failed", e);
+                            }
+                        }
+                    } else {
+                        Log.w(TAG_STREAMING, "audioRecord.read returned " + numRead);
+                    }
+                }
+            } catch (IOException e) {
+                Log.e(TAG_STREAMING, "processAudio IOException", e);
+            } finally {
+                if (fos != null) {
+                    try { fos.close(); } catch (IOException ignored) {}
+                }
+                Log.i(TAG_STREAMING, "processAudio finished");
+            }
+        }, "processAudioThread").start();
+    }
+
+    /** convert only len samples */
+    private byte[] shortArrayToByteArray(short[] shortArray, int len) {
+        byte[] byteArray = new byte[len * 2];
+        for (int i = 0; i < len; i++) {
+            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
+            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
+        }
+        return byteArray;
+    }
+
+    /*
+     * VAD library only accepts 16-bit mono PCM audio stream and can work with the next Sample Rates and Frame Sizes :
+     *
+     *  Valid Sample Rate     Valid Frame Size
+     *      8000Hz              80, 160, 240
+     *      16000Hz             160, 320, 480
+     *      32000Hz             320, 640, 960
+     *      48000Hz             480, 960, 1440
+     *
+     * the number of bytes received by the BlueMic is by default 40 (AUDIO_PACKAGE_SIZE=40).
+     * in order to be able to pass the audio stream to the VAD function with a SampleRate of 8000Hz
+     * we have to find a way to modify the number of processed bytes to 80 bytes (AUDIO_PACKAGE_SIZE=80)
+     *
+     * we are going to build a new shorts[80] which is the combination of two shorts[40] received from the BlueMic.
+     *
+     * Algo:
+     * I store each new short[40] in a circularBuffer and wait for the next short[40] to be received.
+     * Once received, I combine the two in a short[80] and send it in the callback : onNewAudioData
+     */
+    private final VadListener vadListener = new VadListener() {
+        @Override
+        public void onSpeechDetected() {
+            Log.d(TAG_STREAMING, "Speech detected!");
+            // Votre code lorsque la parole est détectée
+            if (!currentState.equals("SPEECH")) {
+                currentState = "SPEECH";
+                alReadyHadSpoke=true;
+                if (!getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("")
+                        && !getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("0")
+                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("")
+                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("0")
+                ){
+                    handler2.postDelayed(periodicTask,Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000 );
+                }
+            }
+        }
+
+        @Override
+        public void onNoiseDetected() {
+            Log.d(TAG_STREAMING, "Noise detected!");
+            // Votre code lorsque du bruit est détecté
+            if (!currentState.equals("NOISE")) {
+                currentState = "NOISE";
+                if(alReadyHadSpoke){
+                    alReadyHadSpoke=false;
+                    stopProcessus =false;
+                    stopRecording();
+                    stopRecordingSTT(true,false);
+                }
+
+            }
+        }
+
+    };
+    private void startVAD() {
+        Log.i(TAG, "startVAD: start 1");
+        int silenceTime;
+        if (!getParamFromFile("Silence_time",configurationFilePseudo).trim().equals("")){
+            try {
+                silenceTime= Integer.parseInt(getParamFromFile("Silence_time",configurationFilePseudo).trim()) *1000;
+            }
+            catch (Exception e){
+                silenceTime = 500;
+            }
+        }
+        else{
+            silenceTime = 500;
+        }
+        // Configure and start VAD
+        vad = new Vad(VadConfig.newBuilder()
+                .setSampleRate(VadConfig.SampleRate.SAMPLE_RATE_8K)
+                .setFrameSize(VadConfig.FrameSize.FRAME_SIZE_80)
+                .setMode(VadConfig.Mode.VERY_AGGRESSIVE)
+                .setSilenceDurationMillis(silenceTime)
+                .setVoiceDurationMillis(500)
+                .build());
+        vad.start();
+    }
+
+    private void processAudiof(String outputFile) {
+        Log.i(TAG, "processAudio: start 1");
+        Log.i(TAG, "processAudio: start 1 FILE"+outputFile);
+
+        new Thread(() -> {
+            short[] buffer = new short[BUFFER_SIZE / 2]; // Divided by 2 because each short is 2 bytes
+            try {
+                Log.i(TAG, "processAudio: start try");
+                Log.i(TAG, "recordingState: " + audioRecord.getRecordingState());
+                FileOutputStream fos = new FileOutputStream(outputFile);
+                while (isRecording) {
+                    Log.i(TAG, "processAudio: start try FOS "+fos);
+                    int numRead = audioRecord.read(buffer, 0, buffer.length);
+                    Log.i(TAG, "processAudio: start try : "+numRead);
+
+                    if (numRead > 0) {
+                        vad.addContinuousSpeechListener(buffer, vadListener);
+                        fos.write(shortArrayToByteArray(buffer), 0, numRead * 2); // * 2 because each short is 2 bytes
+                    }
+                }
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                Log.e(TAG,"processAudioFinally");
+//                stopWhisperSTT(); // Stop recording and process the remaining audio
+            }
+        }).start();
+    }
+
+    // Convertir un tableau de shorts en un tableau de bytes (pour le buffer combiné)
+    private byte[] shortArrayToByteArray(short[] shortArray) {
+        int length = shortArray.length;
+        byte[] byteArray = new byte[length * 2]; // Each short is 2 bytes
+        for (int i = 0; i < length; i++) {
+            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
+            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
+        }
+        return byteArray;
+    }
+
+    private byte[] convertPcmToWavByte() throws IOException {
+        // Convert PCM data to WAV format
+        String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
+        PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
+
+        Log.d("FilePath", "File path: " + outputFileWav);
+        File audioFileWav = new File(outputFileWav);
+        if (audioFileWav.exists()) {
+            return Files.readAllBytes(audioFileWav.toPath());
+        } else {
+            // Handle the case where the file does not exist
+            Log.e("FileError", "The file does not exist at the specified path.");
+            return null;
+        }
     }
 
     //#endregion ******************************************************* TTS **********************************************************************

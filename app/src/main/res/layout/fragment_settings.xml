@@ -303,6 +303,17 @@
                                     android:popupBackground="@drawable/spinner_popup_custom"
                                     android:spinnerMode="dropdown"
                                     android:gravity="center_horizontal"/>
+                                <TextView
+                                    android:id="@+id/menuSTT"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF" />
                             </LinearLayout>
                         </LinearLayout>
                         <!-- option_TTS-->
@@ -340,6 +351,17 @@
                                     android:popupBackground="@drawable/spinner_popup_custom"
                                     android:spinnerMode="dropdown"
                                     android:gravity="center_horizontal"/>
+                                <TextView
+                                    android:id="@+id/menuTTS"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="match_parent"
+                                    android:gravity="center"
+                                    android:textAlignment="center"
+                                    android:textSize="13sp"
+                                    android:background="@null"
+                                    android:importantForAutofill="noExcludeDescendants"
+                                    android:textColor="#FFFFFF"
+                                    android:textColorHint="#FFFFFF" />
                             </LinearLayout>
                         </LinearLayout>
                         <!-- option_volum -->

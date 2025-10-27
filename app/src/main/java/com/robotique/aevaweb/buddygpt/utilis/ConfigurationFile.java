@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 8; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 9; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -181,6 +181,11 @@ public class ConfigurationFile {
             props.addPropertyComment("Number_of_words", "Minimum number of words in the response for activating language detection");
             setProperty("Number_of_words", "5");
             setProperty("Detection_confidence_rate", "90");
+
+            props.addPropertyComment("Silence_time","");
+            props.addPropertyComment("Silence_time","Manage end of speech detection");
+            props.addPropertyComment("Silence_time","Silence time in seconds for STT ApiGoogle and Whisper");
+            setProperty("Silence_time","2");
 
             props.addPropertyComment("chatBotServerNoResponce_fr", "");
             props.addPropertyComment("chatBotServerNoResponce_fr", "Responses in case of API error");
