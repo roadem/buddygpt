@@ -682,7 +682,6 @@ public class MainFragment extends Fragment implements IDBObserver {
         super.onCreate(savedInstanceState);
         Log.d(TAG, " --- onCreate() ---");
     }
-
     @Override
     public void onDestroyView() {
         Log.d(TAG, " --- onDestroyView() ---");
@@ -693,7 +692,8 @@ public class MainFragment extends Fragment implements IDBObserver {
             buddyGPTApplication.getDialog().dismiss();
         buddyGPTApplication.setFileCreate(true);
         buddyGPTApplication.setFirstLaunch(true);
-        buddyGPTApplication.removeObserver(this);
+        buddyGPTApplication.stopListening(getActivity());
+
         buddyGPTApplication.notifyObservers("main destroy");
         if (poseTracking != null) poseTracking.stopMovingAndCancelRunnables();
         if (backgroundExecutor != null) backgroundExecutor.shutdownNow();
@@ -703,63 +703,71 @@ public class MainFragment extends Fragment implements IDBObserver {
             timeoutHandler.removeCallbacks(timeoutRunnable);
         }
         if(cameraProvider != null) cameraProvider.unbindAll();
+        buddyGPTApplication.removeObserver(this);
         super.onDestroyView();
     }
 
+    /**
+     * Navigation vers la page des paramètres avec nettoyage de l'état
+     */
     public void btnOpenSettingsFragment() {
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
-                || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
-                || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+        // 1. Arrêter toutes les activités en cours
+        try {
+            // Arrêt de l'écoute et du TTS
+            buddyGPTApplication.stopTTS();
             buddyGPTApplication.setStartRecording(false);
             buddyGPTApplication.setSpeaking(false);
-            buddyGPTApplication.setActivityClosed(true);
-            isListeningFreeSpeech = false;
-            buddyGPTApplication.stopTTS();
-            buddyGPTApplication.setStoredResponse("");
-            if (buddyTexteQstLyt != null && buddyTexteRespLyt != null && buddyTexteQst != null && buddyTexteResp != null) {
-                buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-                buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-                buddyTexteQst.setMovementMethod(null);
-                buddyTexteResp.setMovementMethod(null);
-            }
-            lytOpenMenuSettings.setVisibility(View.VISIBLE);
-            lytOpenMenuChat.setVisibility(View.VISIBLE);
-            try {
-                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-            } catch (Exception e) {
-                Log.e(TAG, "BuddySDK Exception  " + e);
-            }
-            buddyGPTApplication.notifyObservers("end of timer");
-        } else {
-            buddyGPTApplication.setLed("Neutral");
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-            try {
-                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-                BuddySDK.UI.stopListenAnimation();
-            } catch (Exception e) {
-                Log.e(TAG, "BuddySDK Exception  " + e);
-            }
-            BuddySDK.UI.stopListenAnimation();
             buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-            buddyGPTApplication.traitementAudio();
-        }
-        if (Boolean.FALSE.equals(mlKitIsDownloading)) {
-            if (getActivity() != null && isAdded()) {
-                getActivity().getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, new SettingsFragment())
-                        .commitAllowingStateLoss();
+            isListeningFreeSpeech = false;
+
+            // Reset UI state
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            BuddySDK.UI.stopListenAnimation();
+            buddyGPTApplication.setLed("Neutral");
+
+            // Reset application state
+            buddyGPTApplication.setActivityClosed(true);
+            buddyGPTApplication.setStoredResponse("");
+
+            // Masquer les bulles de texte
+            if (buddyTexteQstLyt != null) buddyTexteQstLyt.setVisibility(View.INVISIBLE);
+            if (buddyTexteRespLyt != null) buddyTexteRespLyt.setVisibility(View.INVISIBLE);
+            if (buddyTexteQst != null) buddyTexteQst.setMovementMethod(null);
+            if (buddyTexteResp != null) buddyTexteResp.setMovementMethod(null);
+
+            // Rendre visibles les boutons de menu
+            if (lytOpenMenuSettings != null) lytOpenMenuSettings.setVisibility(View.VISIBLE);
+            if (lytOpenMenuChat != null) lytOpenMenuChat.setVisibility(View.VISIBLE);
+
+            // Notifier les observateurs
+            buddyGPTApplication.notifyObservers("end of timer");
+
+            // S'assurer que le traitement audio est arrêté
+            if (buddyGPTApplication.getAppIsListeningToTheQuestion()) {
+                buddyGPTApplication.traitementAudio();
             }
-            getActivity().overridePendingTransition(0, 0);
-        } else if (Boolean.TRUE.equals(buddyGPTApplication.getBIExecution())) {
+
+        } catch (Exception e) {
+            Log.e(TAG, "Erreur lors du nettoyage avant navigation", e);
+        }
+
+        // 2. Navigation vers Settings uniquement si l'Activity est valide
+        if (getActivity() == null || !isAdded()) {
+            Log.e(TAG, "Navigation impossible : Activity null ou Fragment détaché");
+            return;
+        }
+
+        try {
+            // Effectuer la transition
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, new SettingsFragment())
                     .commitAllowingStateLoss();
 
             getActivity().overridePendingTransition(0, 0);
+        } catch (Exception e) {
+            Log.e(TAG, "Erreur lors de la navigation vers Settings", e);
         }
     }
 
@@ -1641,6 +1649,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                     buddyGPTApplication.notifyObservers("ENV_ERROR");
                 }
                 else {
+                    Log.i(TAG, "update: STTHotword_success else ");
                     getActivity().runOnUiThread(() -> {
                         buddyGPTApplication.setSpeaking(true);
                         isListeningFreeSpeech = true;

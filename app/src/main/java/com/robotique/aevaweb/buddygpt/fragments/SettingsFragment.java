@@ -648,6 +648,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 R.id.item_name,
                 R.id.checked_item_checked,
                 ttsList);
+        menuOptionTtsLyt.setVisibility(View.VISIBLE);
         menuOptionTtsSpinner.setAdapter(ttsSpinnerAdapter);
         for (int i = 0; i < ttsList.size(); i++) {
             if (ttsList.get(i).getNom().equalsIgnoreCase(buddyGPTApplication.getparam("TTS"))) {

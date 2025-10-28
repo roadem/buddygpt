@@ -964,12 +964,15 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                     //USE BLUE MIC
 
-
+                    Log.i(TAG, "startListeningHotwor: avant try");
                     try {
+                        Log.i(TAG, "onError: speechRecognizer.startListening 1");
                         speechRecognizer.startListening(speechRecognizerIntent2);
+                        Log.i(TAG, "startListeningHotwor: apres try intent2");
                         if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
                             showToast(toastSttAndroidIndispo);
                         }
+                        Log.i(TAG, "startListeningHotwor: apres try intent3");
                         speechRecognizer.setRecognitionListener(new RecognitionListener() {
                             @Override
                             public void onReadyForSpeech(Bundle bundle) {
@@ -1041,6 +1044,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                         logErrorSTTAndroid(i, "Unknown error", "Unknown error");
                                         break;
                                 }
+                                Log.i(TAG, "onError: speechRecognizer.startListening 2");
                                 speechRecognizer.startListening(speechRecognizerIntent2);
                             }
 
@@ -1052,6 +1056,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     checkTheHotword(data.get(0));
                                 } else {
                                     Log.e(TAG, "Hotword result  size = 0 : ");
+                                    Log.i(TAG, "onError: speechRecognizer.startListening 3");
                                     speechRecognizer.startListening(speechRecognizerIntent2);
                                 }
                             }
@@ -1094,6 +1099,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     private void initializeSTT(STTTask sttTask) {
         try {
+            Log.i(TAG, "initializeSTT: try");
             sttTask.initialize();
         } catch (Exception e) {
             Log.e(TAG, "Runnable : Erreur pendant l'initialisation du STT Task : " + e);
@@ -1108,13 +1114,17 @@ public class BuddyGPTApplication extends BuddyApplication {
         shouldPlayEmotion = false;
         stopListening(activity);
         try {
+            Log.i(TAG, "startListeningCerence: try");
             if (getParamFromFile("Language_Specification_STT", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
+                Log.i(TAG, "startListeningCerence: if");
                 freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask();
             } else {
+                Log.i(TAG, "startListeningCerence: else");
                 if (getCurrentLanguage().equals("en")) {
-                    Log.e(TAG, "init ENfreeSpeechSttTask");
+                    Log.e(TAG, "init ENfreeSpeechSttTask en");
                     freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.ENGLISH);
                 } else {
+                    Log.e(TAG, "init ENfreeSpeechSttTask fr ");
                     freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.FRENCH);
                 }
             }
@@ -1124,7 +1134,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
 
 
-        if (freeSpeechSttTask == null) return null;
+        if (freeSpeechSttTask == null) {
+            Log.i(TAG, "startListeningCerence: freeSpeechSttTask == null");
+            return null;
+        }else {
+            Log.i(TAG, "startListeningCerence: else null");
+        }
 
         initializeSTT(freeSpeechSttTask);
 
@@ -1198,6 +1213,9 @@ public class BuddyGPTApplication extends BuddyApplication {
                 speechRecognizerIntent2.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, Integer.parseInt(getParamFromFile("Android_Speech_silence_length", configurationFilePseudo)) * 1000);
                 speechRecognizerIntent2.putExtra(RecognizerIntent.EXTRA_LANGUAGE, langue);
             }
+        } else {
+            speechRecognizerIntent.removeExtra(RecognizerIntent.EXTRA_LANGUAGE);
+            speechRecognizerIntent2.removeExtra(RecognizerIntent.EXTRA_LANGUAGE);
         }
 
 
@@ -1237,6 +1255,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         mainHandler.post(() -> {
             try {
                 Log.i(TAG, "startListeningQuestion: test");
+                Log.i(TAG, "onError: speechRecognizer.startListening 4");
                 speechRecognizer.startListening(speechRecognizerIntent);
 
                 if (!isAppInstalled(getApplicationContext(), "com.google.android.googlequicksearchbox")) {
@@ -1315,6 +1334,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         }
                         // relancer l'écoute
                         try {
+                            Log.i(TAG, "onError: speechRecognizer.startListening 5");
                             speechRecognizer.startListening(speechRecognizerIntent);
                         } catch (Exception ex) {
                             Log.e(TAG, "Failed to restart speechRecognizer after error", ex);
@@ -1332,6 +1352,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         } else {
                             Log.e(TAG, "question result onResults size = 0 : ");
                             try {
+                                Log.i(TAG, "onError: speechRecognizer.startListening 6");
                                 speechRecognizer.startListening(speechRecognizerIntent);
                             } catch (Exception ex) {
                                 Log.e(TAG, "Failed to restart speechRecognizer on empty results", ex);
@@ -1525,20 +1546,29 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public void checkTheHotword(String word) {
-        List<String> hotword = getHotwordList();
+    public void checkTheHotword(String word){
+        List<String> hotword =getHotwordList();
+        boolean rightHottwordDetected = false;
         for (int i = 0; i < hotword.size(); i++) {
             Log.i(TAG, "checkTheHotword :" + word);
             if (word.trim().equalsIgnoreCase(hotword.get(i).trim())) {
                 try {
+                    rightHottwordDetected =true;
                     notifyObservers("STTHotword_success");
 
 
                 } catch (Resources.NotFoundException e) {
                     Log.e(TAG, "Resources not Found " + e);
                 }
-
+                break;
             }
+        }
+        if (!rightHottwordDetected){
+            if (speechRecognizer!=null && speechRecognizerIntent2 !=null) {
+                setLed("listening");
+                speechRecognizer.startListening(speechRecognizerIntent2);
+            }
+
         }
     }
 
@@ -1546,7 +1576,7 @@ public class BuddyGPTApplication extends BuddyApplication {
      * Cette fonction permet d'arrêter l'écoute STT Free Speech
      */
     public void stopListening(Activity activity) {
-
+        Log.i(TAG, "stopListening: start");
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mainHandler.post(() -> {
                     if (activity != null && !activity.isFinishing() ) {
