@@ -1135,10 +1135,20 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
         if (freeSpeechSttTask == null) {
-            Log.i(TAG, "startListeningCerence: freeSpeechSttTask == null");
+            Log.i(TAG, "startListeningCerence: freeSpeechSttTask == null -> falling back to Android STT");
+            try {
+                stopRecording();
+            } catch (Exception ignored) {
+                Log.i(TAG, "startListeningCerence: "+ignored);
+            }
+            try {
+                startListeningQuestion(activity);
+            } catch (Exception e) {
+                Log.e(TAG, "Fallback startListeningQuestion failed", e);
+            }
             return null;
-        }else {
-            Log.i(TAG, "startListeningCerence: else null");
+        } else {
+            Log.i(TAG, "startListeningCerence: freeSpeechSttTask created successfully");
         }
 
         initializeSTT(freeSpeechSttTask);
@@ -1172,6 +1182,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                 }
             });
+            Log.i(TAG, "startListeningCerence: after try");
         } catch (Exception e) {
             Log.e(TAG, "onError cerence " + e);
 

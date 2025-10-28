@@ -1354,7 +1354,7 @@ public class MainFragment extends Fragment implements IDBObserver {
             }
         }
 
-
+        Log.i(TAG, "startListeningFreeSpeech: after cerence or android");
         if (timerEcoute != null) timerEcoute.cancel();
         timerEcoute = new CountDownTimer(duration * 1000, 1000) {
             @Override
