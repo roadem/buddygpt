@@ -1588,8 +1588,7 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void stopListening(Activity activity) {
         Log.i(TAG, "stopListening: start");
-        Handler mainHandler = new Handler(Looper.getMainLooper());
-        mainHandler.post(() -> {
+
                     if (activity != null && !activity.isFinishing() ) {
                         activity.runOnUiThread(() -> {
 
@@ -1626,7 +1625,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         });
 
                     }
-                });
+
         setLed("Neutral");
 
 

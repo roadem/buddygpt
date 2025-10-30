@@ -262,9 +262,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                         reGroup.setTranslationY(1000);
                     }
                     else if (Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Activation")) ) {
-                        if (!Boolean.parseBoolean(buddyGPTApplication.getparam("Tracking_Auto_Listen"))) {
-                            buddyGPTApplication.startListeningHotwor(getActivity());
-                        }
+                        buddyGPTApplication.startListeningHotwor(getActivity());
                         isReTrack = false;
                         Log.i(TAG, "trackingtests 1");
                         initTracking();
@@ -704,6 +702,9 @@ public class MainFragment extends Fragment implements IDBObserver {
         }
         if(cameraProvider != null) cameraProvider.unbindAll();
         buddyGPTApplication.removeObserver(this);
+        if (handler != null) handler.removeCallbacksAndMessages(null);
+        if (handlerCheckPersonDetection != null) handlerCheckPersonDetection.removeCallbacksAndMessages(null);
+        if (handlerPauseTime != null) handlerPauseTime.removeCallbacksAndMessages(null);
         super.onDestroyView();
     }
 
