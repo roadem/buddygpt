@@ -44,7 +44,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
 
 import com.bfr.buddy.speech.shared.ISTTCallback;
 import com.bfr.buddy.speech.shared.ITTSCallback;
@@ -118,12 +117,12 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG_STREAMING = "AudioCapture";
     public final IUsbCommadRsp iUsbLedCommandRsp = new IUsbCommadRsp.Stub() {
         @Override
-        public void onSuccess(String success) throws RemoteException {
+        public void onSuccess(String success) {
             Log.i(TAG, "Led success : " + success);
         }
 
         @Override
-        public void onFailed(String error) throws RemoteException {
+        public void onFailed(String error) {
             Log.e(TAG, "Led error : " + error);
         }
     };
@@ -152,13 +151,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Replica reponse;
     private Setting setting;
     private Boolean fileCreate = true;
-    private Session session;
     private ArrayList<Session> listSession = new ArrayList<>();
     private String switchdetectLanguage;
-    private String switchCommande;
     private String switchVisibility;
     private String switchEmotion;
-    private Uri fileup;
     private Boolean isSpeaking = false;
     private List<IDBObserver> observers = new ArrayList<>();
     private Boolean notYet = true;
@@ -1574,13 +1570,12 @@ public class BuddyGPTApplication extends BuddyApplication {
                 break;
             }
         }
-        if (!rightHottwordDetected){
-            if (speechRecognizer!=null && speechRecognizerIntent2 !=null) {
+        if (!rightHottwordDetected && speechRecognizer!=null && speechRecognizerIntent2 !=null) {
                 setLed("listening");
                 speechRecognizer.startListening(speechRecognizerIntent2);
-            }
-
         }
+
+
     }
 
     /**

@@ -1,21 +1,18 @@
 package com.robotique.aevaweb.buddygpt.fragments;
 
 
-import static androidx.core.app.ActivityCompat.finishAffinity;
 import static com.robotique.aevaweb.buddygpt.utilis.tracking.PoseTracking.TAG_TRACKING_DEBUG;
 import static java.lang.String.format;
 import static java.lang.String.valueOf;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.drawable.AnimationDrawable;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.Looper;
-import android.os.RemoteException;
 import android.os.SystemClock;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
@@ -34,7 +31,6 @@ import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -328,7 +324,6 @@ public class MainFragment extends Fragment implements IDBObserver {
     private final Handler handler = new Handler();
     private Runnable runnable;
     private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
     private final IUIFaceTouchCallback iuiFaceTouchCallback = new IUIFaceTouchCallback.Stub() {
         @Override
         public void onTouch(FaceTouchData faceTouchData) {
@@ -712,7 +707,7 @@ public class MainFragment extends Fragment implements IDBObserver {
      * Navigation vers la page des paramètres avec nettoyage de l'état
      */
     public void btnOpenSettingsFragment() {
-        // 1. Arrêter toutes les activités en cours
+        // Arrêter toutes les activités en cours
         try {
             // Arrêt de l'écoute et du TTS
             buddyGPTApplication.stopTTS();
@@ -745,7 +740,7 @@ public class MainFragment extends Fragment implements IDBObserver {
             buddyGPTApplication.notifyObservers("end of timer");
 
             // S'assurer que le traitement audio est arrêté
-            if (buddyGPTApplication.getAppIsListeningToTheQuestion()) {
+            if (Boolean.TRUE.equals(buddyGPTApplication.getAppIsListeningToTheQuestion())) {
                 buddyGPTApplication.traitementAudio();
             }
 
@@ -753,7 +748,7 @@ public class MainFragment extends Fragment implements IDBObserver {
             Log.e(TAG, "Erreur lors du nettoyage avant navigation", e);
         }
 
-        // 2. Navigation vers Settings uniquement si l'Activity est valide
+        // Navigation vers Settings uniquement si l'Activity est valide
         if (getActivity() == null || !isAdded()) {
             Log.e(TAG, "Navigation impossible : Activity null ou Fragment détaché");
             return;
