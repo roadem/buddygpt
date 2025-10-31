@@ -2047,48 +2047,81 @@ public class BuddyGPTApplication extends BuddyApplication {
         if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")) {
             if (getLangue().getLanguageCode().equals("en-US")) {
                 BuddySDK.Speech.setSpeakerVoice("kate");
-                Log.e("MRAA", "english kate");
+                Log.e("TTS", "english kate");
                 usingReadSpeaker = true;
-            } else if (getLangue().getLanguageCode().split("-")[0].equals("en")) {
-                usingReadSpeaker = false;
-                setAndroidTTSParams("en");
+            }else {
+
+                if (getLangue().getLanguageCode().split("-")[0].equals("en")){
+                    usingReadSpeaker = false;
+                    if (getparam("TTS").equalsIgnoreCase("Android") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("Android"))){
+                        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                        ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
+                    }else if (getparam("TTS").equalsIgnoreCase("ApiGoogle") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))){
+                        Log.i(TAG, "setEnglishTTSLanguage: else");
+                    }
+                    //0.5,2.0
+
+                }
+                else {
+                    BuddySDK.Speech.setSpeakerVoice("kate");
+                    Log.e("TTS","english kate");
+                    usingReadSpeaker = true;
+                }
             }
-        } else {
-            if (getLangue().getLanguageCode().split("-")[0].equals("en")) {
+
+        }
+        else {
+            if (getLangue().getLanguageCode().split("-")[0].equals("en")){
                 usingReadSpeaker = false;
-                setAndroidTTSParams("en");
-            } else {
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
+            }
+            else {
                 usingReadSpeaker = false;
-                setAndroidTTSParamsWithLocale("en", "US");
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale("en","US"));
             }
         }
     }
 
     private void setFrenchTTSLanguage() {
-        if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")) {
-            Log.e("MEHDI", "usingReadSpeaker y");
-            if (getLangue().getLanguageCode().equals("fr-FR")) {
-                Log.e("MRAA", "frensh roxane");
+        if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")){
+            Log.e("TTS","usingReadSpeaker y");
+            if (getLangue().getLanguageCode().equals("fr-FR")){
+                Log.e("TTS","frensh roxane");
                 BuddySDK.Speech.setSpeakerVoice("roxane");
-                Log.e("MEHDI", "usingReadSpeaker 1");
+                Log.e("TTS","usingReadSpeaker 1");
                 usingReadSpeaker = true;
-            } else if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
-                Log.e("MEHDI", "usingReadSpeaker 2");
-                usingReadSpeaker = false;
-                setAndroidTTSParams("fr");
-            } else {
-                Log.e("MRAA", "frensh roxane");
-                BuddySDK.Speech.setSpeakerVoice("roxane");
-                Log.e("MEHDI", "usingReadSpeaker 3");
-                usingReadSpeaker = true;
+            }else {
+                if (getLangue().getLanguageCode().split("-")[0].equals("fr")){
+                    Log.e("TTS","usingReadSpeaker 2");
+                    usingReadSpeaker = false;
+                    ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                    ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                    ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
+                }
+                else {
+                    Log.e("TTS","frensh roxane");
+                    BuddySDK.Speech.setSpeakerVoice("roxane");
+                    Log.e("TTS","usingReadSpeaker 3");
+                    usingReadSpeaker = true;
+                }
             }
-        } else {
-            if (getLangue().getLanguageCode().split("-")[0].equals("fr")) {
+        }else {
+            if (getLangue().getLanguageCode().split("-")[0].equals("fr")){
                 usingReadSpeaker = false;
-                setAndroidTTSParams("fr");
-            } else {
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
+            }
+            else {
                 usingReadSpeaker = false;
-                setAndroidTTSParamsWithLocale("fr", "FR");
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale("fr","FR"));
             }
         }
     }
@@ -2096,17 +2129,21 @@ public class BuddyGPTApplication extends BuddyApplication {
     private void setSpanishTTSLanguage(String language) {
         usingReadSpeaker = false;
         if (getLangue().getLanguageCode().split("-")[0].equals("es")) {
-            setAndroidTTSParams("en"); // Note: uses English params for Spanish
-            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
-                    getLangue().getLanguageCode().split("-")[1]));
-        } else {
-            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
+
+            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch", configurationFilePseudo))));
+            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed", configurationFilePseudo))));
+            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0], getLangue().getLanguageCode().split("-")[1]));
+        }
+        else{
+            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TEST", "langue non pas prise ne charge");
                 String code = getFirstFullLanguageCode(language.toLowerCase());
-                Log.e("TEST", "langue qui doit etre " + code);
-                setAndroidTTSParams("en");
-                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                Log.e("TEST", "langue qui doit etre "+code);
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+
             }
         }
     }
@@ -2114,59 +2151,47 @@ public class BuddyGPTApplication extends BuddyApplication {
     private void setGermanTTSLanguage(String language) {
         usingReadSpeaker = false;
         if (getLangue().getLanguageCode().split("-")[0].equals("de")) {
-            setAndroidTTSParams("en"); // Note: uses English params for German
-            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
-                    getLangue().getLanguageCode().split("-")[1]));
-        } else {
-            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
+
+            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch", configurationFilePseudo))));
+            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed", configurationFilePseudo))));
+            ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0], getLangue().getLanguageCode().split("-")[1]));
+        }
+        else{
+            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TEST", "langue non pas prise ne charge");
                 String code = getFirstFullLanguageCode(language.toLowerCase());
-                Log.e("TEST", "langue qui doit etre " + code);
-                setAndroidTTSParams("en");
-                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                Log.e("TEST", "langue qui doit etre "+code);
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+
             }
         }
     }
 
     private void setDefaultTTSLanguage(String language) {
         usingReadSpeaker = false;
-        Log.e("TEST", "default language " + language);
-        Log.e("TEST", "default getCurrentLanguage().split(\"-\")[0].trim() "
-                + getCurrentLanguage().split("-").length);
-        if (!getCurrentLanguage().equals("")
-                && getCurrentLanguage().split("-")[0].trim().equalsIgnoreCase(language)) {
-            setAndroidTTSParams("en");
-            ttsAndroid.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),
-                    getCurrentLanguage().split("-")[1].trim()));
-        } else {
-            Log.e("TEST", "set Langue TTS " + language.toLowerCase() + "," + language.toUpperCase());
-            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(), language.toUpperCase()));
+        Log.e("TEST","default language "+language);
+        Log.e("TEST","default getCurrentLanguage().split(\"-\")[0].trim() "+getCurrentLanguage().split("-").length);
+        if (!getCurrentLanguage().equals("") && getCurrentLanguage().split("-")[0].trim().equalsIgnoreCase(language)){
+            ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+            ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+            ttsAndroid.setLanguage(new Locale(getCurrentLanguage().split("-")[0].trim(),getCurrentLanguage().split("-")[1].trim()));
+        }
+        else {
+            Log.e("TEST","set Langue TTS "+language.toLowerCase()+","+language.toUpperCase());
+            int result = ttsAndroid.setLanguage(new Locale(language.toLowerCase(),language.toUpperCase()));
             if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
                 Log.e("TEST", "langue non pas prise ne charge");
                 String code = getFirstFullLanguageCode(language.toLowerCase());
-                Log.e("TEST", "langue qui doit etre " + code);
-                setAndroidTTSParams("en");
-                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(), code.split("-")[1].trim()));
+                Log.e("TEST", "langue qui doit etre "+code);
+                ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_pitch",configurationFilePseudo))));
+                ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
+                ttsAndroid.setLanguage(new Locale(code.split("-")[0].trim(),code.split("-")[1].trim()));
+
             }
         }
-    }
-
-    private void setAndroidTTSParams(String lang) {
-        String pitchKey = "TTS_Android_pitch_" + lang;
-        String speedKey = "TTS_Android_speed_" + lang;
-        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile(pitchKey, configurationFilePseudo))));
-        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile(speedKey, configurationFilePseudo))));
-        ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],
-                getLangue().getLanguageCode().split("-")[1]));
-    }
-
-    private void setAndroidTTSParamsWithLocale(String lang, String country) {
-        String pitchKey = "TTS_Android_pitch_" + lang;
-        String speedKey = "TTS_Android_speed_" + lang;
-        ttsAndroid.setPitch(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile(pitchKey, configurationFilePseudo))));
-        ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile(speedKey, configurationFilePseudo))));
-        ttsAndroid.setLanguage(new Locale(lang, country));
     }
 
     public String getSecondTTSfromTTSList() {
