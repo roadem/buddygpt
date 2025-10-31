@@ -204,8 +204,8 @@ public class ChatFragment extends Fragment implements IDBObserver {
         // Arrête l'écoute vocale (reconnaissance libre)
         stopListeningFreeSpeech();
 
-        // Retire cette activité des observateurs de l'application
-        buddyGPTApplication.removeObserver(this);
+
+
         // Vérifie si les préférences initiales ne sont pas définies
         if (Boolean.FALSE.equals(buddyGPTApplication.getInitSharedpreferences())) {
             buddyGPTApplication.setparam("firstLaunch", "true");
@@ -213,7 +213,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
         }
         if (buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing())
             buddyGPTApplication.getDialog().dismiss();
-
+        buddyGPTApplication.removeObserver(this);
         super.onDestroyView();
     }
 

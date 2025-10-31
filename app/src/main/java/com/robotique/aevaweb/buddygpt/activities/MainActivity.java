@@ -179,7 +179,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         } catch (IllegalArgumentException e) {
             Log.i(TAG, "---unregisterReceiver wifiBroadcast:: IllegalArgumentException---" + e.getMessage());
         }
-        buddyGPTApplication.removeObserver(this);
+
         buddyGPTApplication.setparam("firstLaunch", "true");
         if (buddyGPTApplication.getDialog() != null && buddyGPTApplication.getDialog().isShowing())
             buddyGPTApplication.getDialog().dismiss();
@@ -189,7 +189,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             poseTracking.stopMovingAndCancelRunnables();
         if (backgroundExecutor != null)
             backgroundExecutor.shutdownNow();
-
+        buddyGPTApplication.removeObserver(this);
         super.onDestroy();
     }
 
