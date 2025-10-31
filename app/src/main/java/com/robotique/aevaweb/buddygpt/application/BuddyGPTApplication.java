@@ -2171,7 +2171,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     break;
             }
         } catch (Exception e) {
-            Log.e(TAG, "Erreur pendant l'initialisation de la langue TTS : "+e);
+            Log.e(TAG, "Erreur pendant l'initialisation de la langue TTS : " + e);
         }
     }
     private void setEnglishTTSLanguage() {
@@ -2189,7 +2189,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         ttsAndroid.setSpeechRate(getConvertedPitchAndSpeedValue(Integer.parseInt(getParamFromFile("TTS_Android_speed",configurationFilePseudo))));
                         ttsAndroid.setLanguage(new Locale(getLangue().getLanguageCode().split("-")[0],getLangue().getLanguageCode().split("-")[1]));
                     }else if (getparam("TTS").equalsIgnoreCase("ApiGoogle") || (getparam("TTS").equalsIgnoreCase("ReadSpeaker") && getSecondTTSfromTTSList().equalsIgnoreCase("ApiGoogle"))){
-
+                        Log.i(TAG, "setEnglishTTSLanguage: else");
                     }
                     //0.5,2.0
 
