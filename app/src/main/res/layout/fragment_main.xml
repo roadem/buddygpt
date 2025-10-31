@@ -42,23 +42,6 @@
                 android:layout_centerInParent="true"
                 android:src="@drawable/cog"/>
         </RelativeLayout>
-        <!--  Settings btn  -->
-        <RelativeLayout
-            android:id="@+id/lyt_open_menu_test"
-            android:layout_width="100px"
-            android:layout_height="100px"
-            android:layout_marginTop="20px"
-            android:layout_marginStart="280px"
-            android:clickable="true"
-            android:elevation="0.8dp"
-            android:background="@drawable/ellipse_closed">
-            <ImageView
-                android:id="@+id/button_open_menu_test"
-                android:layout_width="36px"
-                android:layout_height="37px"
-                android:layout_centerInParent="true"
-                android:src="@drawable/cog"/>
-        </RelativeLayout>
         <!--  Chat btn  -->
         <RelativeLayout
             android:id="@+id/lyt_open_menu_chat"

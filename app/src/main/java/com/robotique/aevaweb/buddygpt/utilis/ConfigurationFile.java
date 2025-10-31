@@ -187,6 +187,13 @@ public class ConfigurationFile {
             props.addPropertyComment("Silence_time","Silence time in seconds for STT ApiGoogle and Whisper");
             setProperty("Silence_time","2");
 
+            props.addPropertyComment("Volume_reduction","");
+            props.addPropertyComment("Volume_reduction","Percentage of volume reduction");
+            setProperty("Volume_reduction","3");
+
+            props.addPropertyComment("Duration_sound_level_checked","");
+            props.addPropertyComment("Duration_sound_level_checked", "Duration in seconds, at which the sound level should be checked");
+            setProperty("Duration_sound_level_checked","3");
             props.addPropertyComment("chatBotServerNoResponce_fr", "");
             props.addPropertyComment("chatBotServerNoResponce_fr", "Responses in case of API error");
             setProperty("chatBotServerNoResponce_fr", "Je n’ai pas de réponse ");
