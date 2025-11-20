@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 9; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 8; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -127,6 +127,9 @@ public class ConfigurationFile {
             props.addPropertyComment("Language_Specification_STT", "");
             props.addPropertyComment("Language_Specification_STT", "Language_Specification_STT=Yes to specify the language parameter");
             setProperty("Language_Specification_STT", "Yes");
+            props.addPropertyComment("Seuil_dBFS", "");
+            props.addPropertyComment("Seuil_dBFS","Decibel threshold to control the sensitivity of the STT Whisper");
+            setProperty("Seuil_dBFS","-30");
 
             props.addPropertyComment("Text_To_Speech_List", "");
             props.addPropertyComment("Text_To_Speech_List", "Text to Speech : ReadSpeaker/Android");

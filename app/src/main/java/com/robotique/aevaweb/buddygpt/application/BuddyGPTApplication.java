@@ -14,9 +14,11 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -38,6 +40,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -108,14 +111,6 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.StringTokenizer;
 
-import darren.googlecloudtts.model.VoicesList;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";
     private static final String listeningDurationPseudo = "listening_duration";
@@ -184,11 +179,9 @@ public class BuddyGPTApplication extends BuddyApplication {
     private int questionNumber = 0;
     private int currentQuestionNubmer = 0;
     private boolean alreadyGetAnswer = false;
-    private boolean openaialreadySwitchEmotion = false;
     private boolean timeoutExpired = false;
     private long questionTime = 0;
     private String storedResponse = "";
-    private Boolean buddyFaceisTired = false;
     private int bestTextSize = 0;
     private TextToSpeech ttsAndroid;
     private Boolean shouldPlayEmotion = false;
@@ -196,7 +189,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Boolean messageError = false;
     private Langue langue;
     private Dialog dialog;
-    private File fileupdate;
     private int currentIndexText = 0;
     private boolean allTextPronoucedSuccess = true;
     private STTTask freeSpeechSttTask;
@@ -207,7 +199,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String translatedList = "";
     private String languageDetected = "";
     private Boolean usingReadSpeaker;
-    private boolean alreadyCalled = false;
     private Vad vad;
     private Boolean endRecordingAudio = false;
     private AudioRecord audioRecord;
@@ -226,34 +217,11 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String toastSttAndroidIndispo;
     private String toastTtsAndroidIndispo;
     private TtsGoogleC googleCloudTTS;
-    private VoicesList voiceList;
-    private String chosenTTS = "";
     private Boolean appIsCurrentlyDealingWithTheQuestion = false;
     private Boolean bIExecution = false;
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
-    private String imeiRobot;
     private Toast mToast;
     private TranscribeTask transcribeTask;
-
-    public static Locale getLocale(String language) {
-
-        Locale[] locales = Locale.getAvailableLocales();
-
-        for (Locale locale : locales) {
-            if (locale.toString().equals(language)) {
-                Log.w("GoogleSTT", "getLocale(" + language + ") result : " + locale);
-                return locale;
-            }
-        }
-
-        Log.e("GoogleSTT", "getLocale(" + language + ") result : null");
-
-        return Locale.ENGLISH;
-    }
-
-    public boolean isAlreadyChatting() {
-        return alreadyChatting;
-    }
 
     public void setAlreadyChatting(boolean alreadyChatting) {
         this.alreadyChatting = alreadyChatting;
@@ -283,20 +251,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.remainingAttempts = remainingAttempts;
     }
 
-
-
-    public EncodingRegistry getRegistry() {
-        return registry;
-    }
-
     public Dialog getDialog() {
         return dialog;
     }
-
-    public void setDialog(Dialog dialog) {
-        this.dialog = dialog;
-    }
-
 
     public Boolean getAppIsListeningToTheQuestion() {
         return appIsListeningToTheQuestion;
@@ -314,10 +271,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.englishLanguageSelectedTranslator = englishLanguageSelectedTranslator;
     }
 
-    public Translator getLanguageSelectedEnglishTranslator() {
-        return languageSelectedEnglishTranslator;
-    }
-
     public void setLanguageSelectedEnglishTranslator(Translator languageSelectedEnglishTranslator) {
         this.languageSelectedEnglishTranslator = languageSelectedEnglishTranslator;
     }
@@ -332,10 +285,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public Boolean getUsingReadSpeaker() {
         return usingReadSpeaker;
-    }
-
-    public void setUsingReadSpeaker(Boolean usingReadSpeaker) {
-        this.usingReadSpeaker = usingReadSpeaker;
     }
 
     public String getLanguageDetected() {
@@ -358,16 +307,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         return listeningDuration;
     }
 
-    public void setListeningDuration(int listeningDuration) {
-        this.listeningDuration = listeningDuration;
-    }
-
     public int getListeningAttempt() {
         return listeningAttempt;
-    }
-
-    public void setListeningAttempt(int listeningAttempt) {
-        this.listeningAttempt = listeningAttempt;
     }
 
     public int getSpeakVolume() {
@@ -376,11 +317,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setSpeakVolume(int speakVolume) {
         this.speakVolume = speakVolume;
-    }
-
-
-    public Setting getSetting() {
-        return setting;
     }
 
     public void setSetting(Setting setting) {
@@ -399,33 +335,21 @@ public class BuddyGPTApplication extends BuddyApplication {
         return listSession;
     }
 
-    public void setListSession(ArrayList<Session> listSession) {
-        this.listSession = listSession;
-    }
 
     public void listSessionClear() {
         listSession.clear();
     }
 
-    public String getSwitchVisibility() {
-        return switchVisibility;
-    }
 
     public void setSwitchVisibility(String switchVisibility) {
         this.switchVisibility = switchVisibility;
     }
 
-    public String getSwitchEmotion() {
-        return switchEmotion;
-    }
 
     public void setSwitchEmotion(String switchEmotion) {
         this.switchEmotion = switchEmotion;
     }
 
-    public String getSwitchdetectLanguage() {
-        return switchdetectLanguage;
-    }
 
     public void setSwitchdetectLanguage(String switchdetectLanguage) {
         this.switchdetectLanguage = switchdetectLanguage;
@@ -440,9 +364,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         isSpeaking = speaking;
     }
 
-    public Boolean getNotYet() {
-        return notYet;
-    }
 
     public void setNotYet(Boolean notYet) {
         this.notYet = notYet;
@@ -521,9 +442,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.responseTime = responseTime;
     }
 
-    public Boolean getAnswerHasExceededTimeOut() {
-        return answerHasExceededTimeOut;
-    }
 
     public void setAnswerHasExceededTimeOut(Boolean answerHasExceededTimeOut) {
         this.answerHasExceededTimeOut = answerHasExceededTimeOut;
@@ -541,50 +459,23 @@ public class BuddyGPTApplication extends BuddyApplication {
         return bestTextSize;
     }
 
-    public void setBestTextSize(int bestTextSize) {
-        this.bestTextSize = bestTextSize;
-    }
 
-    private class TranscribeTask extends AsyncTask<byte[], Void, String> {
-        String question = "";
+    private class TranscribeTask extends AsyncTask<String, Void, String> {
         @Override
-        protected String doInBackground(byte[]... audioData) {
-            //duration = System.currentTimeMillis();
+        protected String doInBackground(String... audioData) {
             Log.e("MRA","doInBackground stopProcessus---------- "+stopProcessus);
-            if (!stopProcessus) {
-                Log.e("MRA","doInBackground stopProcessus if---------- "+stopProcessus);
-                question = Arrays.toString(audioData[0]);
-                Log.e("MRA","doInBackground stopProcessus question---------- "+question);
-                if (!question.trim().contains("Thank you") && !question.equals("")) {
-                    if (!stopProcessus) {
-                        if (activityTemp!=null){
-                            activityTemp.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.e("MRA","envoie traitement de la question");
-                                    notifyObservers("STTQuestion_success;"+question);
-                                    BuddySDK.UI.stopListenAnimation();
-                                }
-                            });
+
+            String question = audioData[0];
+                    if (Boolean.FALSE.equals(stopProcessus)){
+                        Log.e("MRA","envoie traitement de la question");
+                        notifyObservers("STTQuestion_success;SPLIT;NONE;SPLIT;"+question);
+                        BuddySDK.UI.stopListenAnimation();
+                        setLed("neutral");
                         }
-
+                    else {
+                    if (Boolean.FALSE.equals(endRecordingAudio) && activityTemp!=null){
+                            activityTemp.runOnUiThread(() -> startListeningQuestionWav(activityTemp));
                     }
-
-                } else {
-                    if (!endRecordingAudio) {
-                        if (activityTemp!=null){
-                            activityTemp.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    startListeningQuestionWav(activityTemp);
-                                }
-                            });
-                        }
-
-
-
-                    }
-                }
             }
             return question;
         }
@@ -592,17 +483,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         protected void onPostExecute(String transcription) {
             if (transcription != null) {
-                // endTime = System.currentTimeMillis(); // Record the end time
                 Log.i("MRA", "------it took: ms");
             } else {
                 // Gestion des erreurs
 
             }
         }
-    }
-
-    public Boolean getMessageError() {
-        return messageError;
     }
 
     public void setMessageError(Boolean messageError) {
@@ -1099,7 +985,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                         logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NO_MATCH", "No match");
                                         break;
                                     case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                                        Log.d(TAG, "RecognitionService busy");
+                                        Log.d(TAG, "RecognitionService busy hotword");
                                         logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_RECOGNIZER_BUSY", "RecognitionService busy");
                                         break;
                                     case SpeechRecognizer.ERROR_SERVER:
@@ -1241,7 +1127,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                 "\nScore : " + result.getConfidence() + //the recognition score
                                 "\nUtterance: " + result.getUtterance() +  //actual phrase pronounced by the user and recognised by free speech (google/cerence)
                                 "\nRule: " + result.getRule()); //the respective tag of the Uterrance, as described in the grammar
-                        notifyObservers("STTQuestion_success;" + result.getUtterance());
+                        notifyObservers("STTQuestion_success;SPLIT;" + result.getUtterance()+";SPLIT;NONE;");
                         setLed("neutral");
 
                     }
@@ -1428,7 +1314,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onResults  : " + data.get(0));
-                            notifyObservers("STTQuestion_success;" + data.get(0));
+                            notifyObservers("STTQuestion_success;SPLIT;" + data.get(0)+";SPLIT;NONE;");
                             BuddySDK.UI.stopListenAnimation();
                             setLed("neutral");
                         } else {
@@ -1449,7 +1335,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onPartialResults  : " + data.get(0));
                             if (!data.get(0).trim().equals("")) {
-                                notifyObservers("STTQuestion_success;" + data.get(0));
+                                notifyObservers("STTQuestion_success;SPLIT;" + data.get(0)+";SPLIT;NONE;");
                                 BuddySDK.UI.stopListenAnimation();
                                 setLed("neutral");
                             } else {
@@ -1489,8 +1375,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
     public void stopRecordingSTT(Boolean shouldRestartListening,Boolean shouldRestartNewCycle) {
+        Log.i(TAG, "stopRecordingSTT: start");
         try {
-            byte[] audioDataF = convertPcmToWavByte(); // Read the recorded audio data
+            String audioDataF = convertBase64Wav(); // Read the recorded audio data
             // Annuler la tâche précédente si elle existe
             if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
                 transcribeTask.cancel(true);
@@ -1508,7 +1395,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 try {
                     PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
                     reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
@@ -1530,10 +1417,10 @@ public class BuddyGPTApplication extends BuddyApplication {
                         }
                     }
                     else {
-                        if (shouldRestartListening) {
+                        if (Boolean.TRUE.equals(shouldRestartListening)) {
                             startListeningQuestionWav(activityTemp);
                         } else {
-                            if (shouldRestartNewCycle){
+                            if (Boolean.TRUE.equals(shouldRestartNewCycle)){
                                 activityTemp.runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
@@ -1571,40 +1458,36 @@ public class BuddyGPTApplication extends BuddyApplication {
     Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
-            try {
-                convertPcmToWavByte();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            Log.e("MRAE", "start dbfs calcul 3---------------");
+            convertBase64Wav();
+            Log.e("MRAE","start dbfs calcul 3---------------");
             if (thread1 != null && thread1.isAlive()) {
                 thread1.interrupt();
             }
-            thread1 = new Thread(() -> {
+            thread1 =new Thread(() -> {
                 if (!Python.isStarted()) {
                     Python.start(new AndroidPlatform(activityTemp));
                 }
                 Python py = Python.getInstance();
                 PyObject pyobj = py.getModule("calculDBFS");
                 try {
-                    PyObject pyObject;
+                    PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
-                    pyObject = pyobj.callAttr("main", parameters.getString("fichier_audio"));
+                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
                     //Mettre  le dernier fichier json envoyé à l’API
-                    Log.e("MRAE", "test comparaison flot--------------- " + pyObject.toString());
-                    Log.e("MRAE", "result dBFS python--------------- " + pyObject);
+                    Log.e("MRAE", "test comparaison flot--------------- " + reponse.toString());
+                    Log.e("MRAE", "result dBFS python--------------- " + reponse.toString());
                     Log.e("MRAE", "previousVolume--------------- " + previousVolume);
                     Log.e("MRAE", "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
-                    if (!pyObject.toString().trim().equals("-inf")) {
+                    if (!reponse.toString().trim().equals("-inf")){
                         if (previousVolume == 0) {
                             Log.e("MRAE", "result dBFS if--------------- ");
                             previousVolume = Float.parseFloat(reponse.toString());
                         } else {
-                            if (Float.parseFloat(pyObject.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
+                            if (Float.parseFloat(reponse.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
                                 traitementAudio();
                                 previousVolume = Float.valueOf(0);
                                 Log.e("MRAE", "result dBFS else if--------------- ");
@@ -1617,17 +1500,17 @@ public class BuddyGPTApplication extends BuddyApplication {
                     }
 
                     if (Thread.currentThread().isInterrupted()) {
-                        // Terminer le thread s'il a été interrompu
+                        return; // Terminer le thread s'il a été interrompu
                     }
 
 
                 } catch (PyException | JSONException p) {
-                    Log.e("MRAE", "exception dBFS python " + p);
+                    Log.e("MRAE","exception dBFS python "+p);
                 }
 
             });
             thread1.start();
-            handler2.postDelayed(this, (long) Integer.valueOf(getParamFromFile("Duration_sound_level_checked", configurationFilePseudo)) * 1000);
+            handler2.postDelayed(this, Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000);
         }
     };
 
@@ -2131,9 +2014,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         if (ttsAndroid != null) {
             ttsAndroid.stop();
         }
-        if (googleCloudTTS != null) {
-            googleCloudTTS.stop();
-        }
         setLanguageDetected("");
     }
 
@@ -2430,7 +2310,9 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void startListeningQuestionWav(Activity activity){
         Log.d(TAG_STREAMING, "startListeningQuestionWav start");
-
+        // Post sur le thread UI de façon sûre (activity peut être null / finishing)
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(this::listeningAnimation);
         speechRecognizer.destroy();
         stopListening(activity);
 
@@ -2439,7 +2321,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             return;
         }
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)) {
             Log.e(TAG_STREAMING, "RECORD_AUDIO permission not granted");
             // notify to request permission
             notifyObservers("RECORD_AUDIO_PERMISSION_NEEDED");
@@ -2454,10 +2336,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         audioRecord = ar;
 
-        // use app-specific path (external files dir) to avoid storage permission issues
-        File outDir = getExternalFilesDir("recordings");
-        if (outDir == null) outDir = Environment.getExternalStorageDirectory();
-        String outputFile = new File(outDir, "audioF.pcm").getAbsolutePath();
+        String outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
 
         try {
             setLed("listening");
@@ -2473,86 +2352,19 @@ public class BuddyGPTApplication extends BuddyApplication {
             currentState = "";
             // start VAD (keeps using configured sample rate - VAD expects matching sample rate)
             startVAD();
-            processAudiof(outputFile);
+            processAudio(outputFile);
         } catch (Exception e) {
             Log.e(TAG_STREAMING, "Failed to start recording", e);
             if (audioRecord != null) {
-                try { audioRecord.release(); } catch (Exception ignored) {}
+                try { audioRecord.release(); } catch (Exception ignored) {
+                    Log.i(TAG, "startListeningQuestionWav: Exception "+ignored.getMessage());
+                }
                 audioRecord = null;
             }
         }
     }
 
-    /** processAudio — write only numRead samples and feed VAD with valid length */
-    private void processAudio(String outputFile) {
-        Log.i(TAG_STREAMING, "processAudio: start FILE=" + outputFile);
-        if (audioRecord == null) {
-            Log.e(TAG_STREAMING, "processAudio: audioRecord is null");
-            return;
-        }
 
-        new Thread(() -> {
-            short[] buffer = new short[Math.max(160, AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT) / 2)];
-            FileOutputStream fos = null;
-            try {
-                fos = new FileOutputStream(outputFile);
-                while (isRecording) {
-                    int numRead = audioRecord.read(buffer, 0, buffer.length);
-                    Log.d(TAG_STREAMING, "processAudio: read samples=" + numRead);
-                    if (numRead > 0) {
-                        // write only read samples
-                        byte[] bytes = shortArrayToByteArray(buffer, numRead);
-                        fos.write(bytes, 0, bytes.length);
-
-                        // feed VAD with valid portion if vad available
-                        if (vad != null) {
-                            try {
-                                // try common public API: process(short[], int)
-                                try {
-                                    java.lang.reflect.Method m = vad.getClass().getMethod("process", short[].class, int.class);
-                                    m.invoke(vad, buffer, numRead);
-                                } catch (NoSuchMethodException ns) {
-                                    // fallback: try addContinuousSpeechListener(short[], VadListener)
-                                    try {
-                                        java.lang.reflect.Method m2 = vad.getClass().getMethod("addContinuousSpeechListener", short[].class, VadListener.class);
-                                        m2.invoke(vad, buffer, vadListener);
-                                    } catch (NoSuchMethodException ns2) {
-                                        // last resort: try process(byte[])
-                                        byte[] b = bytes;
-                                        try {
-                                            java.lang.reflect.Method m3 = vad.getClass().getMethod("process", byte[].class);
-                                            m3.invoke(vad, b);
-                                        } catch (Exception ignored) {}
-                                    }
-                                }
-                            } catch (Exception e) {
-                                Log.w(TAG_STREAMING, "VAD invoke failed", e);
-                            }
-                        }
-                    } else {
-                        Log.w(TAG_STREAMING, "audioRecord.read returned " + numRead);
-                    }
-                }
-            } catch (IOException e) {
-                Log.e(TAG_STREAMING, "processAudio IOException", e);
-            } finally {
-                if (fos != null) {
-                    try { fos.close(); } catch (IOException ignored) {}
-                }
-                Log.i(TAG_STREAMING, "processAudio finished");
-            }
-        }, "processAudioThread").start();
-    }
-
-    /** convert only len samples */
-    private byte[] shortArrayToByteArray(short[] shortArray, int len) {
-        byte[] byteArray = new byte[len * 2];
-        for (int i = 0; i < len; i++) {
-            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
-            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
-        }
-        return byteArray;
-    }
 
     /*
      * VAD library only accepts 16-bit mono PCM audio stream and can work with the next Sample Rates and Frame Sizes :
@@ -2577,7 +2389,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         public void onSpeechDetected() {
             Log.d(TAG_STREAMING, "Speech detected!");
-            // Votre code lorsque la parole est détectée
+            // lorsque la parole est détectée
             if (!currentState.equals("SPEECH")) {
                 currentState = "SPEECH";
                 alReadyHadSpoke=true;
@@ -2594,10 +2406,10 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         public void onNoiseDetected() {
             Log.d(TAG_STREAMING, "Noise detected!");
-            // Votre code lorsque du bruit est détecté
+            // lorsque du bruit est détecté
             if (!currentState.equals("NOISE")) {
                 currentState = "NOISE";
-                if(alReadyHadSpoke){
+                if(Boolean.TRUE.equals(alReadyHadSpoke)){
                     alReadyHadSpoke=false;
                     stopProcessus =false;
                     stopRecording();
@@ -2633,7 +2445,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         vad.start();
     }
 
-    private void processAudiof(String outputFile) {
+    private void processAudio(String outputFile) {
         Log.i(TAG, "processAudio: start 1");
         Log.i(TAG, "processAudio: start 1 FILE"+outputFile);
 
@@ -2649,7 +2461,9 @@ public class BuddyGPTApplication extends BuddyApplication {
                     Log.i(TAG, "processAudio: start try : "+numRead);
 
                     if (numRead > 0) {
+                        Log.i(TAG, "processAudiof: >0");
                         vad.addContinuousSpeechListener(buffer, vadListener);
+                        Log.i(TAG, "processAudiof: fos");
                         fos.write(shortArrayToByteArray(buffer), 0, numRead * 2); // * 2 because each short is 2 bytes
                     }
                 }
@@ -2673,19 +2487,86 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         return byteArray;
     }
+    public void readAudioBase64(String base64) {
+        if (base64 == null || base64.trim().isEmpty()) {
+            Log.w(getClass().getSimpleName(), "readAudioBase64: base64 string empty");
+            return;
+        }
+        Log.i(TAG, "readAudioBase64: start");
+        // Décodage et écriture sur un thread background
+        new Thread(() -> {
+            Log.i(TAG, "readAudioBase64: start");
+            File outFile = new File(Environment.getExternalStorageDirectory(), "audio_response.wav");
 
-    private byte[] convertPcmToWavByte() throws IOException {
-        // Convert PCM data to WAV format
-        String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
-        PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
+            try {
+                Log.i(TAG, "readAudioBase64: start try");
+                byte[] audioBytes = Base64.decode(base64, Base64.DEFAULT);
+                try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                    fos.write(audioBytes);
+                    fos.flush();
 
-        Log.d("FilePath", "File path: " + outputFileWav);
-        File audioFileWav = new File(outputFileWav);
-        if (audioFileWav.exists()) {
-            return Files.readAllBytes(audioFileWav.toPath());
-        } else {
-            // Handle the case where the file does not exist
-            Log.e("FileError", "The file does not exist at the specified path.");
+                    Log.i(TAG, "readAudioBase64: audio written to " + outFile.getAbsolutePath());
+// Lecture sur le thread UI
+                    Handler mainHandler = new Handler(Looper.getMainLooper());
+                    mainHandler.post(() -> {
+                        if (outFile == null || !outFile.exists() || outFile.length() == 0) {
+                            Log.e(TAG, "readAudioBase64: fichier introuvable ou vide: " + (outFile != null ? outFile.getAbsolutePath() : "null"));
+                            return;
+                        }
+                        MediaPlayer mp = new MediaPlayer();
+                        try {
+                            mp.setDataSource(outFile.getAbsolutePath());
+                            mp.setAudioAttributes(new AudioAttributes.Builder()
+                                             .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build());
+                            mp.setOnPreparedListener(mediaPlayer -> {
+                                mediaPlayer.setVolume(1f, 1f);
+                                mediaPlayer.start();
+                            });
+                            mp.setOnCompletionListener(mediaPlayer -> {
+                                try {
+                                    mediaPlayer.reset();
+                                    mediaPlayer.release();
+                                } catch (Exception ignored) {
+                                }
+                                Log.i(TAG, "readAudioBase64: lecture terminée");
+                            });
+                            mp.prepareAsync();
+                        } catch (IOException e) {
+                            Log.e(TAG, "readAudioBase64: erreur préparation MediaPlayer", e);
+                        }
+
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(getClass().getSimpleName(), "readAudioBase64: decode/write failed", e);
+                if (outFile != null && outFile.exists()) outFile.delete();
+            }
+        }).start();
+    }
+    private String convertBase64Wav() {
+        try {
+            String inputPcm = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
+            String outputWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav";
+
+            // Convert PCM → WAV
+            PcmToWavConverter.convert(inputPcm, outputWav);
+
+            File wavFile = new File(outputWav);
+            if (!wavFile.exists()) {
+                Log.e("FileError", "WAV file does not exist");
+                return null;
+            }
+
+            // Read WAV → bytes
+            byte[] wavBytes = Files.readAllBytes(wavFile.toPath());
+
+            // Convert bytes → Base64
+            return Base64.encodeToString(wavBytes, Base64.NO_WRAP);
+
+        } catch (Exception e) {
+            Log.e("ERR", "Error converting PCM → WAV → Base64", e);
             return null;
         }
     }

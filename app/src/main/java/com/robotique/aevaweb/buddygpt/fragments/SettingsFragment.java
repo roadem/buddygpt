@@ -580,20 +580,22 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     }
 
     private void handlerSTT() {
+        Log.i(TAG, "handlerSTT: STT-TeamGPT "+buddyGPTApplication.getparam("STT-TeamGPT"));
+        Log.i(TAG, "handlerSTT: STT "+buddyGPTApplication.getparam("STT"));
         String can_change_stt = buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties");
         if (can_change_stt != null && can_change_stt.trim().equalsIgnoreCase("Yes")) {
 
             menuOptionSttLyt.setVisibility(View.VISIBLE);
-            menuOptionTtsSpinner.setVisibility(View.VISIBLE);
+            menuOptionSttSpinner.setVisibility(View.VISIBLE);
 
         }else{
             menuOptionSttLyt.setVisibility(View.GONE);
-            menuOptionTtsSpinner.setVisibility(View.GONE);
+            menuOptionSttSpinner.setVisibility(View.GONE);
 
         }
         if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")) {
-            menuTTS.setVisibility(View.GONE);
-
+            menuSTT.setVisibility(View.GONE);
+            menuOptionSttSpinner.setVisibility(View.VISIBLE);
             final List<SttModel> sttList = new ArrayList<>();
 
 
@@ -930,6 +932,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
             activity.runOnUiThread(() -> {
             if (state == 1) {// refresh with new values
+                handlerSTT();
+                handlerTTS();
                 buddyGPTApplication.setparam("session_id", "");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
                     menuHeaderEditText.setText(buddyGPTApplication.getparam(header));
