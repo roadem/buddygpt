@@ -463,11 +463,11 @@ public class BuddyGPTApplication extends BuddyApplication {
     private class TranscribeTask extends AsyncTask<String, Void, String> {
         @Override
         protected String doInBackground(String... audioData) {
-            Log.e("MRA","doInBackground stopProcessus---------- "+stopProcessus);
+            Log.e(TAG,"doInBackground stopProcessus---------- "+stopProcessus);
 
             String question = audioData[0];
                     if (Boolean.FALSE.equals(stopProcessus)){
-                        Log.e("MRA","envoie traitement de la question");
+                        Log.e(TAG,"envoie traitement de la question");
                         notifyObservers("STTQuestion_success;SPLIT;NONE;SPLIT;"+question);
                         BuddySDK.UI.stopListenAnimation();
                         setLed("neutral");
@@ -483,7 +483,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         protected void onPostExecute(String transcription) {
             if (transcription != null) {
-                Log.i("MRA", "------it took: ms");
+                Log.i(TAG, "------it took: ms");
             } else {
                 // Gestion des erreurs
 
@@ -1450,7 +1450,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             });
             thread.start();
         } catch (Exception e) {
-            Log.e("MRA", "Exception " + e);
+            Log.e(TAG, "Exception " + e);
         }
 
     }
@@ -1459,7 +1459,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         public void run() {
             convertBase64Wav();
-            Log.e("MRAE","start dbfs calcul 3---------------");
+            Log.e(TAG,"start dbfs calcul 3---------------");
             if (thread1 != null && thread1.isAlive()) {
                 thread1.interrupt();
             }
@@ -1472,28 +1472,28 @@ public class BuddyGPTApplication extends BuddyApplication {
                 try {
                     PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
                     reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
                     //Mettre  le dernier fichier json envoyé à l’API
-                    Log.e("MRAE", "test comparaison flot--------------- " + reponse.toString());
-                    Log.e("MRAE", "result dBFS python--------------- " + reponse.toString());
-                    Log.e("MRAE", "previousVolume--------------- " + previousVolume);
-                    Log.e("MRAE", "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
+                    Log.e(TAG, "test comparaison flot--------------- " + reponse.toString());
+                    Log.e(TAG, "result dBFS python--------------- " + reponse.toString());
+                    Log.e(TAG, "previousVolume--------------- " + previousVolume);
+                    Log.e(TAG, "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
                     if (!reponse.toString().trim().equals("-inf")){
                         if (previousVolume == 0) {
-                            Log.e("MRAE", "result dBFS if--------------- ");
+                            Log.e(TAG, "result dBFS if--------------- ");
                             previousVolume = Float.parseFloat(reponse.toString());
                         } else {
                             if (Float.parseFloat(reponse.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
                                 traitementAudio();
                                 previousVolume = Float.valueOf(0);
-                                Log.e("MRAE", "result dBFS else if--------------- ");
+                                Log.e(TAG, "result dBFS else if--------------- ");
 
                             } else {
-                                Log.e("MRAE", "result dBFS else else--------------- ");
+                                Log.e(TAG, "result dBFS else else--------------- ");
                                 previousVolume = Float.parseFloat(reponse.toString());
                             }
                         }
@@ -1505,7 +1505,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
                 } catch (PyException | JSONException p) {
-                    Log.e("MRAE","exception dBFS python "+p);
+                    Log.e(TAG,"exception dBFS python "+p);
                 }
 
             });
@@ -1533,7 +1533,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             audioRecord = null;
         }
         if (vad != null) {
-            Log.e("MRA", "+++++++++++++++++++++++++++++++++vad stop");
+            Log.e(TAG, "+++++++++++++++++++++++++++++++++vad stop");
             vad.stop();
         }
     }
@@ -1612,7 +1612,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                             }
                             try {
                                 if (speechRecognizer != null) {
-                                    speechRecognizer.stopListening();
                                     speechRecognizer.stopListening();
                                     speechRecognizer.destroy();
                                 }
@@ -2277,25 +2276,24 @@ public class BuddyGPTApplication extends BuddyApplication {
         }, "com.google.android.tts");
     }
     private AudioRecord initAudioRecordWithFallback() {
-        int[] sampleRates = new int[]{16000, 8000, 44100};
+        int sampleRate = 8000;
         int[] audioSources = new int[]{
                 MediaRecorder.AudioSource.MIC,
                 MediaRecorder.AudioSource.VOICE_COMMUNICATION,
                 MediaRecorder.AudioSource.VOICE_RECOGNITION
         };
 
-        for (int sr : sampleRates) {
             for (int src : audioSources) {
-                int minBuf = AudioRecord.getMinBufferSize(sr, CHANNEL_CONFIG, AUDIO_FORMAT);
-                Log.i(TAG_STREAMING, "Trying AudioRecord sr=" + sr + " src=" + src + " minBuf=" + minBuf);
+                int minBuf = AudioRecord.getMinBufferSize(sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT);
+                Log.i(TAG_STREAMING, "Trying AudioRecord sr=" + sampleRate + " src=" + src + " minBuf=" + minBuf);
                 if (minBuf == AudioRecord.ERROR || minBuf == AudioRecord.ERROR_BAD_VALUE) continue;
-                int buf = Math.max(minBuf * 2, sr / 10); // safety margin
+                int buf = Math.max(minBuf * 2, sampleRate / 10); // safety margin
                 try {
-                    AudioRecord ar = new AudioRecord(src, sr, CHANNEL_CONFIG, AUDIO_FORMAT, buf);
+                    AudioRecord ar = new AudioRecord(src, sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT, buf);
                     if (ar.getState() == AudioRecord.STATE_INITIALIZED) {
                         // update globals used elsewhere
                         // Note: SAMPLE_RATE constant may be used elsewhere; prefer to use local sr where needed
-                        Log.i(TAG_STREAMING, "AudioRecord initialized (sr=" + sr + ", src=" + src + ", buf=" + buf + ")");
+                        Log.i(TAG_STREAMING, "AudioRecord initialized (sr=" + sampleRate + ", src=" + src + ", buf=" + buf + ")");
                         return ar;
                     } else {
                         ar.release();
@@ -2304,7 +2302,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                     Log.w(TAG_STREAMING, "initAudioRecordWithFallback exception", e);
                 }
             }
-        }
+
         return null;
     }
 
@@ -2529,6 +2527,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     mediaPlayer.reset();
                                     mediaPlayer.release();
                                 } catch (Exception ignored) {
+                                    Log.i(TAG, "readAudioBase64: "+ignored.getMessage());
                                 }
                                 Log.i(TAG, "readAudioBase64: lecture terminée");
                             });

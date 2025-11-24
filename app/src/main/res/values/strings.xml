@@ -2,7 +2,7 @@
     <string name="app_name">BuddyGPT</string>
     <string name="path">/storage/emulated/0/</string>
     <string name="pathConfig">/storage/emulated/0/BuddyGPT/</string>
-    <string name="copyright">[Ver. 1.4.5] 2025©Teamnet</string>
+    <string name="copyright">[Ver. 1.4.6] 2025©Teamnet</string>
     <!-- Menu de paramètres -->
     <!-- Menu de paramètres french-->
     <string name="menu_title_fr">PARAMETRES</string>

@@ -2261,7 +2261,7 @@ public class MainFragment extends Fragment implements IDBObserver {
         buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Response", buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Response", configFile));
         Log.i(TAG, "initTeamGPTSettings: TeamGPT_ID_Device: "+buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile));
         if (buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile).equalsIgnoreCase("")){
-            buddyGPTApplication.setparam("TeamGPT_ID_Device", buddyGPTApplication.getparam("IMEI"));
+            buddyGPTApplication.setparam("TeamGPT_ID_Device", "0");
         }
         else{
             buddyGPTApplication.setparam("TeamGPT_ID_Device", buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile));
@@ -2314,6 +2314,7 @@ public class MainFragment extends Fragment implements IDBObserver {
 
             }
             else{
+
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
                     buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
                 }

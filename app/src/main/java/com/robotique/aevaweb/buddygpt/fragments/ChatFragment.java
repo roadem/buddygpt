@@ -1,5 +1,7 @@
 package com.robotique.aevaweb.buddygpt.fragments;
 
+import static java.lang.String.format;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.AsyncTask;
@@ -10,6 +12,7 @@ import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -868,6 +871,18 @@ public class ChatFragment extends Fragment implements IDBObserver {
                     }
                 });
             }
+            if (message.contains("MODE_STREAM_TEXT;SPLIT;")) {
+                if(buddyGPTApplication.getparam("TTS").equalsIgnoreCase("google")){
+                    getActivity().runOnUiThread(() -> {
+                        if (message.split(";SPLIT;").length > 1) {
+                            String response = message.split(";SPLIT;")[1];
+                            handleResponseSpeak(response,false);
+                        }
+                    });
+                }
+
+            }
+
             if (message.contains("STTQuestion_success")) {
                 String[] parts = message.split(";SPLIT;");
                 Log.i(TAG, "update: PARTS 1 "+parts[1]);
@@ -1050,12 +1065,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                                     speak(translatedText, "timeOutExpired");
                                                 }
 
-                                            }).addOnFailureListener(new OnFailureListener() {
-                                                @Override
-                                                public void onFailure(@NonNull Exception e) {
-                                                    Log.e(TAG, "translatedText exception  " + e);
-                                                }
-                                            });
+                                            }).addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
 
                                         }
 
@@ -1071,6 +1081,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                 } else {
                     getActivity().runOnUiThread(() -> {
                         stopListeningFreeSpeech();
+                        isWaitingForResponse = true;
                         BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                         BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
                         buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
@@ -1082,6 +1093,25 @@ public class ChatFragment extends Fragment implements IDBObserver {
                         if (buddyGPTApplication.getResponseFromTeamGPT() == null)
                             buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
                         buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(null,message.split(";SPLIT;")[2]);
+                    });
+                }
+            }
+            if(message.contains("AUDIO_TEXT_INPUT;")){
+                String[] parts = message.split(";SPLIT;");
+                Log.i(TAG, "update: AUDIO_TEXT_INPUT PARTS 1 "+parts[1]);
+                if (!parts[1].equals("NONE")) {
+                    Log.i(TAG, "Result: " + parts[1]);
+                    getActivity().runOnUiThread(() -> {
+                        buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber() + 1);
+                        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+                        Replica question = new Replica();
+                        question.setType("Question");
+                        question.setTime(time);
+                        question.setValue(parts[1]);
+                        listRep.add(question);
+                        listRepGlobale.add(question);
+                        updateChat();
+                        buddyGPTApplication.setActivityClosed(false);
                     });
                 }
             }
@@ -1449,13 +1479,19 @@ public class ChatFragment extends Fragment implements IDBObserver {
         if (responseTimeout != null) responseTimeout.cancel();
 
         if (type.equals(NOTHEALYSA) || type.equals("storedResponse")) {
-            handleResponseSpeak(texte);
+            handleResponseSpeak(texte,true);
         } else if (type.equals("timeOutExpired")) {
             buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
         }
     }
 
-    private void handleResponseSpeak(String texte) {
+    private void handleResponseSpeak(String texte, boolean isSpeakTTS) {
+        Log.i(TAG, "handleResponseSpeak: speak "+isSpeakTTS);
+        if(isSpeakTTS){
+            buddyGPTApplication.setAlreadyGetAnswer(true);
+            buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);
+        }else
+            Log.i(TAG, "handleResponseSpeak: no speak tts");
         buddyGPTApplication.setAlreadyGetAnswer(true);
         String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
 
@@ -1465,7 +1501,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
             updateExistingResponseReplica(texte);
         }
 
-        buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);
     }
 
     private void createNewResponseReplica(String texte, String time) {
