@@ -263,6 +263,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
         buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
         buddyGPTApplication.hideSystemUI(getActivity());
+        configureSystemUI();
         buddyGPTApplication.setInitSharedpreferences(false);
 
 
@@ -445,7 +446,15 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         buddyGPTApplication.removeObserver(this);
     }
 
-
+    private void configureSystemUI() {
+        int uiFlags = buddyGPTApplication.hideSystemUI(getActivity());
+        View decorView = getActivity().getWindow().getDecorView();
+        decorView.setSystemUiVisibility(uiFlags);
+        decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
+            if (visibility == View.SYSTEM_UI_FLAG_VISIBLE)
+                decorView.setSystemUiVisibility(uiFlags);
+        });
+    }
 
     private void setupClickListeners() {
         lytCloseMenuSettings.setOnClickListener(v -> btnCloseSettingsFragment());

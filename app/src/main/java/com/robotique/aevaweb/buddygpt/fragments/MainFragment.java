@@ -537,6 +537,8 @@ public class MainFragment extends Fragment implements IDBObserver {
              }
          Log.i(TAG, "onCreate: restored initOrMajOrNone=" + initOrMajOrNone);
         buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
+        buddyGPTApplication.hideSystemUI(getActivity());
+        configureSystemUI();
         buddyGPTApplication.registerObserver(this);
         buddyGPTApplication.setInitSharedpreferences(true);
         if (BuddySDK.UI != null) {
@@ -670,6 +672,17 @@ public class MainFragment extends Fragment implements IDBObserver {
     }
 
 
+
+
+    private void configureSystemUI() {
+        int uiFlags = buddyGPTApplication.hideSystemUI(getActivity());
+        View decorView = getActivity().getWindow().getDecorView();
+        decorView.setSystemUiVisibility(uiFlags);
+        decorView.setOnSystemUiVisibilityChangeListener(visibility -> {
+            if (visibility == View.SYSTEM_UI_FLAG_VISIBLE)
+                decorView.setSystemUiVisibility(uiFlags);
+        });
+    }
 
     @SuppressLint("UseCompatLoadingForDrawables")
     @Override

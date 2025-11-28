@@ -168,10 +168,11 @@ public class ChatFragment extends Fragment implements IDBObserver {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
         buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.registerObserver(this);
         buddyGPTApplication.hideSystemUI(getActivity());
-        initializeApplication();
         configureSystemUI();
+        buddyGPTApplication.registerObserver(this);
+        initializeApplication();
+
         initializeResponseHandler();
         initializeViews(view);
         setupClickListeners();
