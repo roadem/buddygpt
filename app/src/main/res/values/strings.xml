@@ -24,6 +24,7 @@
     <string name="menu_option_chatbotmodel_fr">Modèle du ChatBot</string>
     <string name="menu_header_fr">En-tête</string>
     <string name="menu_api_key_fr">Clé TeamGPT</string>
+    <string name="menu_api_env_fr">Environnement</string>
     <string name="menu_email_fr">Email</string>
     <string name="menu_name_fr">Nom du compte et Email</string>
     <string name="menu_option_projectID_fr">L\'identifiant du projet de CustomGPT</string>
@@ -62,6 +63,7 @@
     <string name="menu_option_chatbotmodel_en">ChatBot </string>
     <string name="menu_header_en">Header</string>
     <string name="menu_api_key_en">TeamGPT key</string>
+    <string name="menu_api_env_en">Environment</string>
     <string name="menu_email_en">E-mail</string>
     <string name="menu_name_en">Account name and E-mail</string>
     <string name="menu_option_projectID_en">CustomGPT project ID</string>
@@ -99,6 +101,7 @@
     <string name="menu_option_chatbotmodel_es">modelo de ChatBot</string>
     <string name="menu_header_es">Cabecera</string>
     <string name="menu_api_key_es">Clave ChatBot</string>
+    <string name="menu_api_env_es">Entorno</string>
     <string name="menu_email_es">Correo electrónico</string>
     <string name="menu_name_es">Nombre de cuenta</string>
     <string name="menu_option_projectID_es">Identificador del proyecto CustomGPT</string>
@@ -133,6 +136,7 @@
     <string name="menu_option_chatbotmodel_de">ChatBot-</string>
     <string name="menu_header_de">Kopfzeile</string>
     <string name="menu_api_key_de">TeamGPT-Schlüssel</string>
+    <string name="menu_api_env_de">Umgebung</string>
     <string name="menu_email_de">E-Mail</string>
     <string name="menu_name_de">Kontoname</string>
     <string name="menu_option_projectID_de">Die Projekt-ID von CustomGPT</string>
@@ -249,6 +253,7 @@
     
     <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
     <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
+    <string name="toast_teamgpt_EnvProgress_fr">Environnement en cours ...</string>
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
     <string name="toast_teamgpt_id_invalid_fr">Seul le STT/TTS local est pris en charge dans cette version. Ceux du serveur ne sont pas encore disponibles.</string>
     <string name="toast_teamgpt_params_invalid_fr">Les paramètres reçus du serveur TeamGPT sont invalides.</string>
@@ -257,6 +262,7 @@
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
     <!--english-->
     <string name="toast_teamgpt_key_indispo_en">TeamGPT key not inserted</string>
+    <string name="toast_teamgpt_EnvProgress_en">Environment progress ...</string>
     <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
     <string name="toast_teamgpt_invalid_en">Attention !</string>
     <string name="toast_teamgpt_key_invalid_en">The key is invalid</string>
@@ -268,12 +274,16 @@
     <!-- spanish -->
    
     <string name="toast_teamgpt_key_indispo_es">la clave teamgpt no insertada</string>
+    <string name="toast_teamgpt_EnvProgress_es">medio ambiente en progreso ...</string>
+
     <string name="toast_teamgpt_key_invalid_es">La clave no es válida</string>
     <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
     <string name="toast_teamgpt_invalid_es">Atención !</string>
     <!-- allemand -->
     
     <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
+    <string name="toast_teamgpt_EnvProgress_de">Umwelt im Wandel ...</string>
+
     <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
     <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>
     <string name="toast_teamgpt_invalid_de">Aufmerksamkeit !</string>

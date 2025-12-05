@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
@@ -86,16 +87,163 @@ public class ResponseFromTeamGPT {
 
     }
 
-    public void getParameters(ResponseCallback responseCallback) {
+    public void getEnvironnement(ResponseCallback responseCallback) {
+
+        new Thread(() -> {
+            HttpURLConnection con = null;
+
+            try {
+                // --- Préparation URL et paramètres ---
+                String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
+                String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Env");
+                String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
+
+                Log.i(TAG_STREAM, "getEnvironnement: Endpoint = " + endpoint);
+
+                URL url = new URL(baseUrl + endpoint);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                con.setRequestProperty("TeamGPT-Key", gptKey);
+                con.setConnectTimeout(5000);
+                con.setReadTimeout(5000);
+
+                int responseCode = con.getResponseCode();
+                Log.i(TAG_STREAM, "HTTP Response Code = " + responseCode);
+
+                // --- Gestion des erreurs HTTP (4xx/5xx) ---
+                if (responseCode >= 400) {
+                    handleHttpError(con, responseCode);
+                    buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
+                    buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+
+                    responseCallback.onFailure();
+                    return;
+                }
+
+                // --- Cas 404 : clé invalide ---
+                if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    Log.i(TAG_PARAM, "Invalid TeamGPT Key detected in getEnvironnement");
+
+                    buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.setparam("Environnement", "");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+
+                    responseCallback.onFailure();
+                    return;
+                }
+
+                // --- Cas 200 OK ---
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                    // Lire réponse JSON
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(con.getInputStream())
+                    );
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = in.readLine()) != null) {
+                        response.append(line);
+                    }
+                    in.close();
+
+                    Log.i(TAG_STREAM, "Response JSON = " + response);
+
+                    JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
+
+                    if (!jsonObject.has("environment")) {
+                        Log.e(TAG_STREAM, "Missing field 'environment' in JSON response");
+                        buddyGPTApplication.notifyObservers("ENV_ERROR");
+                        responseCallback.onFailure();
+                        return;
+                    }
+
+                    // Extraction env
+                    String env = jsonObject.get("environment").getAsString();
+                    buddyGPTApplication.setparam("Environnement", env);
+                    buddyGPTApplication.setparam("ENV_ERROR", "FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+
+                    Log.i(TAG_STREAM, "Environment loaded: " + env);
+
+                    // Enchaînement
+                    getParameters(new ResponseCallback() {
+                        @Override
+                        public void onSuccess() {
+                            Log.i("TAG", "getParameters Success");
+                        }
+
+                        @Override
+                        public void onFailure() {
+                            Log.i("TAG", "getParameters Failure");
+                        }
+                    }, env);
+
+                    responseCallback.onSuccess();
+                }
+
+            } catch (MalformedURLException e) {
+                Log.e(TAG_STREAM, "URL MAL FORMÉE : " + e.getMessage());
+                buddyGPTApplication.resetSharedPreferences();
+                buddyGPTApplication.notifyObservers("ENV_ERROR");
+                responseCallback.onFailure();
+
+            } catch (IOException e) {
+                Log.e(TAG_STREAM, "IOException : " + e.getMessage());
+                buddyGPTApplication.resetSharedPreferences();
+                buddyGPTApplication.notifyObservers("ENV_ERROR");
+                responseCallback.onFailure();
+
+            } catch (Exception e) {
+                Log.e(TAG_STREAM, "Erreur inconnue : " + e.getMessage());
+                buddyGPTApplication.resetSharedPreferences();
+                buddyGPTApplication.notifyObservers("ENV_ERROR");
+                responseCallback.onFailure();
+
+            } finally {
+                if (con != null) con.disconnect();
+            }
+
+        }).start();
+    }
+
+    private void handleHttpError(HttpURLConnection con, int responseCode) {
+        try {
+            InputStream err = con.getErrorStream();
+            StringBuilder errorResp = new StringBuilder();
+
+            if (err != null) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(err));
+                String line;
+                while ((line = br.readLine()) != null) {
+                    errorResp.append(line);
+                }
+                br.close();
+            }
+
+            Log.e(TAG_STREAM,
+                    "HTTP ERROR " + responseCode +
+                            " - Server Response: " + errorResp);
+
+        } catch (Exception e) {
+            Log.e(TAG_STREAM, "Failed to read error stream: " + e.getMessage());
+        }
+    }
+
+    public void getParameters(ResponseCallback responseCallback, String env) {
         final CountDownLatch latch = new CountDownLatch(1); // Initialize the latch with count 1
 
         new Thread(() -> {
             try {
-                String url = buddyGPTApplication.getparam("TeamGPT_url");
-                String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
+                String url = buddyGPTApplication.getparam("TeamGPT_Base_url");
+                String endpoint = env+buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
                 String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
-
+                Log.i(TAG_PARAM, "getParameters: "+url + endpoint);
                 URL obj = new URL(url + endpoint);
                 HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                 con.setRequestMethod("GET");
@@ -104,6 +252,7 @@ public class ResponseFromTeamGPT {
 
                 int responseCode = con.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    Log.i(TAG_PARAM, "getParameters: ");
                     responseCallback.onSuccess();
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
@@ -120,24 +269,23 @@ public class ResponseFromTeamGPT {
 
                     if (contentType != null && contentType.contains("application/json")) {
                         JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
-                        Log.i(TAG_STREAM, "run: PARAMS : " + jsonObject.toString());
+                        Log.i(TAG_PARAM, "run: PARAMS : " + jsonObject.toString());
                         JsonArray parametersArray = jsonObject.getAsJsonArray("parameters");
                         if (parametersArray != null && parametersArray.size() > 0) {
                             JsonObject parametersObject = parametersArray.get(0).getAsJsonObject();
                             Gson gson = new Gson();
                             Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
-
+                            buddyGPTApplication.setparam(TeamGPTKey, gptKey);
                             if (parameters != null) {
                                 if (!parameters.getStt().equalsIgnoreCase("local")
                                         || !parameters.getTts().equalsIgnoreCase("local")) {
-                                    buddyGPTApplication.setparam(TeamGPTKey, gptKey);
+
                                     buddyGPTApplication.resetSharedPreferences();
                                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
                                     buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "TRUE");
                                 } else {
                                     buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                                     buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
-                                    buddyGPTApplication.setparam(TeamGPTKey, parameters.getTeamGptKey());
                                     buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
                                     buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
                                     buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
@@ -179,6 +327,8 @@ public class ResponseFromTeamGPT {
                                     if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase("local")
                                             && buddyGPTApplication.getparam("TTS").equalsIgnoreCase(""))
                                         buddyGPTApplication.setparam("TTS", "ReadSpeaker");
+
+                                    buddyGPTApplication.notifyObservers("GET_PARAMETERS_SUCCESS");
                                 }
                             }
                         }
@@ -197,8 +347,8 @@ public class ResponseFromTeamGPT {
                 else if (responseCode== HttpURLConnection.HTTP_NOT_FOUND){
                     responseCallback.onSuccess();
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
-                    buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.setparam("session_id","");
                     buddyGPTApplication.setparam("ENV_ERROR","TRUE");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
@@ -233,11 +383,18 @@ public class ResponseFromTeamGPT {
 
     public void sendPutRequestStream(String question) {
         isEmotionNeutral = false;
-        String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
-        String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response");
+
+        String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
+        String endpoint = buddyGPTApplication.getparam("Environnement") + buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response");
         String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
         String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
 
+        Log.i(TAG_STREAM, "---- SEND PUT REQUEST STREAM ----");
+        Log.i(TAG_STREAM, "Base URL: " + baseUrl);
+        Log.i(TAG_STREAM, "Endpoint: " + endpoint);
+        Log.i(TAG_STREAM, "TeamGPT Key: " + gptKey);
+        Log.i(TAG_STREAM, "Device ID: " + imeiDevice);
+        Log.i(TAG_STREAM, "Final URL: " + baseUrl + endpoint);
         Request payload = new Request();
         payload.setTextInput(question);
         payload.setImeiIdDevice(imeiDevice);
@@ -247,13 +404,16 @@ public class ResponseFromTeamGPT {
         if (!buddyGPTApplication.getparam("session_id").isEmpty()) {
             payload.setSessionId(buddyGPTApplication.getparam("session_id"));
         }
+        Gson gson = new Gson();
+        String jsonPayload = gson.toJson(payload);
+        Log.i(TAG_STREAM, "Payload JSON: " + jsonPayload);
         saveRequestToFile(payload);
         updateMessageHistory(question);
+
         long requestStartTime = System.currentTimeMillis();
         SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss:SSS");
-        String formattedTime = sdf.format(new Date(requestStartTime));
         buddyGPTApplication.setQuestionTime(requestStartTime);
-        Log.i(TAG_STREAM, "Request sent at: " + formattedTime);
+        Log.i(TAG_STREAM, "Request sent at: " + sdf.format(new Date(requestStartTime)));
 
         new Thread(() -> {
             HttpURLConnection connection = null;
@@ -267,40 +427,60 @@ public class ResponseFromTeamGPT {
                 connection.setDoOutput(true);
                 connection.setChunkedStreamingMode(0);
 
-                Gson gson = new Gson();
-                String jsonPayload = gson.toJson(payload);
+                Log.i(TAG_STREAM, "Headers:");
+                Log.i(TAG_STREAM, "  Content-Type: application/json");
+                Log.i(TAG_STREAM, "  TeamGPT-Key: " + gptKey);
+                Log.i(TAG_STREAM, "  ID_DEVICE: " + imeiDevice);
+                Log.i(TAG_STREAM, "Sending payload...");
 
                 try (OutputStream os = connection.getOutputStream()) {
                     byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
                     os.write(input, 0, input.length);
                     os.flush();
                 }
-
                 int responseCode = connection.getResponseCode();
+                Log.e(TAG_STREAM, "HTTP Response Code: " + responseCode);
+                // Lire message d'erreur éventuel
+                if (responseCode >= 400) {
+                    InputStream errorStream = connection.getErrorStream();
+                    if (errorStream != null) {
+                        BufferedReader br = new BufferedReader(new InputStreamReader(errorStream));
+                        StringBuilder errorResp = new StringBuilder();
+                        String line;
+                        while ((line = br.readLine()) != null) errorResp.append(line);
+                        Log.e(TAG_STREAM, "Error response: " + errorResp.toString());
+                    } else {
+                        Log.e(TAG_STREAM, "No error body from server.");
+                    }
+                }
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     long responseStartTime = System.currentTimeMillis();
                     buddyGPTApplication.setResponseTime(responseStartTime);
-                    String formattedTime2 = sdf.format(new Date(responseStartTime));
-                    Log.i(TAG_STREAM, "First response received at: " + formattedTime2);
+                    Log.i(TAG_STREAM, "First response received at: " + sdf.format(new Date(responseStartTime)));
                     long responseTime = buddyGPTApplication.getResponseTime() - buddyGPTApplication.getQuestionTime();
                     Log.i(TAG_STREAM, "Response time: " + responseTime + " ms");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
                     buddyGPTApplication.setparam("ENV_ERROR", "FALSE");
+                    Log.i(TAG_STREAM, "Starting streaming response...");
                     handleStreamingResponse(connection.getInputStream());
                 } else if (responseCode == 400) {
+                    Log.e(TAG_STREAM, "400 Bad Request: INVALID KEY or BAD PAYLOAD");
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                 } else if (responseCode == 500) {
+                    Log.e(TAG_STREAM, "500 Server Error: Session may be invalid");
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("Session_ID_ERROR");
                     buddyGPTApplication.setparam("session_id", "");
                 } else if (responseCode == 404) {
+                    Log.e(TAG_STREAM, "404 Not Found: wrong environment endpoint");
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.setparam("ENV_ERROR","TRUE");
                     buddyGPTApplication.setparam("session_id", "");
                 } else {
+                    Log.e(TAG_STREAM, "Unexpected error -> calling handleError()");
                     handleError();
                 }
             } catch (Exception e) {
@@ -313,6 +493,7 @@ public class ResponseFromTeamGPT {
             }
         }).start();
     }
+
 
     private void updateMessageHistory(String question) {
         try {
@@ -340,7 +521,7 @@ public class ResponseFromTeamGPT {
             }
             Log.v("Json_API", "File saved successfully.");
         } catch (IOException e) {
-            Log.i("TAG", "saveRequestToFile: ");
+            Log.i(TAG_STREAM, "saveRequestToFile: ");
         }
     }
 

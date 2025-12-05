@@ -163,10 +163,10 @@ public class ChatFragment extends Fragment implements IDBObserver {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
         buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.registerObserver(this);
         buddyGPTApplication.hideSystemUI(getActivity());
-        initializeApplication();
         configureSystemUI();
+        buddyGPTApplication.setInitSharedpreferences(false);
+        buddyGPTApplication.registerObserver(this);
         initializeResponseHandler();
         initializeViews(view);
         setupClickListeners();
@@ -220,10 +220,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
     // -------------------------------------Initialisation---------------------------------------
 
-    private void initializeApplication() {
-        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.setInitSharedpreferences(false);
-    }
+
 
     private void configureSystemUI() {
         int uiFlags = buddyGPTApplication.hideSystemUI(getActivity());
@@ -981,18 +978,8 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                                     } else {
                                                         buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                                                                 .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                                                                .addOnSuccessListener(new OnSuccessListener<String>() {
-                                                                    @Override
-                                                                    public void onSuccess(String translatedText) {
-                                                                        buddyGPTApplication.showToast(translatedText);
-                                                                    }
-                                                                })
-                                                                .addOnFailureListener(new OnFailureListener() {
-                                                                    @Override
-                                                                    public void onFailure(@NonNull Exception e) {
-                                                                        buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                                                                    }
-                                                                });
+                                                                .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
+                                                                .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
                                                     }
                                                 } else {
                                                     buddyGPTApplication.setStartRecording(true);
@@ -1345,17 +1332,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
         isListeningFreeSpeech = true;
         buddyGPTApplication.setAppIsListeningToTheQuestion(true);
 
-
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
-            buddyGPTApplication.startListeningQuestion(getActivity());
-        } else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
-            if (buddyGPTApplication.getCurrentLanguage().equals("fr") || buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                buddyGPTApplication.startListeningCerence(getActivity());
-            } else {
-                buddyGPTApplication.startListeningQuestion(getActivity());
-            }
-        }
-
+        buddyGPTApplication.startListeningSTTForQuestion(getActivity());
 
         if (timerEcoute != null) timerEcoute.cancel();
         timerEcoute = new CountDownTimer(duration * 1000, 1000) {
@@ -1384,19 +1361,8 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
     private void startCycle() {
         isListeningFreeSpeech = true;
-        buddyGPTApplication.setAppIsListeningToTheQuestion(true);
 
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
-            buddyGPTApplication.startListeningQuestion(getActivity());
-
-        } else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
-            if (buddyGPTApplication.getCurrentLanguage().equals("fr") || buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                buddyGPTApplication.startListeningCerence(getActivity());
-            } else {
-                buddyGPTApplication.startListeningQuestion(getActivity());
-            }
-        }
-
+        buddyGPTApplication.startListeningSTTForQuestion(getActivity());
 
         if (timerEcoute != null) timerEcoute.cancel();
         timerEcoute = new CountDownTimer(buddyGPTApplication.getListeningDuration() * 1000, 1000) {

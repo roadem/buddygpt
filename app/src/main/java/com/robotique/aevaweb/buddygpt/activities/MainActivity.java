@@ -104,7 +104,6 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
         buddyGPTApplication.setparam("session_id", "");
         AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         am.setStreamMute(AudioManager.STREAM_NOTIFICATION, true);
-        buddyGPTApplication.setparam("TeamGPT_ID_Device", "");
         buddyGPTApplication.setSpeaking(false);
         buddyGPTApplication.setNotYet(true);
         buddyGPTApplication.setActivityClosed(false);
