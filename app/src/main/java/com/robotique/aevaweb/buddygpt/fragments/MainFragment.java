@@ -91,7 +91,7 @@ public class MainFragment extends Fragment implements IDBObserver {
     private static final String ANDROID_STT = "Android";
     private static final String CERENCE_STT = "Cerence";
     private static final String GOOGLE_STT = "google";
-    private static final String WHISPER_STT = "whisper";
+    private static final String WHISPER_STT = "openai";
     private static final String LANGUE_FR = "Français";
     private static final String LANGUE_EN = "Anglais";
     private static final String LANGUE_ES = "Espagnol";
@@ -565,8 +565,8 @@ public class MainFragment extends Fragment implements IDBObserver {
         }
         currentTrackingListeningState = StateTrackingListening.PERSON_IS_NOT_VISIBLE_TIMEOUT;
         totalTimeLookingAtCamera = 0L;
-        lytOpenMenuSettings.setOnClickListener(v -> btnOpenSettingsFragment());
-        lytOpenMenuChat.setOnClickListener(v -> btnOpenChatFragment());
+        lytOpenMenuSettings.setOnClickListener(v -> btnOpenFragment("settingsFragment"));
+        lytOpenMenuChat.setOnClickListener(v -> btnOpenFragment("chatFragment"));
         // Initialiser le spinner
         lytSpinner = view.findViewById(R.id.lyt_spinner);
         lytSpinner.setVisibility(View.GONE);
@@ -747,9 +747,9 @@ public class MainFragment extends Fragment implements IDBObserver {
     }
 
     /**
-     * Navigation vers la page des paramètres avec nettoyage de l'état
+     * Navigation vers les autres pages avec nettoyage de l'état
      */
-    public void btnOpenSettingsFragment() {
+    public void btnOpenFragment(String fragment) {
         // Arrêter toutes les activités en cours
         try {
             // Arrêt de l'écoute et du TTS
@@ -758,7 +758,19 @@ public class MainFragment extends Fragment implements IDBObserver {
             buddyGPTApplication.setSpeaking(false);
             buddyGPTApplication.setAppIsListeningToTheQuestion(false);
             isListeningFreeSpeech = false;
+            if (handler != null) {
+                handler.removeCallbacksAndMessages(null);
+                handler.removeCallbacks(runnable);
+            }
+            if (handlerCheckPersonDetection != null) {
+                handlerCheckPersonDetection.removeCallbacksAndMessages(null);
+                handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
+            }
 
+            if (handlerPauseTime != null) {
+                handlerPauseTime.removeCallbacksAndMessages(null);
+                handlerPauseTime.removeCallbacks(runnablePauseTime);
+            }
             // Reset UI state
             BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
@@ -778,9 +790,7 @@ public class MainFragment extends Fragment implements IDBObserver {
             // Rendre visibles les boutons de menu
             if (lytOpenMenuSettings != null) lytOpenMenuSettings.setVisibility(View.VISIBLE);
             if (lytOpenMenuChat != null) lytOpenMenuChat.setVisibility(View.VISIBLE);
-
-            // Notifier les observateurs
-            buddyGPTApplication.notifyObservers("end of timer");
+            stopListeningFreeSpeech();
 
             // S'assurer que le traitement audio est arrêté
             if (Boolean.TRUE.equals(buddyGPTApplication.getAppIsListeningToTheQuestion())) {
@@ -798,72 +808,24 @@ public class MainFragment extends Fragment implements IDBObserver {
         }
 
         try {
-            // Effectuer la transition
-            getActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new SettingsFragment())
-                    .commitAllowingStateLoss();
+            if(fragment.equalsIgnoreCase("settingsFragment")){
+                getActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new SettingsFragment())
+                        .commitAllowingStateLoss();
 
-            getActivity().overridePendingTransition(0, 0);
-        } catch (Exception e) {
-            Log.e(TAG, "Erreur lors de la navigation vers Settings", e);
-        }
-    }
-
-    public void btnOpenChatFragment() {
-        // Arrêter toutes les activités en cours
-        try {
-            // Arrêt de l'écoute et du TTS
-            buddyGPTApplication.stopTTS();
-            buddyGPTApplication.setStartRecording(false);
-            buddyGPTApplication.setSpeaking(false);
-            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
-            isListeningFreeSpeech = false;
-            buddyGPTApplication.stopListening(getActivity());
-            // Reset UI state
-            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
-            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-            BuddySDK.UI.stopListenAnimation();
-            buddyGPTApplication.setLed("Neutral");
-
-            // Reset application state
-            buddyGPTApplication.setActivityClosed(true);
-            buddyGPTApplication.setStoredResponse("");
-
-            // Masquer les bulles de texte
-            if (buddyTexteQstLyt != null) buddyTexteQstLyt.setVisibility(View.INVISIBLE);
-            if (buddyTexteRespLyt != null) buddyTexteRespLyt.setVisibility(View.INVISIBLE);
-            if (buddyTexteQst != null) buddyTexteQst.setMovementMethod(null);
-            if (buddyTexteResp != null) buddyTexteResp.setMovementMethod(null);
-
-            // Rendre visibles les boutons de menu
-            if (lytOpenMenuSettings != null) lytOpenMenuSettings.setVisibility(View.VISIBLE);
-            if (lytOpenMenuChat != null) lytOpenMenuChat.setVisibility(View.VISIBLE);
-
-            buddyGPTApplication.removeObserver(this);
-            // S'assurer que le traitement audio est arrêté
-            if (Boolean.TRUE.equals(buddyGPTApplication.getAppIsListeningToTheQuestion())) {
-                buddyGPTApplication.traitementAudio();
+                getActivity().overridePendingTransition(0, 0);
             }
+            else if(fragment.equalsIgnoreCase("chatFragment")){
+                getActivity().getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new ChatFragment())
+                        .commitAllowingStateLoss();
 
-        } catch (Exception e) {
-            Log.e(TAG, "Erreur lors du nettoyage avant navigation", e);
-        }
-
-        // Navigation vers Settings uniquement si l'Activity est valide
-        if (getActivity() == null || !isAdded()) {
-            Log.e(TAG, "Navigation impossible : Activity null ou Fragment détaché");
-            return;
-        }
-
-        try {
+                getActivity().overridePendingTransition(0, 0);
+            }
             // Effectuer la transition
-            getActivity().getSupportFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new ChatFragment())
-                    .commitAllowingStateLoss();
 
-            getActivity().overridePendingTransition(0, 0);
         } catch (Exception e) {
             Log.e(TAG, "Erreur lors de la navigation vers Settings", e);
         }
@@ -1997,12 +1959,12 @@ public class MainFragment extends Fragment implements IDBObserver {
                     });
                 }
             }
-            if (message.contains("AUDIO_BASE64;")){
-                BuddySDK.UI.setLabialExpression(LabialExpression.SPEAK_NEUTRAL);
-            }
-            if (message.contains("AUDIO_PLAYBACK_FINISHED;")){
-                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-            }
+//            if (message.contains("AUDIO_BASE64;")){
+//                BuddySDK.UI.setLabialExpression(LabialExpression.SPEAK_NEUTRAL);
+//            }
+//            if (message.contains("AUDIO_PLAYBACK_FINISHED;")){
+//                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+//            }
             if (message.contains("TTS_success")) {
                 getActivity().runOnUiThread(() -> {
                     Log.e(TAG, " TTS_success");
@@ -2269,128 +2231,138 @@ public class MainFragment extends Fragment implements IDBObserver {
     }
 
     public void initTeamGPTSettings() throws IOException {
-        buddyGPTApplication.setparam("TeamGPT_url", buddyGPTApplication.getParamFromFile("TeamGPT_url", configFile));
-        buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Params", buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Params", configFile));
-        buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Response", buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Response", configFile));
-        Log.i(TAG, "initTeamGPTSettings: TeamGPT_ID_Device: "+buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile));
-        if (buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile).equalsIgnoreCase("")){
-            buddyGPTApplication.setparam("TeamGPT_ID_Device", "0");
-        }
-        else{
-            buddyGPTApplication.setparam("TeamGPT_ID_Device", buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile));
-        }
+
+        //  Charger les paramètres de base depuis config.json ─────
+        buddyGPTApplication.setparam("TeamGPT_url",
+                buddyGPTApplication.getParamFromFile("TeamGPT_url", configFile));
+
+        buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Params",
+                buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Params", configFile));
+
+        buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Response",
+                buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Response", configFile));
+
+        String idDevice = buddyGPTApplication.getParamFromFile("TeamGPT_ID_Device", configFile);
+        buddyGPTApplication.setparam("TeamGPT_ID_Device", idDevice.isEmpty() ? "0" : idDevice);
+
+        Log.i(TAG, "initTeamGPTSettings: TeamGPT_ID_Device: " + idDevice);
+
+
+        //  Préparer ResponseFromTeamGPT ─────
         ResponseFromTeamGPT rft = buddyGPTApplication.getResponseFromTeamGPT();
         if (rft == null) {
             rft = new ResponseFromTeamGPT(buddyGPTApplication);
             buddyGPTApplication.setResponseFromTeamGPT(rft);
         }
-        if (buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+
+        String savedKey = buddyGPTApplication.getparam("TeamGPT_Key");
+        String fileKey  = buddyGPTApplication.getParamFromFile("TeamGPT_Key", configFile);
+
+
+        //  CASE 1 : pas de clé en RAM ⇒ essayer la clé du fichier ─────
+        if (savedKey.isEmpty()) {
+
+            // cacher le spinner au début
             lytSpinner = view.findViewById(R.id.lyt_spinner);
-            if (lytSpinner != null) {
-                lytSpinner.setVisibility(View.GONE);
+            if (lytSpinner != null) lytSpinner.setVisibility(View.GONE);
+
+            buddyGPTApplication.setparam("TeamGPT_Key", fileKey);
+
+            if (!fileKey.isEmpty()) {
+
+                // On appelle getParameters avec la clé venant du fichier
+                callGetParameters(rft);
+
+            } else {
+                // ─────────── Clé inexistante nulle part ⇒ afficher toast ───────────
+                showMissingKeyToast();
             }
-            buddyGPTApplication.setparam("TeamGPT_Key", buddyGPTApplication.getParamFromFile("TeamGPT_Key", configFile));
-            Log.i("TAG", "run: getParameters 4");
 
-            if(!buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")){
-                // Appeler getParameters
-                if (timeoutHandler != null && timeoutRunnable != null) {
-                    timeoutHandler.removeCallbacks(timeoutRunnable);
-                }
-
-                    rft.getParameters(new ResponseCallback() {
-                        @Override
-                        public void onSuccess() {
-                            getActivity().runOnUiThread(() -> {
-                                Log.i(TAG, "run: TEST successsss");
-                                // Annuler le timeout et cacher le spinner
-                                if (timeoutHandler != null && timeoutRunnable != null) {
-                                    timeoutHandler.removeCallbacks(timeoutRunnable);
-                                }
-                                lytSpinner.setVisibility(View.GONE);
-                            });
-                        }
-
-                        @Override
-                        public void onFailure() {
-                            getActivity().runOnUiThread(() -> {
-                                Log.i(TAG, "run: TEST failuuuure");
-                                // Annuler le timeout et afficher un message d'erreur
-                                if (timeoutHandler != null && timeoutRunnable != null) {
-                                    timeoutHandler.removeCallbacks(timeoutRunnable);
-                                }
-                                lytSpinner.setVisibility(View.VISIBLE);
-                                buddyGPTApplication.notifyObservers("ENV_ERROR");
-                            });
-                        }
-                    });
-
-            }
-            else{
-
-                if (buddyGPTApplication.getLangue().getNom().equals("Anglais")){
-                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                }
-                else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {
-                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_fr));
-                }
-                else{
-                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
-                            .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                            .addOnSuccessListener(new OnSuccessListener<String>() {
-                                @Override
-                                public void onSuccess(String translatedText) {
-                                    buddyGPTApplication.showToast(translatedText);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                                }
-                            });
-                }
-            }
         }
-        else
 
-            rft.getParameters(new ResponseCallback() {
-                @Override
-                public void onSuccess() {
-                    getActivity().runOnUiThread(() -> {
-                        Log.i(TAG, "run: TEST success");
-                        // Annuler le timeout et cacher le spinner
-                        if (timeoutHandler != null && timeoutRunnable != null) {
-                            timeoutHandler.removeCallbacks(timeoutRunnable);
-                        }
-                        lytSpinner.setVisibility(View.GONE);
-                    });
-                }
+        // CASE 2 : clé déjà dans SharedPreferences ─────
+        else {
+            callGetParameters(rft);
+        }
 
-                @Override
-                public void onFailure() {
-                    getActivity().runOnUiThread(() -> {
-                        Log.i(TAG, "run: TEST failuuuure");
-                        // Annuler le timeout et afficher un message d'erreur
-                        if (timeoutHandler != null && timeoutRunnable != null) {
-                            timeoutHandler.removeCallbacks(timeoutRunnable);
-                        }
-                        lytSpinner.setVisibility(View.VISIBLE);
-                        buddyGPTApplication.notifyObservers("ENV_ERROR");
-                        buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
-                    });
-                }
-            });
+
+        //  First Launch : recharger header + entete ─────
         if (buddyGPTApplication.getparam("firstLaunch").equals("true")) {
-            if (buddyGPTApplication.getparam(header).equals("")) {
-                buddyGPTApplication.setparam(header, buddyGPTApplication.getParamFromFile(header, configFile));
+
+            if (buddyGPTApplication.getparam(header).isEmpty()) {
+                buddyGPTApplication.setparam(header,
+                        buddyGPTApplication.getParamFromFile(header, configFile));
             }
-            if (buddyGPTApplication.getparam(entete).equals("")) {
-                buddyGPTApplication.setparam(entete, buddyGPTApplication.getParamFromFile(entete, configFile));
+
+            if (buddyGPTApplication.getparam(entete).isEmpty()) {
+                buddyGPTApplication.setparam(entete,
+                        buddyGPTApplication.getParamFromFile(entete, configFile));
             }
+
             buddyGPTApplication.setparam("firstLaunch", "false");
         }
-        // TeamGPT
+    }
+
+    private void callGetParameters(ResponseFromTeamGPT rft) {
+
+        // Stop timeout si actif
+        if (timeoutHandler != null && timeoutRunnable != null) {
+            timeoutHandler.removeCallbacks(timeoutRunnable);
+        }
+
+        lytSpinner.setVisibility(View.VISIBLE);
+
+        rft.getParameters(new ResponseCallback() {
+
+            @Override
+            public void onSuccess() {
+                getActivity().runOnUiThread(() -> {
+                    Log.i(TAG, "getParameters SUCCESS");
+
+                    removeTimeout();
+                    lytSpinner.setVisibility(View.GONE);
+                });
+            }
+
+            @Override
+            public void onFailure() {
+                getActivity().runOnUiThread(() -> {
+                    Log.e(TAG, "getParameters FAILURE");
+
+                    removeTimeout();
+                    lytSpinner.setVisibility(View.VISIBLE);
+
+                    // Notifier l’application que l’environnement est en erreur
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
+                    buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
+                });
+            }
+        });
+    }
+    private void removeTimeout() {
+        if (timeoutHandler != null && timeoutRunnable != null) {
+            timeoutHandler.removeCallbacks(timeoutRunnable);
+        }
+    }
+    private void showMissingKeyToast() {
+
+        String lang = buddyGPTApplication.getLangue().getNom();
+
+        if (lang.equals("Anglais")) {
+            buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
+            return;
+        }
+
+        if (lang.equals("Français")) {
+            buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_fr));
+            return;
+        }
+
+        // langue autre → traduction automatique
+        buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                .translate(getString(R.string.toast_teamgpt_key_indispo_en))
+                .addOnSuccessListener(text -> buddyGPTApplication.showToast(text))
+                .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
     }
 
     private void checkSpeakingAndSetNeutral() {

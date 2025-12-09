@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 8; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 10; //TODO upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -105,9 +105,9 @@ public class ConfigurationFile {
             setProperty("TeamGPT_Key", "");
             props.addPropertyComment("TeamGPT_url", "");
             props.addPropertyComment("TeamGPT_url", "TeamGPT parameters");
-            setProperty("TeamGPT_url", "https://chat.teamgpt.fr/api/");
+            setProperty("TeamGPT_url", "https://chat.teamgpt.fr/api_buddy1/");
             setProperty("TeamGPT_ApiEndpoint_Params", "get_parameters");
-            setProperty("TeamGPT_ApiEndpoint_Response", "get-response");
+            setProperty("TeamGPT_ApiEndpoint_Response", "get_response");
 
             setProperty("TeamGPT_ID_Device", "");
             props.addPropertyComment("Speech_To_Text_List","");

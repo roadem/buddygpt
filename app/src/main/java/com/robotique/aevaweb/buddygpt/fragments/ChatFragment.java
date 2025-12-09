@@ -91,7 +91,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     private static final String ANDROID_STT = "Android";
     private static final String CERENCE_STT = "Cerence";
     private static final String GOOGLE_STT = "google";
-    private static final String WHISPER_STT = "whisper";
+    private static final String WHISPER_STT = "openai";
     private static final String NEUTRAL = "neutral";
     private static final String HOUR_PATTERN = "HH:mm:ss";
     private static final String SELECTED_CHATBOT = "SelectedChatbot";

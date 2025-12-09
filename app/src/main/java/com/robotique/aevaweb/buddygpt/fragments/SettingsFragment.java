@@ -936,6 +936,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     }
 
     private void refresh(int state) {
+        Log.i(TAG, "refresh: start ");
             FragmentActivity activity = getActivity();
             if (activity == null || !isAdded()) return; // Ajout de la vérification
 
@@ -943,6 +944,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             if (state == 1) {// refresh with new values
                 handlerSTT();
                 handlerTTS();
+                Log.i(TAG, "refresh: start ");
+
                 buddyGPTApplication.setparam("session_id", "");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
                     menuHeaderEditText.setText(buddyGPTApplication.getparam(header));
@@ -953,6 +956,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 } else if (buddyGPTApplication.getLangue().getNom().equals(langueDE)) {
                     menuHeaderEditText.setText(buddyGPTApplication.getparam(kopfzeile));
                 }
+                Log.i(TAG, "refresh: start ");
+
                 if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase(""))
                     menuOptionSttLyt.setVisibility(View.GONE);
                 if (buddyGPTApplication.getparam("TTS-TeamGPT").equalsIgnoreCase(""))

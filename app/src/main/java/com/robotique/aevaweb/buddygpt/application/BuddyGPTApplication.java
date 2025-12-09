@@ -1002,7 +1002,23 @@ public class BuddyGPTApplication extends BuddyApplication {
                                         break;
                                 }
                                 Log.i(TAG, "onError: speechRecognizer.startListening 2");
-                                speechRecognizer.startListening(speechRecognizerIntent2);
+                                try {
+                                    speechRecognizer.cancel();
+                                    speechRecognizer.destroy();
+                                } catch (Exception ignored) {
+                                    Log.i(TAG, "onError: "+ignored.getMessage());
+                                }
+
+                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                    try {
+                                        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+                                        speechRecognizer.setRecognitionListener(this);
+                                        speechRecognizer.startListening(speechRecognizerIntent2);
+
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Failed recreating speechRecognizer: " + e);
+                                    }
+                                }, 600); // délai stable
                             }
 
                             @Override
@@ -1587,8 +1603,13 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         if (!rightHottwordDetected && speechRecognizer!=null && speechRecognizerIntent2 !=null) {
                 setLed("listening");
-                speechRecognizer.startListening(speechRecognizerIntent2);
-        }
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                try {
+                    speechRecognizer.startListening(speechRecognizerIntent2);
+                } catch (Exception e) {
+                    Log.e(TAG, "Retry failed in checkTheHotword: " + e);
+                }
+            }, 250);        }
 
 
     }
