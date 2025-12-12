@@ -23,7 +23,6 @@ import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -51,7 +50,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.bfr.buddy.speech.shared.ISTTCallback;
@@ -136,7 +134,6 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.e(TAG, "Led error : " + error);
         }
     };
-    private final Handler handlerListeningHotword = new Handler();
     private final Handler handler2 = new Handler();
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final Intent speechRecognizerIntent2 = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
@@ -155,14 +152,12 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void setFirstLaunch(boolean firstLaunch) {
         isFirstLaunch = firstLaunch;
     }
-    Runnable runnableListeningHotword;
-    SpeechRecognizer speechRecognizer;
+    private SpeechRecognizer speechRecognizer;
     int remainingAttempts;
     private int listeningDuration;
     private int listeningAttempt;
     private int speakVolume;
     private ResponseFromTeamGPT responseFromTeamGPT;
-    private Replica reponse;
     private Setting setting;
     private Boolean fileCreate = true;
     private ArrayList<Session> listSession = new ArrayList<>();
@@ -184,8 +179,6 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String storedResponse = "";
     private int bestTextSize = 0;
     private TextToSpeech ttsAndroid;
-    private Boolean shouldPlayEmotion = false;
-    private String currentEmotion = "";
     private Boolean messageError = false;
     private Langue langue;
     private Dialog dialog;
@@ -216,13 +209,15 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Boolean appIsListeningToTheQuestion = false;
     private String toastSttAndroidIndispo;
     private String toastTtsAndroidIndispo;
-    private TtsGoogleC googleCloudTTS;
     private Boolean appIsCurrentlyDealingWithTheQuestion = false;
     private Boolean bIExecution = false;
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
     private Toast mToast;
     private TranscribeTask transcribeTask;
-
+    private Handler retryHotwordHandler;
+    private Runnable retryHotwordRunnable;
+    private Handler noMatchHandler;          //  Pour les faux positifs/no match (checkTheHotword)
+    private Runnable noMatchRunnable;
     public void setAlreadyChatting(boolean alreadyChatting) {
         this.alreadyChatting = alreadyChatting;
     }
@@ -893,9 +888,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         getTranslateHotwordList();
         neutralAnimation();
         isSpeaking = false;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
-
         stopListening(activity);
 
         setAlreadyChatting(false);
@@ -1009,16 +1001,33 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     Log.i(TAG, "onError: "+ignored.getMessage());
                                 }
 
-                                new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                                // --- LOGIQUE DE REDÉMARRAGE AVEC RÉFÉRENCE ---
+
+                                // 1. Initialiser le Handler et le Runnable si nécessaire
+                                if (retryHotwordHandler == null) {
+                                    retryHotwordHandler = new Handler(Looper.getMainLooper());
+                                }
+
+                                // 2. Définir le Runnable de redémarrage
+                                retryHotwordRunnable = () -> {
                                     try {
                                         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
-                                        speechRecognizer.setRecognitionListener(this);
+                                        speechRecognizer.setRecognitionListener(this); // 'this' est le RecognitionListener
                                         speechRecognizer.startListening(speechRecognizerIntent2);
+                                        Log.i(TAG, "SpeechRecognizer redémarré après erreur.");
+
+                                        // Une fois redémarré, l'objet Runnable n'est plus nécessaire dans le Handler
+                                        retryHotwordRunnable = null;
 
                                     } catch (Exception e) {
                                         Log.e(TAG, "Failed recreating speechRecognizer: " + e);
+                                        // Si l'échec persiste, vous pouvez choisir de ne pas relancer
                                     }
-                                }, 600); // délai stable
+                                };
+
+                                // 3. Annuler tout redémarrage précédent et poster le nouveau
+                                retryHotwordHandler.removeCallbacksAndMessages(null);
+                                retryHotwordHandler.postDelayed(retryHotwordRunnable, 600);
                             }
 
                             @Override
@@ -1029,8 +1038,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     checkTheHotword(data.get(0));
                                 } else {
                                     Log.e(TAG, "Hotword result  size = 0 : ");
-                                    Log.i(TAG, "onError: speechRecognizer.startListening 3");
-                                    speechRecognizer.startListening(speechRecognizerIntent2);
                                 }
                             }
 
@@ -1083,8 +1090,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         Log.e(TAG, "startListeningFreeSpeechStt fonction start");
         alreadyGetAnswer = false;
         questionNumber++;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
         stopListening(activity);
         try {
             Log.i(TAG, "startListeningCerence: try");
@@ -1214,8 +1219,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         alreadyGetAnswer = false;
         questionNumber++;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
 
         // Arrêter l'écoute précédente (garde l'usage de activity)
         stopListening(activity);
@@ -1398,7 +1401,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
                 transcribeTask.cancel(true);
             }
-            Log.e("MIDO","start dbfs calcul");
+            Log.e(TAG,"start dbfs calcul");
             if (thread != null && thread.isAlive()) {
                 thread.interrupt();
             }
@@ -1420,14 +1423,14 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
 
-                    Log.e("MIDO","result dBFS python "+reponse.toString());
+                    Log.e(TAG,"result dBFS python "+reponse.toString());
                     if (!reponse.toString().trim().equals("-inf")) {
                         if (Float.parseFloat(reponse.toString()) >= Float.parseFloat(getParamFromFile("Seuil_dBFS", configurationFilePseudo))) {
-                            Log.d("MIDO", "volume est bien : " + Float.parseFloat(reponse.toString()));
+                            Log.d(TAG, "volume est bien : " + Float.parseFloat(reponse.toString()));
                             transcribeTask = new TranscribeTask();
                             transcribeTask.execute(audioDataF); // Transcribe the audio
                         } else {
-                            Log.d("MIDO", "volume est trop bas : " + Float.parseFloat(reponse.toString()));
+                            Log.d(TAG, "volume est trop bas : " + Float.parseFloat(reponse.toString()));
                             startListeningQuestionWav(activityTemp);
 
                         }
@@ -1437,20 +1440,10 @@ public class BuddyGPTApplication extends BuddyApplication {
                             startListeningQuestionWav(activityTemp);
                         } else {
                             if (Boolean.TRUE.equals(shouldRestartNewCycle)){
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notifyObservers("restartNewCycle");
-                                    }
-                                });
+                                activityTemp.runOnUiThread(() -> notifyObservers("restartNewCycle"));
                             }
                             else {
-                                activityTemp.runOnUiThread(new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        notifyObservers("restartListeningHotword");
-                                    }
-                                });
+                                activityTemp.runOnUiThread(() -> notifyObservers("restartListeningHotword"));
                             }
                         }
                     }
@@ -1602,18 +1595,27 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
         }
         if (!rightHottwordDetected && speechRecognizer!=null && speechRecognizerIntent2 !=null) {
-                setLed("listening");
-            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            setLed("listening");
+
+            // 1. Initialiser le Handler
+            if (noMatchHandler == null) {
+                noMatchHandler = new Handler(Looper.getMainLooper());
+            }
+
+            // 2. Définir le Runnable de redémarrage
+            noMatchRunnable = () -> {
                 try {
                     speechRecognizer.startListening(speechRecognizerIntent2);
                 } catch (Exception e) {
                     Log.e(TAG, "Retry failed in checkTheHotword: " + e);
                 }
-            }, 250);        }
+            };
 
-
+            // 3. Annuler l'ancien post et poster le nouveau
+            noMatchHandler.removeCallbacksAndMessages(null);
+            noMatchHandler.postDelayed(noMatchRunnable, 250);
+        }
     }
-
     /**
      * Cette fonction permet d'arrêter l'écoute STT Free Speech
      */
@@ -1624,12 +1626,16 @@ public class BuddyGPTApplication extends BuddyApplication {
                         activity.runOnUiThread(() -> {
 
                             stopProcessus = true;
-
-                            if (handlerListeningHotword != null && runnableListeningHotword != null) {
-
-                                handlerListeningHotword.removeCallbacksAndMessages(null);
-                                handlerListeningHotword.removeCallbacks(runnableListeningHotword);
-
+                            // ---  ANNULLER LE HANDLER D'ERREUR DE REDÉMARRAGE ---
+                            if (retryHotwordHandler != null) {
+                                // Annuler tous les messages postés, y compris le Runnable de redémarrage
+                                retryHotwordHandler.removeCallbacksAndMessages(null);
+                                Log.i(TAG, "stopListening: Hotword Retry Handler annulé.");
+                            }
+                            // --- NOUVEAU : Annuler le Handler de Re-tentative après non-match ---
+                            if (noMatchHandler != null) {
+                                noMatchHandler.removeCallbacksAndMessages(null);
+                                Log.i(TAG, "stopListening: NoMatch Retry Handler annulé.");
                             }
                             try {
                                 if (speechRecognizer != null) {
@@ -3171,7 +3177,101 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
 
+    /**
+     * ✅ Cleanup all running handlers and threads when app closes
+     */
+    public void cleanup() {
+        Log.i(TAG, "🛑 cleanup: Stopping all handlers and threads");
 
+        if (handler2 != null) {
+            handler2.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: handler2 stopped");
+        }
+
+        if (retryHotwordHandler != null) {
+            retryHotwordHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: retryHotwordHandler stopped");
+        }
+
+        if (noMatchHandler != null) {
+            noMatchHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: noMatchHandler stopped");
+        }
+
+        // Arrêter le periodic task
+        if (periodicTask != null) {
+            handler2.removeCallbacks(periodicTask);
+            Log.i(TAG, "🛑 cleanup: periodicTask stopped");
+        }
+
+        // Arrêter les threads
+        if (thread != null && thread.isAlive()) {
+            thread.interrupt();
+            Log.i(TAG, "🛑 cleanup: thread interrupted");
+        }
+
+        if (thread1 != null && thread1.isAlive()) {
+            thread1.interrupt();
+            Log.i(TAG, "🛑 cleanup: thread1 interrupted");
+        }
+
+        // Arrêter l'enregistrement audio
+        if (audioRecord != null) {
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+                audioRecord = null;
+                Log.i(TAG, "🛑 cleanup: audioRecord stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "🛑 cleanup: Error stopping audioRecord: " + e.getMessage());
+            }
+        }
+
+        // Arrêter VAD
+        if (vad != null) {
+            vad.stop();
+            Log.i(TAG, "🛑 cleanup: VAD stopped");
+        }
+
+        // Arrêter STT
+        if (speechRecognizer != null) {
+            try {
+                speechRecognizer.cancel();
+                speechRecognizer.destroy();
+                Log.i(TAG, "🛑 cleanup: speechRecognizer stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "🛑 cleanup: Error stopping speechRecognizer: " + e.getMessage());
+            }
+        }
+
+        if (freeSpeechSttTask != null) {
+            try {
+                freeSpeechSttTask.stop();
+                Log.i(TAG, "🛑 cleanup: freeSpeechSttTask stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "🛑 cleanup: Error stopping freeSpeechSttTask: " + e.getMessage());
+            }
+        }
+
+        // Arrêter TTS
+        if (ttsAndroid != null) {
+            try {
+                ttsAndroid.stop();
+                ttsAndroid.shutdown();
+                Log.i(TAG, "🛑 cleanup: ttsAndroid stopped");
+            } catch (Exception e) {
+                Log.e(TAG, "🛑 cleanup: Error stopping ttsAndroid: " + e.getMessage());
+            }
+        }
+
+        // Arrêter ResponseFromTeamGPT
+        if (responseFromTeamGPT != null) {
+            responseFromTeamGPT.reset();
+            Log.i(TAG, "🛑 cleanup: responseFromTeamGPT stopped");
+        }
+
+        Log.i(TAG, "🛑 cleanup: Complete");
+    }
     //#endregion ******************************************************* Fonctions utiles *********************************************************
 
 }

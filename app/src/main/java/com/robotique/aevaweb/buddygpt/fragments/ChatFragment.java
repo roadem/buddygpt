@@ -12,7 +12,6 @@ import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -189,6 +188,10 @@ public class ChatFragment extends Fragment implements IDBObserver {
         if (runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
             handlerTTSError.removeCallbacksAndMessages(null); // Supprime tous les messages restants
+        }
+        if (runnablePauseTime != null) {
+            handlerPauseTime.removeCallbacks(runnablePauseTime);
+            handlerPauseTime.removeCallbacksAndMessages(null); // Supprime tous les messages restants
         }
 
         // Réinitialise l’état de démarrage du SDK et l'attente de réponse
@@ -873,7 +876,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                 });
             }
             if (message.contains("MODE_STREAM_TEXT;SPLIT;")) {
-                if(buddyGPTApplication.getparam("TTS").equalsIgnoreCase("google")){
+                if(buddyGPTApplication.getparam("TTS").equalsIgnoreCase("google")|| buddyGPTApplication.getparam("TTS").equalsIgnoreCase("openai")){
                     getActivity().runOnUiThread(() -> {
                         if (message.split(";SPLIT;").length > 1) {
                             String response = message.split(";SPLIT;")[1];

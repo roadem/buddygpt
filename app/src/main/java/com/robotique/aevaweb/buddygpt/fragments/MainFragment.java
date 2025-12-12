@@ -766,7 +766,10 @@ public class MainFragment extends Fragment implements IDBObserver {
                 handlerCheckPersonDetection.removeCallbacksAndMessages(null);
                 handlerCheckPersonDetection.removeCallbacks(runnableCheckPersonDetection);
             }
-
+            if (handler != null && runnable != null) {
+                handler.removeCallbacks(runnable);
+                handler.removeCallbacksAndMessages(null);
+            }
             if (handlerPauseTime != null) {
                 handlerPauseTime.removeCallbacksAndMessages(null);
                 handlerPauseTime.removeCallbacks(runnablePauseTime);
@@ -977,37 +980,34 @@ public class MainFragment extends Fragment implements IDBObserver {
     };
     private void startListeningQuestion(){
         Log.d(TAG_TRACKING, "startListeningQuestion()");
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    isSpeaking =false;
-                    if(handler!=null && runnable!=null){
-                        handler.removeCallbacks(runnable);
-                        handler.removeCallbacksAndMessages(null);
-                    }
-                    if (responseTimeout!=null) responseTimeout.cancel();
-                    if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
-                        buddyGPTApplication.getResponseFromTeamGPT().reset();
-                    if(handlerTTSError!=null && runnableTTSError!=null){
-                        handlerTTSError.removeCallbacks(runnableTTSError);
-                        handlerTTSError.removeCallbacksAndMessages(null);
-                    }
-                    Log.d(TAG_TRACKING, "startListeningQuestion() if first");
-                    if (Boolean.TRUE.equals(!buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)){
-                        buddyGPTApplication.setStartRecording(true);
-                        buddyGPTApplication.setSpeaking(true);
-                        if(!isListeningFreeSpeech ) {
-                            Log.d(TAG_TRACKING, "startListeningQuestion() if second");
-                            isListeningFreeSpeech=true;
-                            buddyGPTApplication.setActivityClosed(false);
-                            startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
-                        }
-                        Log.d(TAG_TRACKING, "startListeningQuestion() isListeningFreeSpeech="+isListeningFreeSpeech);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+        getActivity().runOnUiThread(() -> {
+            try {
+                isSpeaking =false;
+                if(handler!=null && runnable!=null){
+                    handler.removeCallbacks(runnable);
+                    handler.removeCallbacksAndMessages(null);
                 }
+                if (responseTimeout!=null) responseTimeout.cancel();
+                if(buddyGPTApplication.getResponseFromTeamGPT()!=null)
+                    buddyGPTApplication.getResponseFromTeamGPT().reset();
+                if(handlerTTSError!=null && runnableTTSError!=null){
+                    handlerTTSError.removeCallbacks(runnableTTSError);
+                    handlerTTSError.removeCallbacksAndMessages(null);
+                }
+                Log.d(TAG_TRACKING, "startListeningQuestion() if first");
+                if (Boolean.TRUE.equals(!buddyGPTApplication.getSpeaking()) && Boolean.TRUE.equals(!mlKitIsDownloading)){
+                    buddyGPTApplication.setStartRecording(true);
+                    buddyGPTApplication.setSpeaking(true);
+                    if(!isListeningFreeSpeech ) {
+                        Log.d(TAG_TRACKING, "startListeningQuestion() if second");
+                        isListeningFreeSpeech=true;
+                        buddyGPTApplication.setActivityClosed(false);
+                        startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
+                    }
+                    Log.d(TAG_TRACKING, "startListeningQuestion() isListeningFreeSpeech="+isListeningFreeSpeech);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -1959,12 +1959,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                     });
                 }
             }
-//            if (message.contains("AUDIO_BASE64;")){
-//                BuddySDK.UI.setLabialExpression(LabialExpression.SPEAK_NEUTRAL);
-//            }
-//            if (message.contains("AUDIO_PLAYBACK_FINISHED;")){
-//                BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-//            }
+
             if (message.contains("TTS_success")) {
                 getActivity().runOnUiThread(() -> {
                     Log.e(TAG, " TTS_success");

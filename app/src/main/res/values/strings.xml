@@ -272,7 +272,7 @@
     <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
     <string name="toast_teamgpt_invalid_es">Atención !</string>
     <!-- allemand -->
-    
+    <string name="permission_required_message">Autorisations requises manquent: veuillez les accepter pour continuer.</string>
     <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
     <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
     <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>

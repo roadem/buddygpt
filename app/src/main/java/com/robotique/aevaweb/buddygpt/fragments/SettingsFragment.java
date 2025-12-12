@@ -19,8 +19,6 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ListPopupWindow;
-import android.widget.PopupWindow;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -48,7 +46,6 @@ import com.robotique.aevaweb.buddygpt.utilis.IMLKitDownloadCallback;
 import com.robotique.aevaweb.buddygpt.utilis.ResponseCallback;
 import com.robotique.aevaweb.buddygpt.utilis.WifiBroadcastReceiver;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
