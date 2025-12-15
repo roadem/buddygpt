@@ -254,6 +254,7 @@
     <string name="toast_teamgpt_key_indispo_fr">Clé TeamGPT non insérée</string>
     <string name="toast_teamgpt_cnx_failed_fr">L’accès au serveur TeamGPT est impossible</string>
     <string name="toast_teamgpt_EnvProgress_fr">Environnement en cours ...</string>
+    <string name="toast_teamgpt_cerencefcf_fr">Dictionnaires Cerence introuvables. Android STT utilisé.</string>
     <string name="toast_teamgpt_key_invalid_fr">La clé n\'est pas valide</string>
     <string name="toast_teamgpt_id_invalid_fr">Seul le STT/TTS local est pris en charge dans cette version. Ceux du serveur ne sont pas encore disponibles.</string>
     <string name="toast_teamgpt_params_invalid_fr">Les paramètres reçus du serveur TeamGPT sont invalides.</string>
@@ -263,6 +264,7 @@
     <!--english-->
     <string name="toast_teamgpt_key_indispo_en">TeamGPT key not inserted</string>
     <string name="toast_teamgpt_EnvProgress_en">Environment progress ...</string>
+    <string name="toast_teamgpt_cerencefcf_en">Cerence dictionaries not found. Android STT is being used.</string>
     <string name="toast_teamgpt_cnx_failed_en">Access to the TeamGPT server is impossible</string>
     <string name="toast_teamgpt_invalid_en">Attention !</string>
     <string name="toast_teamgpt_key_invalid_en">The key is invalid</string>
@@ -275,6 +277,7 @@
    
     <string name="toast_teamgpt_key_indispo_es">la clave teamgpt no insertada</string>
     <string name="toast_teamgpt_EnvProgress_es">medio ambiente en progreso ...</string>
+    <string name="toast_teamgpt_cerencefcf_es">Diccionarios de Cerence no encontrados. Se está usando Android STT.</string>
 
     <string name="toast_teamgpt_key_invalid_es">La clave no es válida</string>
     <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
@@ -283,7 +286,7 @@
     
     <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
     <string name="toast_teamgpt_EnvProgress_de">Umwelt im Wandel ...</string>
-
+    <string name="toast_teamgpt_cerencefcf_de">Cerence-Wörterbücher nicht gefunden. Android STT wird verwendet.</string>
     <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
     <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>
     <string name="toast_teamgpt_invalid_de">Aufmerksamkeit !</string>

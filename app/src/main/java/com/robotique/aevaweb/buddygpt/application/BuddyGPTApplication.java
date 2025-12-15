@@ -1161,7 +1161,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
 
         // Si Cerence STT est le moteur par défaut
-        if (getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
+        else if (getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
 
             String currentLang = getCurrentLanguage();
 
@@ -1183,6 +1183,20 @@ public class BuddyGPTApplication extends BuddyApplication {
                     grammarToUse = defaultGrammarFile;
 
                 } else {
+                    if (getLangue().getNom().equals(langueEn)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_en));
+                    } else if (getLangue().getNom().equals(langueFr)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_fr));
+                    } else if (getLangue().getNom().equals(langueEs)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_es));
+                    } else if (getLangue().getNom().equals(langueDe)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_de));
+                    } else {
+                        getEnglishLanguageSelectedTranslator()
+                                .translate(getString(R.string.toast_teamgpt_cerencefcf_en))
+                                .addOnSuccessListener(translatedText -> showToast(translatedText))
+                                .addOnFailureListener(e -> showToast(getString(R.string.toast_teamgpt_cerencefcf_en)));
+                    }
                     // Ni l'un ni l'autre n'est valide : FALLBACK sur Android STT
                     Log.w(TAG, "Cerence grammar (Configured: " + configuredGrammar + " | Default: " + defaultGrammarFile + ") not found or invalid. Falling back to Android STT.");
                     startListeningQuestion(activity);

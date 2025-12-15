@@ -108,7 +108,7 @@ public class ConfigurationFile {
             setProperty("TeamGPT_Base_url", "https://chat.teamgpt.fr");
             setProperty("TeamGPT_ApiEndpoint_Env", "/api/get_env_key");
             setProperty("TeamGPT_ApiEndpoint_Params", "/get_parameters");
-            setProperty("TeamGPT_ApiEndpoint_Response", "/get-response");
+            setProperty("TeamGPT_ApiEndpoint_Response", "/get_response");
 
             setProperty("TeamGPT_ID_Device", "");
             props.addPropertyComment("Speech_To_Text_List","");

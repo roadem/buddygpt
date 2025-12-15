@@ -110,19 +110,6 @@ public class ResponseFromTeamGPT {
                 int responseCode = con.getResponseCode();
                 Log.i(TAG_STREAM, "HTTP Response Code = " + responseCode);
 
-                // --- Gestion des erreurs HTTP (4xx/5xx) ---
-                if (responseCode >= 400) {
-                    handleHttpError(con, responseCode);
-                    buddyGPTApplication.resetSharedPreferences();
-                    buddyGPTApplication.notifyObservers("ENV_ERROR");
-                    buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
-                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
-                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
-
-                    responseCallback.onFailure();
-                    return;
-                }
-
                 // --- Cas 404 : clé invalide ---
                 if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                     Log.i(TAG_PARAM, "Invalid TeamGPT Key detected in getEnvironnement");
@@ -134,7 +121,7 @@ public class ResponseFromTeamGPT {
 
                     responseCallback.onFailure();
                     return;
-                }
+                }else
 
                 // --- Cas 200 OK ---
                 if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -157,51 +144,44 @@ public class ResponseFromTeamGPT {
 
                     if (!jsonObject.has("environment")) {
                         Log.e(TAG_STREAM, "Missing field 'environment' in JSON response");
-                        buddyGPTApplication.notifyObservers("ENV_ERROR");
+                        buddyGPTApplication.resetSharedPreferences();
+                        buddyGPTApplication.setparam("Environnement", "");
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                        buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                         responseCallback.onFailure();
                         return;
+                    }else{
+                        // Extraction env
+                        String env = jsonObject.get("environment").getAsString();
+                        buddyGPTApplication.setparam("Environnement", env);
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+
+                        Log.i(TAG_STREAM, "Environment loaded: " + env);
+
+                        // Enchaînement
+                        getParameters(new ResponseCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Log.i("TAG", "getParameters Success");
+                            }
+
+                            @Override
+                            public void onFailure() {
+                                Log.i("TAG", "getParameters Failure");
+                            }
+                        }, env);
+
+                        responseCallback.onSuccess();
                     }
 
-                    // Extraction env
-                    String env = jsonObject.get("environment").getAsString();
-                    buddyGPTApplication.setparam("Environnement", env);
-                    buddyGPTApplication.setparam("ENV_ERROR", "FALSE");
-                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
 
-                    Log.i(TAG_STREAM, "Environment loaded: " + env);
-
-                    // Enchaînement
-                    getParameters(new ResponseCallback() {
-                        @Override
-                        public void onSuccess() {
-                            Log.i("TAG", "getParameters Success");
-                        }
-
-                        @Override
-                        public void onFailure() {
-                            Log.i("TAG", "getParameters Failure");
-                        }
-                    }, env);
-
-                    responseCallback.onSuccess();
                 }
-
-            } catch (MalformedURLException e) {
-                Log.e(TAG_STREAM, "URL MAL FORMÉE : " + e.getMessage());
-                buddyGPTApplication.resetSharedPreferences();
-                buddyGPTApplication.notifyObservers("ENV_ERROR");
-                responseCallback.onFailure();
-
-            } catch (IOException e) {
-                Log.e(TAG_STREAM, "IOException : " + e.getMessage());
-                buddyGPTApplication.resetSharedPreferences();
-                buddyGPTApplication.notifyObservers("ENV_ERROR");
-                responseCallback.onFailure();
-
             } catch (Exception e) {
                 Log.e(TAG_STREAM, "Erreur inconnue : " + e.getMessage());
                 buddyGPTApplication.resetSharedPreferences();
-                buddyGPTApplication.notifyObservers("ENV_ERROR");
+                buddyGPTApplication.setparam("Environnement", "");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                 responseCallback.onFailure();
 
             } finally {
@@ -211,28 +191,6 @@ public class ResponseFromTeamGPT {
         }).start();
     }
 
-    private void handleHttpError(HttpURLConnection con, int responseCode) {
-        try {
-            InputStream err = con.getErrorStream();
-            StringBuilder errorResp = new StringBuilder();
-
-            if (err != null) {
-                BufferedReader br = new BufferedReader(new InputStreamReader(err));
-                String line;
-                while ((line = br.readLine()) != null) {
-                    errorResp.append(line);
-                }
-                br.close();
-            }
-
-            Log.e(TAG_STREAM,
-                    "HTTP ERROR " + responseCode +
-                            " - Server Response: " + errorResp);
-
-        } catch (Exception e) {
-            Log.e(TAG_STREAM, "Failed to read error stream: " + e.getMessage());
-        }
-    }
 
     public void getParameters(ResponseCallback responseCallback, String env) {
         final CountDownLatch latch = new CountDownLatch(1); // Initialize the latch with count 1

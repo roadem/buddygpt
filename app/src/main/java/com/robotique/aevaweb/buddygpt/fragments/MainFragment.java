@@ -2085,6 +2085,9 @@ public class MainFragment extends Fragment implements IDBObserver {
             if(message.contains("EnvInProgress")){
                 buddyGPTApplication.setparam("EnvInProgress", "true");
             }
+            if(message.contains("GET_PARAMETERS_SUCCESS")){
+                buddyGPTApplication.setparam("EnvInProgress", "false");
+            }
             if (message.contains("Session_ID_ERROR")) {
 
                 if (buddyGPTApplication.getLangue().getNom().equals(LANGUE_EN)) {
@@ -2221,8 +2224,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                                     timeoutHandler.removeCallbacks(timeoutRunnable);
                                 }
                                 lytSpinner.setVisibility(View.VISIBLE);
-                                buddyGPTApplication.notifyObservers("ENV_ERROR");
-                            });
+                                buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");                            });
                         }
                     });
 
@@ -2283,8 +2285,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                             timeoutHandler.removeCallbacks(timeoutRunnable);
                         }
                         lytSpinner.setVisibility(View.VISIBLE);
-                        buddyGPTApplication.notifyObservers("ENV_ERROR");
-                        buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
+                        buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     });
                 }
             });

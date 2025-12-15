@@ -875,6 +875,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null ");
                             showApiKeyLoader(true);
                             buddyGPTApplication.notifyObservers("EnvInProgress");
+                            buddyGPTApplication.setparam("EnvInProgress", "true");
                             buddyGPTApplication.getResponseFromTeamGPT().getEnvironnement(new ResponseCallback() {
                                 @Override
                                 public void onSuccess() {
@@ -913,6 +914,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                     if (buddyGPTApplication.getResponseFromTeamGPT() != null){
                         showApiKeyLoader(true);
                         buddyGPTApplication.notifyObservers("EnvInProgress");
+                        buddyGPTApplication.setparam("EnvInProgress", "true");
                         buddyGPTApplication.getResponseFromTeamGPT().getEnvironnement(new ResponseCallback() {
                             @Override
                             public void onSuccess() {
@@ -1140,6 +1142,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
                 refresh(0);
                 showApiKeyLoader(false);
+                buddyGPTApplication.setparam("EnvInProgress","false");
                 Log.i(TAG, "afterTextChanged: invalid");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
