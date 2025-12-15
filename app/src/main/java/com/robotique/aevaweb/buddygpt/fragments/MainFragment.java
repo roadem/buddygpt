@@ -2086,7 +2086,9 @@ public class MainFragment extends Fragment implements IDBObserver {
                 buddyGPTApplication.setparam("EnvInProgress", "true");
             }
             if(message.contains("GET_PARAMETERS_SUCCESS")){
-                buddyGPTApplication.setparam("EnvInProgress", "false");
+                    buddyGPTApplication.setparam("EnvInProgress","false");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","false");
+                    Log.i(TAG, "afterTextChanged: success");
             }
             if (message.contains("Session_ID_ERROR")) {
 

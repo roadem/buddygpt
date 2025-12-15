@@ -1230,6 +1230,28 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
 
             }
+            if(message.contains("EnvInProgress")){
+                buddyGPTApplication.setparam("EnvInProgress", "true");
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_fr));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueEs)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_es));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueDe)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_de));
+                } else {
+                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                            .translate(getString(R.string.toast_teamgpt_EnvProgress_en))
+                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
+                            .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_en)));
+                }
+            }
+            if(message.contains("GET_PARAMETERS_SUCCESS")){
+                buddyGPTApplication.setparam("EnvInProgress","false");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","false");
+                Log.i(TAG, "afterTextChanged: success");
+            }
             if (message.contains("Session_ID_ERROR")) {
 
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {

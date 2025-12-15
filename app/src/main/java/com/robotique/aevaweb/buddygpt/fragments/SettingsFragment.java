@@ -1116,13 +1116,14 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 refresh(1);
                 showApiKeyLoader(false);
                 buddyGPTApplication.setparam("EnvInProgress","false");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","false");
                 Log.i(TAG, "afterTextChanged: success");
             }
             if (message.contains("INVALID_TEAMGPT_KEY")) {
                 refresh(0);
                 showApiKeyLoader(false);
                 buddyGPTApplication.setparam("EnvInProgress","false");
-                Log.i(TAG, "afterTextChanged: invalid");
+                Log.i(TAG, "afterTextChanged: invalid1");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
                     buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
@@ -1143,7 +1144,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 refresh(0);
                 showApiKeyLoader(false);
                 buddyGPTApplication.setparam("EnvInProgress","false");
-                Log.i(TAG, "afterTextChanged: invalid");
+                Log.i(TAG, "afterTextChanged: invalid2");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
                     buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
