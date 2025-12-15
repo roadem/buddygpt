@@ -746,6 +746,29 @@ public class MainFragment extends Fragment implements IDBObserver {
         super.onDestroyView();
     }
 
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "--- MainFragment.onResume() ---");
+
+        // ✅ Réactiver l'activity
+        if (buddyGPTApplication != null) {
+            buddyGPTApplication.setActivityClosed(false);
+            Log.i(TAG, "onResume: Activity is ACTIVE again");
+
+            // ✅ Redémarrer TOUS les services (hotword, audio, VAD, etc.)
+            Log.i(TAG, "onResume: Calling buddyGPTApplication.resume()");
+            buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+            buddyGPTApplication.startListeningHotwor(getActivity());
+            if (BuddySDK.UI != null) {
+                BuddySDK.UI.addFaceTouchListener(iuiFaceTouchCallback);
+            } else {
+                Log.e(TAG, "BuddySDK.UI is null, cannot add face touch listener");
+            }
+        }
+    }
+
     /**
      * Navigation vers les autres pages avec nettoyage de l'état
      */

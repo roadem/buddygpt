@@ -31,6 +31,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
@@ -57,7 +58,7 @@ public class ResponseFromTeamGPT {
     private final Queue<String> phrasesQueue = new LinkedList<>();
     private final Handler phrasesHandler = new Handler();
     private final Handler wordsHandler = new Handler();
-    public boolean isReadyToSpeak = true;
+    public boolean isReadyToSpeak = true; // Vrai si le TTS est prêt à parler
     public boolean isError = false;
     String chatBotServerNoResponceFr;
     String chatBotServerNoResponceEn;
@@ -74,8 +75,8 @@ public class ResponseFromTeamGPT {
     private final String TeamGPTKey = "TeamGPT_Key";
     private Runnable phrasesRunnable;
     private String currentDisplayedText = "";
-    private boolean isFullResponseReceived = false;
-    private boolean isDisplayFinished = true;
+    private boolean isFullResponseReceived = false; // Vrai si l'ensemble de la réponse a été reçue
+    private boolean isDisplayFinished = true; // Vrai si l'affichage est terminé
     private String phraseToPronounceWhenResumed;
     private boolean isReset = false;
     private boolean isPaused = false;
@@ -84,13 +85,17 @@ public class ResponseFromTeamGPT {
     private boolean isResponseTimeSaved = false;
     private JSONArray existingHistoryArray;
     private SimpleDateFormat sdf;
-    private StreamItem lastAddedItem = null;
+    private StreamItem lastAddedItem = null; // Last item added to the queue
     // New structure to pair text and audio chunks
     private static class StreamItem {
         String text;
         final Queue<String> audioChunks = new LinkedList<>();
         boolean audioReady = false; // true when at least one audio chunk has been attached
         // Vrai quand le serveur a envoyé le flag de fin pour CETTE phrase (ou la fin de la réponse)
+        // accumulate PCM chunks per-item and flag whether item uses WAV chunks or PCM
+        final ByteArrayOutputStream pcmAccumulator = new ByteArrayOutputStream();
+        boolean itemIsWav = false;
+
         boolean audioEnd = false;
         StreamItem(String text) {
             this.text = text;
@@ -108,8 +113,10 @@ public class ResponseFromTeamGPT {
     private MediaPlayer streamPlayer;   // player utilisé pour les chunks audio serveur
     private final Queue<StreamItem> streamQueue = new LinkedList<>();
     private StreamItem currentPlayingItem = null;
-    private boolean isPlayingAudio = false;
-
+    private boolean isPlayingAudio = false; // Vrai si un item est en lecture
+    private StreamItem lastCreatedItem = null;
+    private ByteArrayOutputStream pcmAccumulator = new ByteArrayOutputStream(); // Accumulateur pour les chunks audio serveur PCM
+    private boolean currentItemIsWav = false; // Vrai si le dernier chunk est un fichier WAV
     public ResponseFromTeamGPT(BuddyGPTApplication context) {
         this.buddyGPTApplication = context;
         chatBotServerNoResponceFr = buddyGPTApplication.getParamFromFile("chatBotServerNoResponce_fr",
@@ -430,7 +437,7 @@ public class ResponseFromTeamGPT {
                 if (buddyGPTApplication.getparam("switch_visibility").equals("true")) {
                     showPhrase(phraseToPronounce);
                 } else {
-
+                    Log.i(TAG_STREAM, "pronouncePhrase: visibility off");
                 }
                 // Ne pas notifier MODE_STREAM_SPEAK si on a une entrée audio (transcription)
                 // ou une sortie audio (base64) pour éviter doublons / conflits TTS
@@ -456,15 +463,29 @@ public class ResponseFromTeamGPT {
         isDisplayFinished = false;
         if (isError)
             currentDisplayedText = "";
-        final String phraseToShow = currentDisplayedText + phrase;
-        // on affiche UNIQUEMENT la phrase reçue
-        buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
+       if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")){
+           final int totalLength = currentDisplayedText.length() + phrase.length();
+           for (int i = 1; i <= phrase.length(); i++) {
+               final String phraseToShow = currentDisplayedText + phrase.substring(0, i);
+               wordsRunnable = () -> {
+                   buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
+                   if (phraseToShow.length() == totalLength) {
+                       isDisplayFinished = true;
+                   }
+               };
+               wordsHandler.postDelayed(wordsRunnable, i);
+           }
+           currentDisplayedText += phrase + " ";
+       }else {
+           final String phraseToShow = currentDisplayedText + phrase;
+           // on affiche UNIQUEMENT la phrase reçue
+           buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
 
-        currentDisplayedText += phrase + " ";
-        // IMPORTANT : marquer l'affichage comme terminé après envoi
-        isDisplayFinished = true;
+           currentDisplayedText += phrase + " ";
+           // IMPORTANT : marquer l'affichage comme terminé après envoi
+           isDisplayFinished = true;
+       }
     }
-
 
 
     // --- Gestion du Streaming ---
@@ -516,6 +537,20 @@ public class ResponseFromTeamGPT {
             String formattedObject = jsonObject.toString(4);
             formattedContent.append("data: ").append(formattedObject).append("\n\n");
             Log.w(TAG_STREAM, "Received JSON object: " + formattedObject);
+            // Vérifier TOUS les champs qui arrivent
+            Log.i(TAG_STREAM, "=== STREAM MESSAGE RECEIVED ===");
+            Log.i(TAG_STREAM, "has Answer: " + jsonObject.has("Answer"));
+            Log.i(TAG_STREAM, "has Audio_reponse: " + jsonObject.has("Audio_reponse"));
+            Log.i(TAG_STREAM, "has is_finished: " + jsonObject.has("is_finished"));
+            Log.i(TAG_STREAM, "has Chatbot_is_finished: " + jsonObject.has("Chatbot_is_finished"));
+            if (jsonObject.has("Answer")) {
+                Log.i(TAG_STREAM, "✓ Answer value: " + jsonObject.getString("Answer").substring(0, Math.min(50, jsonObject.getString("Answer").length())));
+            }
+            if (jsonObject.has("Audio_reponse")) {
+                String audioStr = jsonObject.getString("Audio_reponse");
+                Log.i(TAG_STREAM, "✓ Audio_reponse size: " + audioStr.length() + " chars");
+            }
+
             // Gérer Text_input (transcription STT)
             if (jsonObject.has("Text_input") && !jsonObject.getString("Text_input").trim().isEmpty()) {
                 handleTextInput(jsonObject);
@@ -524,18 +559,14 @@ public class ResponseFromTeamGPT {
             boolean isChatbotFinished = jsonObject.optBoolean("Chatbot_is_finished", false);
 
             if (isChatbotFinished) {
-                Log.i(TAG_STREAM, "Chatbot_is_finished received. Finalizing audio linkage.");
-
-                // Marquer la fin de l'audio pour le dernier StreamItem
-                // Cela indique au mécanisme de lecture qu'il ne doit plus attendre de chunks pour cet item
+                Log.i(TAG_STREAM, "🎯 Chatbot_is_finished received");
+                Log.i(TAG_STREAM, "  lastAddedItem is null? " + (lastAddedItem == null));
                 if (lastAddedItem != null) {
+                    Log.i(TAG_STREAM, "  lastAddedItem.text: " + lastAddedItem.text);
+                    Log.i(TAG_STREAM, "  lastAddedItem.audioEnd before: " + lastAddedItem.audioEnd);
                     lastAddedItem.audioEnd = true;
-                    Log.i(TAG_STREAM, "lastAddedItem.audioEnd set to true for: " + lastAddedItem.text);
+                    Log.i(TAG_STREAM, "  lastAddedItem.audioEnd after: " + lastAddedItem.audioEnd);
                 }
-
-                // Réinitialiser lastAddedItem
-                // Le serveur a fini d'envoyer sa réponse, donc tout audio/texte futur
-                // appartient à une nouvelle requête.
                 lastAddedItem = null;
             }
 
@@ -554,6 +585,8 @@ public class ResponseFromTeamGPT {
                 if (currentPlayingItem == null && !isPlayingAudio) {
                     if (streamQueue.isEmpty() && phrasesQueue.isEmpty()) {
                         processPhrasesWithDelay();
+                    }else{
+                        Log.i(TAG_STREAM, "processStreamLine: queue not empty");
                     }
                 }
             } else {
@@ -687,7 +720,12 @@ public class ResponseFromTeamGPT {
                     phrase = resp;
                     onNewPhrase(); // Ajoute à phrasesQueue pour TTS local
                 }
+            } else {
+                // ✅ NOUVEAU : Answer est vide, ne pas créer d'item
+                Log.i(TAG_STREAM, "handleAnswer: Answer is empty, skipping StreamItem creation");
             }
+        } else {
+            Log.w(TAG_STREAM, "✗ handleAnswer: Answer field missing or empty");
         }
     }
 
@@ -696,61 +734,67 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "handleAudioResponse: start ");
         if (jsonObject.has("Audio_reponse")) {
             String base64Audio = jsonObject.optString("Audio_reponse", "");
-
             if (base64Audio != null && !base64Audio.isEmpty()) {
                 Log.i(TAG_STREAM, "Audio chunk reçu (len=" + base64Audio.length() + ")");
-                // Mettre ce flag à true pour confirmer que le serveur a répondu en audio
                 hasSentAudioResponse = true;
                 StreamItem target = null;
                 synchronized (streamQueue) {
-                    // L'audio doit aller au dernier item de texte reçu
                     if (lastAddedItem != null) {
                         target = lastAddedItem;
-
-                        target.audioChunks.add(base64Audio);
-                        target.audioReady = true; // Marquer qu'on a reçu au moins un chunk
-
-                        // AJOUT : on considère qu'un chunk = audio complet de la phrase
-                        target.audioEnd = true;
-
-                        Log.i(TAG_STREAM, "handleAudioResponse: " + target.toString());
-
+                    } else if (currentPlayingItem != null) {
+                        target = currentPlayingItem;
                     } else {
-                        Log.e(TAG_STREAM, "handleAudioResponse: Received audio chunk but lastAddedItem is null!");
+                        Log.w(TAG_STREAM, "handleAudioResponse: no target, creating audio-only placeholder");
+                        target = new StreamItem("");
+                        streamQueue.add(target);
+                        lastAddedItem = target;
+                    }
 
-                        // Fallback : si on a déjà un item en lecture, on rattache le chunk dessus
-                        if (currentPlayingItem != null) {
-                            currentPlayingItem.audioChunks.add(base64Audio);
-                            currentPlayingItem.audioReady = true;
-                            target = currentPlayingItem;   // important pour la suite
+                    try {
+                        byte[] decoded = Base64.decode(base64Audio, Base64.DEFAULT);
+                        boolean chunkIsWav = isWavFile(decoded);
+
+                        if (chunkIsWav) {
+                            // ✅ MODIFICATION : WAV est complet -> stocker en base64 pour streaming immédiat
+                            target.audioChunks.add(base64Audio);  // Garder le base64 pour WAV
+                            target.itemIsWav = true;
+                            Log.i(TAG_STREAM, "handleAudioResponse: chunk is complete WAV, queued as WAV ("
+                                    + decoded.length + " bytes)");
+                        } else {
+                            // ✅ PCM chunks -> accumuler jusqu'à audioEnd
+                            target.pcmAccumulator.write(decoded);
+                            target.itemIsWav = false;
+                            Log.i(TAG_STREAM, "handleAudioResponse: chunk is PCM, appended to pcmAccumulator, size="
+                                    + target.pcmAccumulator.size());
                         }
+
+                        // Mark ready when we have at least some audio data
+                        if (!target.audioReady) {
+                            target.audioReady = true;
+                        }
+
+                        // If server marks end, set audioEnd
+                        if (jsonObject.optBoolean("Audio_end", false)) {
+                            target.audioEnd = true;
+                            Log.i(TAG_STREAM, "handleAudioResponse: Audio_end flag set to true");
+                        }
+
+                        lastAddedItem = target;
+
+                    } catch (IOException e) {
+                        Log.e(TAG_STREAM, "handleAudioResponse: error processing chunk", e);
                     }
                 }
 
-                buddyGPTApplication.notifyObservers("AUDIO_BASE64;SPLIT;");
-
-                // Reprise / démarrage de la lecture
-                if (target != null) {
-                    if (currentPlayingItem == target) {
-                        // On recevait déjà un item en cours, mais on s'était mis en pause
-                        if (!isPlayingAudio) {
-                            Log.i(TAG_STREAM, "handleAudioResponse: new chunk for current item -> resume playback");
-                            isPlayingAudio = true;
-                            playNextChunkForCurrentItem();
-                        }
-                    } else if (!isPlayingAudio && currentPlayingItem == null) {
-                        // Aucun item en cours, on peut démarrer le suivant prêt
-                        Log.i(TAG_STREAM, "handleAudioResponse: no current item -> startNextReadyItemIfAny");
-                        startNextReadyItemIfAny();
-                    }
-                } else {
-                    // Cas extrême : pas de target trouvé, on garde ton ancien comportement
-                    if (!isPlayingAudio && currentPlayingItem == null) {
-                        Log.i(TAG_STREAM, "handleAudioResponse: fallback -> startNextReadyItemIfAny");
-                        startNextReadyItemIfAny();
-                    }
+                // Decide to start playback
+                if (!isPlayingAudio && currentPlayingItem == null) {
+                    Log.i(TAG_STREAM, "handleAudioResponse: attempting startNextReadyItemIfAny()");
+                    startNextReadyItemIfAny();
+                } else if (target != null && currentPlayingItem == target && !isPlayingAudio) {
+                    Log.i(TAG_STREAM, "handleAudioResponse: resume playback for current item");
+                    isPlayingAudio = true;
+                    playNextChunkForCurrentItem();
                 }
-
             }
         }
     }
@@ -767,130 +811,160 @@ public class ResponseFromTeamGPT {
             return;
         }
 
-        String nextChunk = currentPlayingItem.audioChunks.poll();
-        if (nextChunk == null) {
-            Log.i(TAG_STREAM, "playNextChunkForCurrentItem:  (nextChunk == null) ");
-            if (currentPlayingItem.audioEnd) {
-                Log.w(TAG_STREAM, "--- FIN D'ITEM CONFIRMEE PAR AUDIO_END ---");
-                onPlaybackFinished(currentPlayingItem);
+        // If item uses WAV chunks, keep previous logic (streaming chunk-per-chunk WAV)
+        // ✅ PATH WAV : streaming chunk-par-chunk (pas d'accumulation)
+        if (currentPlayingItem.itemIsWav) {
+            String nextChunk = currentPlayingItem.audioChunks.poll();
+            Log.i(TAG_STREAM, "playNextChunkForCurrentItem (WAV): nextChunk == null? " + (nextChunk == null));
+            if (nextChunk == null) {
+                if (currentPlayingItem.audioEnd) {
+                    Log.w(TAG_STREAM, "--- FIN D'ITEM CONFIRMEE PAR AUDIO_END (WAV) ---");
+                    onPlaybackFinished(currentPlayingItem);
+                    return;
+                } else {
+                    Log.i(TAG_STREAM, "Chunk queue empty (WAV), waiting for more data...");
+                    isPlayingAudio = false;
+                    startNextReadyItemIfAny();
+                    return;
+                }
+            }
+            // Jouer le WAV chunk immédiatement (il est complet)
+            final String base64Chunk = nextChunk;
+            new Thread(() -> {
+                File outFile = null;
+                try {
+                    byte[] audioBytes = Base64.decode(base64Chunk, Base64.DEFAULT);
+                    // C'est déjà un WAV complet, pas besoin d'ajouter d'en-tête
+                    outFile = new File(Environment.getExternalStorageDirectory(),
+                            "chunk_" + System.currentTimeMillis() + ".wav");
+                    try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                        fos.write(audioBytes);
+                    }
+                    File fileToPlay = outFile;
+                    Handler mainHandler = new Handler(Looper.getMainLooper());
+                    mainHandler.post(() -> {
+                        // same MediaPlayer creation & listeners as before...
+                        if (streamPlayer != null) {
+                            try { if (streamPlayer.isPlaying()) streamPlayer.stop(); } catch (Exception ignored) {}
+                            try { streamPlayer.release(); } catch (Exception ignored) {}
+                            streamPlayer = null;
+                        }
+                        streamPlayer = new MediaPlayer();
+                        MediaPlayer mp = streamPlayer;
+                        try {
+                            mp.setDataSource(fileToPlay.getAbsolutePath());
+                            mp.setAudioAttributes(new AudioAttributes.Builder()
+                                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build());
+                            mp.setOnPreparedListener(player -> player.start());
+                            mp.setOnCompletionListener(player -> {
+                                try { player.release(); } catch (Exception ignored) {}
+                                if (streamPlayer == player) streamPlayer = null;
+                                if (fileToPlay.exists()) fileToPlay.delete();
+                                playNextChunkForCurrentItem();
+                            });
+                            mp.setOnErrorListener((player, what, extra) -> {
+                                try { player.release(); } catch (Exception ignored) {}
+                                if (streamPlayer == player) streamPlayer = null;
+                                if (fileToPlay.exists()) fileToPlay.delete();
+                                playNextChunkForCurrentItem();
+                                return true;
+                            });
+                            mp.prepareAsync();
+                        } catch (Exception e) {
+                            Log.e(TAG_STREAM, "Error playing WAV chunk", e);
+                            if (mp != null) mp.release();
+                            if (fileToPlay.exists()) fileToPlay.delete();
+                            playNextChunkForCurrentItem();
+                        }
+                    });
+                } catch (Exception e) {
+                    Log.e(TAG_STREAM, "Erreur play WAV chunk: " + e.getMessage(), e);
+                    if (outFile != null && outFile.exists()) outFile.delete();
+                    playNextChunkForCurrentItem();
+                }
+            }).start();
+            return;
+        }
+
+        // PCM flow: we only play when server signalled audioEnd for this item.
+        synchronized (streamQueue) {
+            Log.i(TAG_STREAM, "playNextChunkForCurrentItem (PCM): pcm size=" + currentPlayingItem.pcmAccumulator.size()
+                    + " audioEnd=" + currentPlayingItem.audioEnd);
+            if (currentPlayingItem.pcmAccumulator.size() == 0) {
+                // nothing to play yet
+                if (currentPlayingItem.audioEnd) {
+                    // nothing and end -> finish
+                    onPlaybackFinished(currentPlayingItem);
+                } else {
+                    isPlayingAudio = false;
+                }
                 return;
-            } else {
-                Log.i(TAG_STREAM, "Chunk queue empty, but audioEnd=false. Waiting for more data...");
+            }
+
+            if (!currentPlayingItem.audioEnd) {
+                // wait for more PCM chunks (server not finished)
+                Log.i(TAG_STREAM, "playNextChunkForCurrentItem: waiting for more PCM chunks");
                 isPlayingAudio = false;
                 return;
             }
-        }
 
-        // Écrire et jouer ce chunk sur un thread séparé
-        new Thread(() -> {
-            File outFile = null;
-            try {
-                // Décodage Base64
-                byte[] audioBytes = Base64.decode(nextChunk, Base64.DEFAULT);
-                Log.i("NEXT", "playNextChunkForCurrentItem: decoded " + audioBytes.length + " bytes");
+            // audioEnd == true and we have PCM data -> convert once and play whole wav
+            byte[] pcmBytes = currentPlayingItem.pcmAccumulator.toByteArray();
+            // clear accumulator immediately to avoid reusing same bytes later
+            currentPlayingItem.pcmAccumulator.reset();
 
-                // ✅ NOUVEAU : Vérifier si c'est WAV ou PCM
-                boolean isWav = isWavFile(audioBytes);
-                Log.i(TAG_STREAM, "Audio format detected: " + (isWav ? "WAV" : "PCM"));
-
-                // Si c'est PCM, ajouter l'en-tête WAV
-                if (!isWav) {
-                    audioBytes = addWavHeader(audioBytes);
-                    Log.i(TAG_STREAM, "WAV header added. New size: " + audioBytes.length + " bytes");
-                }
-
-                // Création du fichier temporaire
-                outFile = new File(
-                        Environment.getExternalStorageDirectory(),
-                        "chunk_" + System.currentTimeMillis() + ".wav");
-
-                // Écriture du fichier
-                try (FileOutputStream fos = new FileOutputStream(outFile)) {
-                    fos.write(audioBytes);
-                }
-                Log.i(TAG_STREAM, "playNextChunkForCurrentItem: Wrote " + audioBytes.length + " bytes to "
-                        + outFile.getAbsolutePath());
-
-                final File fileToPlay = outFile;
-
-                // Lecture sur le thread principal (code existant inchangé)
-                Handler mainHandler = new Handler(Looper.getMainLooper());
-                mainHandler.post(() -> {
-                    if (streamPlayer != null) {
-                        try {
-                            if (streamPlayer.isPlaying()) {
-                                streamPlayer.stop();
-                            }
-                        } catch (Exception ignored) {}
-                        try {
-                            streamPlayer.release();
-                        } catch (Exception ignored) {}
-                        streamPlayer = null;
-                    }
-
-                    streamPlayer = new MediaPlayer();
-                    MediaPlayer mp = streamPlayer;
-
-                    try {
-                        mp.setDataSource(fileToPlay.getAbsolutePath());
-                        mp.setAudioAttributes(new AudioAttributes.Builder()
-                                .setUsage(AudioAttributes.USAGE_MEDIA)
-                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                                .build());
-
-                        mp.setOnPreparedListener(player -> {
-                            Log.i(TAG_STREAM, "MediaPlayer prepared, duration=" + player.getDuration() + " ms");
-                            player.start();
-                        });
-
-                        mp.setOnCompletionListener(player -> {
-                            Log.i(TAG_STREAM, "MediaPlayer onCompletion, pos=" + player.getCurrentPosition()
-                                    + " / dur=" + player.getDuration());
-                            try {
-                                player.release();
-                            } catch (Exception ignored) {}
-                            if (streamPlayer == player) {
-                                streamPlayer = null;
-                            }
-                            if (fileToPlay.exists()) {
-                                boolean deleted = fileToPlay.delete();
-                                Log.i(TAG_STREAM, "Chunk file deleted: " + deleted);
-                            }
-                            playNextChunkForCurrentItem();
-                        });
-
-                        mp.setOnErrorListener((player, what, extra) -> {
-                            Log.e(TAG_STREAM, "MediaPlayer error what=" + what + ", extra=" + extra);
-                            try {
-                                player.release();
-                            } catch (Exception ignored) {}
-                            if (streamPlayer == player) {
-                                streamPlayer = null;
-                            }
-                            if (fileToPlay.exists()) {
-                                fileToPlay.delete();
-                            }
-                            playNextChunkForCurrentItem();
-                            return true;
-                        });
-
-                        mp.prepareAsync();
-                    } catch (Exception e) {
-                        Log.e(TAG_STREAM, "Error playing chunk for current item", e);
-                        if (mp != null)
-                            mp.release();
-                        if (fileToPlay.exists())
-                            fileToPlay.delete();
-                        playNextChunkForCurrentItem();
-                    }
-                });
+            byte[] wavBytes = addWavHeader(pcmBytes);
+            File outFile = new File(Environment.getExternalStorageDirectory(),
+                    "pcm_chunk_" + System.currentTimeMillis() + ".wav");
+            try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                fos.write(wavBytes);
             } catch (Exception e) {
-                Log.e(TAG_STREAM, "Erreur chunk audio (item): " + e.getMessage(), e);
-                if (outFile != null && outFile.exists())
-                    outFile.delete();
-                playNextChunkForCurrentItem();
+                Log.e(TAG_STREAM, "Erreur writing PCM->WAV file", e);
+                onPlaybackFinished(currentPlayingItem);
+                return;
             }
-        }).start();
+
+            final File fileToPlay = outFile;
+            Handler mainHandler = new Handler(Looper.getMainLooper());
+            mainHandler.post(() -> {
+                if (streamPlayer != null) {
+                    try { if (streamPlayer.isPlaying()) streamPlayer.stop(); } catch (Exception ignored) {}
+                    try { streamPlayer.release(); } catch (Exception ignored) {}
+                    streamPlayer = null;
+                }
+                streamPlayer = new MediaPlayer();
+                MediaPlayer mp = streamPlayer;
+                try {
+                    mp.setDataSource(fileToPlay.getAbsolutePath());
+                    mp.setAudioAttributes(new AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_MEDIA)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .build());
+                    mp.setOnPreparedListener(player -> player.start());
+                    mp.setOnCompletionListener(player -> {
+                        try { player.release(); } catch (Exception ignored) {}
+                        if (streamPlayer == player) streamPlayer = null;
+                        if (fileToPlay.exists()) fileToPlay.delete();
+                        onPlaybackFinished(currentPlayingItem);
+                    });
+                    mp.setOnErrorListener((player, what, extra) -> {
+                        try { player.release(); } catch (Exception ignored) {}
+                        if (streamPlayer == player) streamPlayer = null;
+                        if (fileToPlay.exists()) fileToPlay.delete();
+                        onPlaybackFinished(currentPlayingItem);
+                        return true;
+                    });
+                    mp.prepareAsync();
+                } catch (Exception e) {
+                    Log.e(TAG_STREAM, "Error playing PCM->WAV", e);
+                    if (mp != null) mp.release();
+                    if (fileToPlay.exists()) fileToPlay.delete();
+                    onPlaybackFinished(currentPlayingItem);
+                }
+            });
+        }
     }
 
     // ✅ HELPER 1 : Vérifier si le fichier est WAV
@@ -903,10 +977,15 @@ public class ResponseFromTeamGPT {
 
     // ✅ HELPER 2 : Ajouter en-tête WAV au PCM
     private byte[] addWavHeader(byte[] pcmData) {
-        int sampleRate = 24000;
-        int numChannels = 1;
-        int bitsPerSample = 16;
+        // ✅ Le serveur OpenAI TTS envoie TOUJOURS du 24kHz PCM
+        int sampleRate = 24000;  // ← FIXE : le serveur envoie du 24kHz
+        int numChannels = 1;     // MONO
+        int bitsPerSample = 16;  // 16-bit PCM
 
+        Log.i(TAG_STREAM, "addWavHeader: Using fixed sampleRate=24000 Hz (from OpenAI TTS)");
+        Log.i(TAG_STREAM, "addWavHeader: PCM data size=" + pcmData.length + " bytes");
+
+        // Calcul de la durée réelle
         int byteRate = sampleRate * numChannels * bitsPerSample / 8;
         int blockAlign = numChannels * bitsPerSample / 8;
 
@@ -951,6 +1030,7 @@ public class ResponseFromTeamGPT {
         System.arraycopy(wavHeader, 0, wavFile, 0, wavHeader.length);
         System.arraycopy(pcmData, 0, wavFile, wavHeader.length, pcmData.length);
 
+        Log.i(TAG_STREAM, "addWavHeader: WAV file created, total size=" + wavFile.length + " bytes");
         return wavFile;
     }
 
@@ -958,20 +1038,34 @@ public class ResponseFromTeamGPT {
     private void startNextReadyItemIfAny() {
         Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem + ", isPlayingAudio=" + isPlayingAudio);
 
-        // Si la lecture est déjà active, on ne démarre rien de nouveau
-        if (currentPlayingItem != null || isPlayingAudio) {
+        // ✅ MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
+        // on peut quand même essayer de lancer le prochain item
+        if (currentPlayingItem != null && isPlayingAudio) {
+            // Une lecture est en cours, ne rien démarrer
+            Log.i(TAG_STREAM, "startNextReadyItemIfAny: Playback already active, skipping");
             return;
         }
 
         synchronized (streamQueue) {
             for (StreamItem item : streamQueue) {
-                Log.i(TAG_STREAM, "startNextReadyItemIfAny: "+item.text);
+                Log.i(TAG_STREAM, "startNextReadyItemIfAny: "+item.text + " audioReady="+item.audioReady + " itemIsWav="+item.itemIsWav + " audioEnd="+item.audioEnd);
             }
+
             // 1. Regarder le prochain élément sans le retirer (Peek)
             StreamItem si = streamQueue.peek();
 
             if (si != null && si.audioReady) {
+                // IMPORTANT:
+                // - si c'est un WAV on peut jouer dès qu'un chunk est présent
+                // - si c'est du PCM (multi-chunks) on doit attendre audioEnd == true pour récupérer/poller l'item
+                boolean canStart =
+                        si.itemIsWav ||        // wav streaming -> start immediately
+                                si.audioEnd;           // pcm -> only when server signalled end
 
+                if (!canStart) {
+                    Log.i(TAG_STREAM, "startNextReadyItemIfAny: Item ready but waiting for audioEnd (PCM multi-chunks).");
+                    return;
+                }
 
                 Log.i(TAG_STREAM, "startNextReadyItemIfAny: size "+streamQueue.size());
                 // 2. L'élément est prêt : le retirer de la queue (Poll)
@@ -990,9 +1084,13 @@ public class ResponseFromTeamGPT {
             }
         }
     }
-
     // Démarre l'affichage du texte et la lecture de l'audio pour un StreamItem
     private void startPlaybackForItem(StreamItem item) {
+        Log.i(TAG_STREAM, "🎬 startPlaybackForItem START");
+        Log.i(TAG_STREAM, "  item.text: " + item.text);
+        Log.i(TAG_STREAM, "  item.audioChunks.size(): " + item.audioChunks.size());
+        Log.i(TAG_STREAM, "  item.audioReady: " + item.audioReady);
+        Log.i(TAG_STREAM, "  item.audioEnd: " + item.audioEnd);
 
         currentPlayingItem = item;
         isPlayingAudio = true;
@@ -1006,19 +1104,17 @@ public class ResponseFromTeamGPT {
         } catch (Exception e) {
             Log.e(TAG_STREAM, "BuddySDK Exception in startPlaybackForItem: " + e);
         }
-        // Afficher le texte (affichge progressif via showPhrase)
+
+        // Afficher le texte (affichage progressif via showPhrase)
         if (item.text != null && !item.text.isEmpty()) {
-            // on appelle showPhrase pour l'affichage progressif
             if (buddyGPTApplication.getparam("switch_visibility").equals("true")) {
-                Log.i("TAG", "startPlaybackForItem: calling showPhrase for item text");
+                Log.i(TAG_STREAM, "startPlaybackForItem: calling showPhrase for item text");
                 showPhrase(item.text);
             } else {
-                Log.i("TAG", "startPlaybackForItem: immediate display for item text");
-
+                Log.i(TAG_STREAM, "startPlaybackForItem: visibility is off");
             }
         }
-
-        // Commencer la lecture du premier chunk
+        Log.i(TAG_STREAM, "🎬 startPlaybackForItem: Calling playNextChunkForCurrentItem DIRECTLY");
         playNextChunkForCurrentItem();
     }
     /**
@@ -1028,8 +1124,8 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "onPlaybackFinished: Item finished: " + finishedItem.text);
 
         // 1. L'action CRUCIALE de nettoyage
-        currentPlayingItem = null;
-        isPlayingAudio = false;
+        currentPlayingItem = null;  // nettoyer currentPlayingItem
+        isPlayingAudio = false;      // marquer la fin
         hasSentAudioResponse = false;
 
         // ✅ FIN LECTURE AUDIO : Remettre expression à NO_EXPRESSION
@@ -1040,7 +1136,14 @@ public class ResponseFromTeamGPT {
         }
         // 2. Notifier l'UI/autres systèmes si nécessaire
         buddyGPTApplication.notifyObservers("AUDIO_PLAYBACK_FINISHED;SPLIT;");
-
+        // Reschedule la vérification du prochain item
+        // (même si pas prêt maintenant, il peut l'être bientôt)
+        if (!isFullResponseReceived) {
+            Log.i(TAG_STREAM, "onPlaybackFinished: Scheduling next item check (response not complete yet)");
+            phrasesRunnable = this::processPhrasesWithDelay;
+            phrasesHandler.postDelayed(phrasesRunnable, 100);
+            return;
+        }
         // 3. Tenter de démarrer l'item suivant (si l'audio est déjà prêt)
         startNextReadyItemIfAny();
         // 4. Vérifier si TOUT est fini (incluant TTS local)
@@ -1155,6 +1258,8 @@ public class ResponseFromTeamGPT {
                     if (waitingItem.text != null && !waitingItem.text.isEmpty()) {
                         if (buddyGPTApplication.getparam("switch_visibility").equals("true")) {
                             showPhrase(waitingItem.text);
+                        }else {
+                            Log.i(TAG_STREAM, "processPhrasesWithDelay: visibility is off");
                         }
                     }
 
@@ -1561,6 +1666,7 @@ public class ResponseFromTeamGPT {
         // Réinitialiser les flags d'audio / texte audio pour la session suivante
         hasSentAudioResponse = false;
         hasSentAudioTextInput = false;
+        lastCreatedItem = null;
     }
 
 }

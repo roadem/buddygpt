@@ -1532,14 +1532,22 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.d(TAG_STREAMING, "Not recording");
             return;
         }
+
+        // Arrêter la boucle du thread AVANT de libérer audioRecord
+        isRecording = false;
+
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
         }
-        isRecording = false;
         if (audioRecord != null) {
-            audioRecord.stop();
-            audioRecord.release();
-            audioRecord = null;
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+                audioRecord = null;
+                Log.i(TAG_STREAMING, "✅ audioRecord stopped and released");
+            } catch (Exception e) {
+                Log.e(TAG_STREAMING, "Error stopping audioRecord: " + e.getMessage());
+            }
         }
         if (vad != null) {
             Log.e(TAG, "+++++++++++++++++++++++++++++++++vad stop");
@@ -2478,26 +2486,42 @@ public class BuddyGPTApplication extends BuddyApplication {
             short[] buffer = new short[BUFFER_SIZE / 2]; // Divided by 2 because each short is 2 bytes
             try {
                 Log.i(TAG, "processAudio: start try");
+                // Vérifier que audioRecord n'est pas null
+                if (audioRecord == null) {
+                    Log.w(TAG, "processAudio: audioRecord is null, exiting thread");
+                    return;
+                }
                 Log.i(TAG, "recordingState: " + audioRecord.getRecordingState());
                 FileOutputStream fos = new FileOutputStream(outputFile);
                 while (isRecording) {
+                    //  Vérifier que audioRecord n'est pas null à chaque itération
+                    if (audioRecord == null) {
+                        Log.w(TAG, "processAudio: audioRecord became null, stopping loop");
+                        fos.close();
+                        return;
+                    }
                     Log.i(TAG, "processAudio: start try FOS "+fos);
                     int numRead = audioRecord.read(buffer, 0, buffer.length);
                     Log.i(TAG, "processAudio: start try : "+numRead);
 
                     if (numRead > 0) {
                         Log.i(TAG, "processAudiof: >0");
-                        vad.addContinuousSpeechListener(buffer, vadListener);
+                        // Vérifier que vad n'est pas null non plus
+                        if (vad != null) {
+                            vad.addContinuousSpeechListener(buffer, vadListener);
+                        }
                         Log.i(TAG, "processAudiof: fos");
-                        fos.write(shortArrayToByteArray(buffer), 0, numRead * 2); // * 2 because each short is 2 bytes
+                        fos.write(shortArrayToByteArray(buffer), 0, numRead * 2);
                     }
                 }
                 fos.close();
+            } catch (NullPointerException e) {
+                Log.e(TAG, "❌ processAudio: NullPointerException (likely audioRecord was released): " + e.getMessage());
             } catch (IOException e) {
+                Log.e(TAG, "❌ processAudio: IOException: " + e.getMessage());
                 e.printStackTrace();
             } finally {
                 Log.e(TAG,"processAudioFinally");
-//                stopWhisperSTT(); // Stop recording and process the remaining audio
             }
         }).start();
     }
@@ -3176,46 +3200,38 @@ public class BuddyGPTApplication extends BuddyApplication {
     //fonction pour push files
 
 
-
     /**
      * ✅ Cleanup all running handlers and threads when app closes
      */
     public void cleanup() {
         Log.i(TAG, "🛑 cleanup: Stopping all handlers and threads");
 
-        if (handler2 != null) {
-            handler2.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: handler2 stopped");
-        }
+        // ✅ CRUCIAL : Arrêter isRecording IMMÉDIATEMENT
+        isRecording = false;
+        Log.i(TAG, "🛑 cleanup: isRecording set to false");
 
-        if (retryHotwordHandler != null) {
-            retryHotwordHandler.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: retryHotwordHandler stopped");
-        }
-
-        if (noMatchHandler != null) {
-            noMatchHandler.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: noMatchHandler stopped");
-        }
-
-        // Arrêter le periodic task
-        if (periodicTask != null) {
-            handler2.removeCallbacks(periodicTask);
-            Log.i(TAG, "🛑 cleanup: periodicTask stopped");
-        }
-
-        // Arrêter les threads
+        // ✅ Arrêter les threads AVANT de libérer les ressources
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
-            Log.i(TAG, "🛑 cleanup: thread interrupted");
+            try {
+                thread.join(1000);  // ← Attendre que le thread se termine
+                Log.i(TAG, "🛑 cleanup: thread joined successfully");
+            } catch (InterruptedException e) {
+                Log.w(TAG, "🛑 cleanup: thread join interrupted: " + e.getMessage());
+            }
         }
 
         if (thread1 != null && thread1.isAlive()) {
             thread1.interrupt();
-            Log.i(TAG, "🛑 cleanup: thread1 interrupted");
+            try {
+                thread1.join(1000);
+                Log.i(TAG, "🛑 cleanup: thread1 joined successfully");
+            } catch (InterruptedException e) {
+                Log.w(TAG, "🛑 cleanup: thread1 join interrupted: " + e.getMessage());
+            }
         }
 
-        // Arrêter l'enregistrement audio
+        // PUIS libérer audioRecord
         if (audioRecord != null) {
             try {
                 audioRecord.stop();
@@ -3227,6 +3243,22 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
         }
 
+        if (handler2 != null) {
+            handler2.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: handler2 stopped");
+        }
+        if (retryHotwordHandler != null) {
+            retryHotwordHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: retryHotwordHandler stopped");
+        }
+        if (noMatchHandler != null) {
+            noMatchHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, "🛑 cleanup: noMatchHandler stopped");
+        }
+        if (periodicTask != null) {
+            handler2.removeCallbacks(periodicTask);
+            Log.i(TAG, "🛑 cleanup: periodicTask stopped");
+        }
         // Arrêter VAD
         if (vad != null) {
             vad.stop();
