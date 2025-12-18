@@ -97,6 +97,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private TextView menuOptionDetectLanguageTextView;
     private TextView menuHeaderTextView;
     private TextView menuApiKeyTextView;
+    private TextView menuApiEnvText;
     private TextView menuNameTextView;
     private Spinner menuOptionLangueSpinner;
     private Spinner menuOptionSttSpinner;
@@ -106,11 +107,13 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private TextView menuTTS;
     private TextView menuHeaderEditText;
     private EditText menuApiKeyEditText;
+    private TextView menuApiEnvTextView;
     private TextView menuNameText;
     private TextView copyRight;
     private TextView identifiers;
     private TextView volumeSeekbarValue;
     private SeekBar volumeSeekbar;
+    private ProgressBar loader;
     private Switch switchTrackingActivation;
     private Switch switchTrackingCameraDisplay;
     private Switch switchTrackingAutoListen;
@@ -262,9 +265,6 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         buddyGPTApplication.hideSystemUI(getActivity());
         configureSystemUI();
         buddyGPTApplication.setInitSharedpreferences(false);
-
-
-
         menuTitle = view.findViewById(R.id.menu_title);
         popupLanguageList = view.findViewById(R.id.popup_Languages_List);
         popupLanguageListContent = view.findViewById(R.id.popup_Languages_List_linearLayout);
@@ -283,6 +283,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         menuOptionEmotionTextView = view.findViewById(R.id.menu_option_emotion_textView);
         menuOptionDetectLanguageTextView = view.findViewById(R.id.menu_option_language_detection_textView);
         menuApiKeyTextView = view.findViewById(R.id.api_key_txt);
+        menuApiEnvText = view.findViewById(R.id.api_env_txt);
+        loader = view.findViewById(R.id.apiKeyLoader);
         menuNameTextView = view.findViewById(R.id.name_txt);
         menuHeaderTextView = view.findViewById(R.id.header_txt);
         menuOptionLangueSpinner = view.findViewById(R.id.menu_option_langue_spinner);
@@ -292,6 +294,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         menuSTT = view.findViewById(R.id.menuSTT);
         menuTTS = view.findViewById(R.id.menuTTS);
         menuApiKeyEditText = view.findViewById(R.id.api_key_editText);
+        menuApiEnvTextView = view.findViewById(R.id.api_env_textview);
         menuNameText = view.findViewById(R.id.user_name);
         copyRight = view.findViewById(R.id.copyright_texte);
         identifiers = view.findViewById(R.id.identifiers_texte);
@@ -403,11 +406,24 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         /**
          *  Gestion du choix STT
          */
+        String can_change_stt = buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties");
+        if(can_change_stt != null && can_change_stt.trim().equalsIgnoreCase("Yes")){
+            if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")){
+                menuOptionSttLyt.setVisibility(View.VISIBLE);
+                menuOptionTtsLyt.setVisibility(View.VISIBLE);
+            }
+        }
+        else{
+            menuOptionSttLyt.setVisibility(View.GONE);
+            menuOptionTtsLyt.setVisibility(View.GONE);
+        }
+
 
         handlerSTT();
         handlerTTS();
         handlerSupport();
         handlerNameAndEmail();
+        handlerEnvironment();
         /**
          * Gestion Tracking
          */
@@ -758,7 +774,13 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     private void handlerNameAndEmail() {
 
         Log.i(TAG, "handlerName: HOU" + buddyGPTApplication.getparam("NomCompte"));
-        menuNameText.setText(capitalizeFirst(buddyGPTApplication.getparam("NomCompte")) + " " + buddyGPTApplication.getparam(EMAIL));
+        menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
+
+    }
+    private void handlerEnvironment() {
+
+        Log.i(TAG, "handlerEnvironment: HOU" + buddyGPTApplication.getparam("Environnement"));
+        menuApiEnvTextView.setText(buddyGPTApplication.getparam("Environnement"));
 
     }
 
@@ -817,7 +839,15 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
         }
     }
+    private void showApiKeyLoader(boolean show) {
+        FragmentActivity activity = getActivity();
+        if (activity == null || !isAdded()) return;
+        activity.runOnUiThread(() -> {
+            if (loader == null) return;
 
+            loader.setVisibility(show ? View.VISIBLE : View.GONE);
+        });
+    }
     /**
      * handlerApiKey
      */
@@ -865,29 +895,36 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                     buddyGPTApplication.hideSystemUI(getActivity());
                     buddyGPTApplication.setparam(teamGPT_Key, menuApiKeyEditText.getText().toString());
                     Log.i("TAG", "run: menuApiKeyEditText" + menuApiKeyEditText.getText().toString());
-
+                    if (buddyGPTApplication.getResponseFromTeamGPT() != null)
+                        buddyGPTApplication.getResponseFromTeamGPT().reset();
+                    if (buddyGPTApplication.getResponseFromTeamGPT() == null)
+                        buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
                     if (menuApiKeyEditText.getText().toString().equals("")) {
-                        Log.i("TAG", "run: getParameters");
+                        Log.i("TAG", "run: menuApiKeyEditText.getText().toString(). ");
                         buddyGPTApplication.resetSharedPreferences();
                         refresh(0);
                     } else {
-                        Log.i("TAG", "run: getParameters else");
+                        Log.i("TAG", "run: menuApiKeyEditText else");
                         if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(buddyGPTApplication.getparam(EMAIL))) {
                             buddyGPTApplication.setparam("Mail_Destination", "");
                         }
                         if (buddyGPTApplication.getResponseFromTeamGPT() != null) {
                             Log.w("BuddyGPT", "buddyGPTApplication.getResponseFromTeamGPT()!=null ");
-                            buddyGPTApplication.getResponseFromTeamGPT().getParameters(new ResponseCallback() {
+                            showApiKeyLoader(true);
+                            buddyGPTApplication.notifyObservers("EnvInProgress");
+                            buddyGPTApplication.setparam("EnvInProgress", "true");
+                            buddyGPTApplication.getResponseFromTeamGPT().getEnvironnement(new ResponseCallback() {
                                 @Override
                                 public void onSuccess() {
-                                    Log.i(TAG, "onSuccess getParameters ");
+                                    Log.i(TAG, "onSuccess getEnvironnement ");
                                 }
 
                                 @Override
                                 public void onFailure() {
-                                    Log.i(TAG, "onFailure: getParameters");
+                                    Log.i(TAG, "onFailure: getEnvironnement");
                                 }
-                            });                        }
+                            });
+                        }
                         refresh(1);
                     }
 
@@ -900,7 +937,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             if (!isCalledOnce) {
                 isCalledOnce = true;
                 buddyGPTApplication.setparam(teamGPT_Key, textView.getText().toString());
-                Log.i("TAG", "run: getParameters 3" + textView.getText().toString());
+                Log.i("TAG", "run:  3" + textView.getText().toString());
 
                 if (textView.getText().toString().equals("")) {
                     Log.i("TAG", "run: getParameters 31");
@@ -912,17 +949,27 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                         buddyGPTApplication.setparam("Mail_Destination", "");
                     }
                     if (buddyGPTApplication.getResponseFromTeamGPT() != null)
-                        buddyGPTApplication.getResponseFromTeamGPT().getParameters(new ResponseCallback() {
+                        buddyGPTApplication.getResponseFromTeamGPT().reset();
+                    if (buddyGPTApplication.getResponseFromTeamGPT() == null)
+                        buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
+                    if (buddyGPTApplication.getResponseFromTeamGPT() != null){
+                        Log.i(TAG, "handlerApiKey: aaaaaaaaaaaaaaaaaaaaa");
+                        showApiKeyLoader(true);
+                        buddyGPTApplication.notifyObservers("EnvInProgress");
+                        buddyGPTApplication.setparam("EnvInProgress", "true");
+                        buddyGPTApplication.getResponseFromTeamGPT().getEnvironnement(new ResponseCallback() {
                             @Override
                             public void onSuccess() {
-                                Log.i(TAG, "onSuccess getParameters ");
+                                Log.i(TAG, "onSuccess getEnvironnement ");
                             }
 
                             @Override
                             public void onFailure() {
-                                Log.i(TAG, "onFailure getParameters: ");
+                                Log.i(TAG, "onFailure getEnvironnement: ");
                             }
                         });
+                    }else
+                        Log.i(TAG, "handlerApiKey: elseeeeeeeeeeeeeeeeeeeeeee");
                     refresh(1);
                 }
             }
@@ -933,7 +980,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
     }
 
     private void refresh(int state) {
-        Log.i(TAG, "refresh: start ");
+        Log.i(TAG, "refresh: start 1");
             FragmentActivity activity = getActivity();
             if (activity == null || !isAdded()) return; // Ajout de la vérification
 
@@ -941,7 +988,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             if (state == 1) {// refresh with new values
                 handlerSTT();
                 handlerTTS();
-                Log.i(TAG, "refresh: start ");
+                Log.i(TAG, "refresh: start 2");
 
                 buddyGPTApplication.setparam("session_id", "");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
@@ -953,7 +1000,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 } else if (buddyGPTApplication.getLangue().getNom().equals(langueDE)) {
                     menuHeaderEditText.setText(buddyGPTApplication.getparam(kopfzeile));
                 }
-                Log.i(TAG, "refresh: start ");
+                Log.i(TAG, "refresh: start 3");
 
                 if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase(""))
                     menuOptionSttLyt.setVisibility(View.GONE);
@@ -962,6 +1009,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
 
                 menuOptionChatbotSpinner.setText(buddyGPTApplication.getparam("SelectedChatbot") + " " + buddyGPTApplication.getparam("chatbotModel"));
                 menuNameText.setText(buddyGPTApplication.getparam("NomCompte") + " " + buddyGPTApplication.getparam(EMAIL));
+                menuApiEnvTextView.setText(buddyGPTApplication.getparam("Environnement"));
                 if (buddyGPTApplication.getparam("Mail_Destination").equalsIgnoreCase(""))
                     buddyGPTApplication.setparam("Mail_Destination", buddyGPTApplication.getparam(EMAIL));
 
@@ -973,6 +1021,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 menuOptionTtsLyt.setVisibility(View.GONE);
                 menuOptionChatbotSpinner.setText("");
                 menuNameText.setText("");
+                menuApiEnvTextView.setText("");
                 copyRight.setText(getString(R.string.copyright) + " / _");
                 identifiers.setText("_ / _");
 
@@ -994,6 +1043,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             menuOptionEmotionTextView.setText(R.string.menu_option_emotion_en);
             menuOptionDetectLanguageTextView.setText(R.string.menu_option_detectionLanguage_en);
             menuApiKeyTextView.setText(R.string.menu_api_key_en);
+            menuApiEnvText.setText(R.string.menu_api_env_en);
             menuNameTextView.setText(R.string.menu_name_en);
             menuHeaderTextView.setText(R.string.menu_header_en);
             menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_en);
@@ -1012,6 +1062,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
             menuOptionEmotionTextView.setText(R.string.menu_option_emotion_fr);
             menuOptionDetectLanguageTextView.setText(R.string.menu_option_detectionLanguage_fr);
             menuApiKeyTextView.setText(R.string.menu_api_key_fr);
+            menuApiEnvText.setText(R.string.menu_api_env_fr);
             menuNameTextView.setText(R.string.menu_name_fr);
             menuHeaderTextView.setText(R.string.menu_header_fr);
             menu_option_tracking_activation_textView.setText(R.string.menu_option_tracking_activation_fr);
@@ -1032,6 +1083,7 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 translateAndSetTextView(R.string.menu_option_emotion_en, menuOptionEmotionTextView, "");
                 translateAndSetTextView(R.string.menu_option_detectionLanguage_en, menuOptionDetectLanguageTextView, "");
                 translateAndSetTextView(R.string.menu_api_key_en, menuApiKeyTextView, "");
+                translateAndSetTextView(R.string.menu_api_env_en, menuApiEnvText, "");
                 translateAndSetTextView(R.string.menu_name_en, menuNameTextView, "");
                 translateAndSetTextView(R.string.menu_header_en, menuHeaderTextView, "");
                 translateAndSetTextView(0, menuHeaderEditText, buddyGPTApplication.getparam(header));
@@ -1113,9 +1165,18 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                 set.setVolume(Integer.toString(defaultVolume));
                 volumeSeekbar.setProgress(defaultVolume);
             }
+            if (message.contains("GET_PARAMETERS_SUCCESS")){
+                refresh(1);
+                showApiKeyLoader(false);
+                buddyGPTApplication.setparam("EnvInProgress","false");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","false");
+                Log.i(TAG, "afterTextChanged: success");
+            }
             if (message.contains("INVALID_TEAMGPT_KEY")) {
                 refresh(0);
-                Log.i(TAG, "afterTextChanged: invalid");
+                showApiKeyLoader(false);
+                buddyGPTApplication.setparam("EnvInProgress","false");
+                Log.i(TAG, "afterTextChanged: invalid1");
                 if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
                     buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
@@ -1132,8 +1193,26 @@ public class SettingsFragment extends Fragment implements IDBObserver {
                             .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_key_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
                 }
             }
-            if (message.contains("ENV_ERROR")){
+            if (message.contains("INVALID_TEAMGPT_DEVICE_ID")) {
+                refresh(0);
+                showApiKeyLoader(false);
+                buddyGPTApplication.setparam("EnvInProgress","false");
+                Log.i(TAG, "afterTextChanged: invalid2");
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEN)) {
 
+                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFR)) {
+                    buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_fr), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_fr));
+                } else {
+                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                            .translate(buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en))
+                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showInputDialog(getActivity(), translatedText, "Attention !"))
+                            .addOnFailureListener(e -> buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_id_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en)));
+                }
+            }
+            if (message.contains("ENV_ERROR")){
+                showApiKeyLoader(false);
+                buddyGPTApplication.setparam("EnvInProgress","false");
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
                     buddyGPTApplication.showInputDialog(getActivity(), buddyGPTApplication.getString(R.string.toast_teamgpt_env_invalid_en), buddyGPTApplication.getString(R.string.toast_teamgpt_invalid_en));
                 } else if (buddyGPTApplication.getLangue().getNom().equals("Français")) {

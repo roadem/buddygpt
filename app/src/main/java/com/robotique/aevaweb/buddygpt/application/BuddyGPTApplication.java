@@ -2,8 +2,6 @@ package com.robotique.aevaweb.buddygpt.application;
 
 import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
 
-import static com.google.android.exoplayer2.audio.OpusUtil.SAMPLE_RATE;
-
 import android.Manifest;
 import android.app.Activity;
 import android.app.Dialog;
@@ -23,6 +21,7 @@ import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
@@ -92,6 +91,7 @@ import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
 import com.robotique.aevaweb.buddygpt.utilis.PcmToWavConverter;
 import com.robotique.aevaweb.buddygpt.utilis.SettingsContentObserver;
 import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleC;
+import static com.google.android.exoplayer2.audio.OpusUtil.SAMPLE_RATE;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -122,6 +122,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final String langueEn = "Anglais";
     private static final String langueEs = "Espagnol";
     private static final String langueDe = "Allemand";
+    private static final String ANDROID_STT = "Android";
+    private static final String CERENCE_STT = "Cerence";
+    private static final String GOOGLE_STT = "google";
+    private static final String WHISPER_STT = "openai";
     private static final String TAG_STREAMING = "AudioCapture";
     public final IUsbCommadRsp iUsbLedCommandRsp = new IUsbCommadRsp.Stub() {
         @Override
@@ -549,25 +553,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         notifyObservers("properties file done;SPLIT;"+initOrMajOrNone);
     }
 
-    public String getIMEI() {
-        String imei = "";
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // For Android 8.0 and above
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                imei = telephonyManager.getImei();
-            }
-
-        } else {
-            // For Android versions below 8.0
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null) {
-                imei = telephonyManager.getDeviceId();
-            }
-        }
-        return imei;
-    }
-
     private void initListeningSettings() {
         if (getparam(listeningDurationPseudo).isEmpty()) {
             setparam(listeningDurationPseudo, getParamFromFile("Listening_time", configurationFilePseudo));
@@ -599,6 +584,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         setparam("SelectedChatbot", "");
         setparam("chatbotModel", "");
         setparam("STT-TeamGPT", "");
+        setparam("Environnement", "");
         setparam("TTS-TeamGPT", "");
         setparam("Header", "");
         setparam("Entete", "");
@@ -977,7 +963,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                         logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_NO_MATCH", "No match");
                                         break;
                                     case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
-                                        Log.d(TAG, "RecognitionService busy hotword");
+                                        Log.d(TAG, "RecognitionService busy");
                                         logErrorSTTAndroid(i, "SpeechRecognizer.ERROR_RECOGNIZER_BUSY", "RecognitionService busy");
                                         break;
                                     case SpeechRecognizer.ERROR_SERVER:
@@ -1086,31 +1072,157 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public STTTask startListeningCerence(Activity activity) {
-        Log.e(TAG, "startListeningFreeSpeechStt fonction start");
+    /**
+     * Vérifie si le nom de fichier complet de la grammaire est valide pour la langue courante
+     * et si le fichier existe et est accessible.
+     *
+     * @param fullGrammarFileName Le nom complet du fichier de grammaire (ex: 'BuddyCompanion_Combined_fr.fcf').
+     * @return true si le fichier est trouvé et lisible et correspond à la langue, false sinon.
+     */
+    public boolean isValidGrammarFile(String fullGrammarFileName) {
+        String TAG = "BuddyApp";
+        String currentLang = getCurrentLanguage();
+        String expectedSuffix;
+
+        // Déterminer le suffixe attendu
+        if (currentLang.equals("en")) {
+            expectedSuffix = "_en.fcf";
+        } else if (currentLang.equals("fr")) {
+            expectedSuffix = "_fr.fcf";
+        } else {
+            Log.e(TAG, "isValidGrammarFile: Language '" + currentLang + "' not supported for Cerence grammar check.");
+            return false;
+        }
+
+        // Vérifier que le nom de fichier configuré correspond au suffixe de la langue
+        if (!fullGrammarFileName.toLowerCase().endsWith(expectedSuffix.toLowerCase())) {
+            Log.w(TAG, "isValidGrammarFile: Configured file name '" + fullGrammarFileName +
+                    "' does not match expected suffix for language " + currentLang +
+                    " (expected " + expectedSuffix + ")");
+            return false;
+        }
+
+        // Obtenir le chemin de stockage externe (correspond à /storage/emulated/0/)
+        File externalStorageDir = Environment.getExternalStorageDirectory();
+
+        // Construire le chemin complet : /storage/emulated/0/grammars/NOM_FICHIER.fcf
+        File grammarDir = new File(externalStorageDir, "grammars");
+        File grammarFile = new File(grammarDir, fullGrammarFileName);
+
+        String filePath = grammarFile.getAbsolutePath(); // Pour le logging
+
+        if (grammarFile.exists() && grammarFile.isFile() && grammarFile.canRead()) {
+            Log.i(TAG, "isValidGrammarFile: Grammar file found and valid at: " + filePath);
+            return true;
+        } else {
+            Log.w(TAG, "isValidGrammarFile: Grammar file NOT found or invalid at: " + filePath);
+            return false;
+        }
+    }
+
+    public void startListeningSTTForQuestion(Activity activity) {
+        Log.e(TAG, "startListeningSTTForQuestion start");
+
+        setAppIsListeningToTheQuestion(true);
+        // Si Android STT est le moteur par défaut
+        if (getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
+            startListeningQuestion(activity);
+        }
+
+        // Si Cerence STT est le moteur par défaut
+        else if (getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
+
+            String currentLang = getCurrentLanguage();
+
+            // Vérification de la langue supportée par Cerence avec grammaire
+            if (currentLang.equals("fr") || currentLang.equals("en")) {
+
+                String grammarParamKey = "Cerence_Grammar_Name_" + currentLang;
+                String defaultGrammarFile = "companion_commands_" + currentLang + ".fcf";
+                String grammarToUse = "";
+
+                // récupérer le fichier de grammaire depuis le fichier de config
+                String configuredGrammar = getParamFromFile(grammarParamKey, configurationFilePseudo).trim();
+
+                if (!configuredGrammar.isEmpty() && isValidGrammarFile(configuredGrammar)) {
+                    grammarToUse = configuredGrammar;
+
+                } else if (isValidGrammarFile(defaultGrammarFile)) {
+                    // Fichier par défaut trouvé et valide de companion
+                    grammarToUse = defaultGrammarFile;
+
+                } else {
+                    if (getLangue().getNom().equals(langueEn)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_en));
+                    } else if (getLangue().getNom().equals(langueFr)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_fr));
+                    } else if (getLangue().getNom().equals(langueEs)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_es));
+                    } else if (getLangue().getNom().equals(langueDe)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_de));
+                    } else {
+                        getEnglishLanguageSelectedTranslator()
+                                .translate(getString(R.string.toast_teamgpt_cerencefcf_en))
+                                .addOnSuccessListener(translatedText -> showToast(translatedText))
+                                .addOnFailureListener(e -> showToast(getString(R.string.toast_teamgpt_cerencefcf_en)));
+                    }
+                    // Ni l'un ni l'autre n'est valide : FALLBACK sur Android STT
+                    Log.w(TAG, "Cerence grammar (Configured: " + configuredGrammar + " | Default: " + defaultGrammarFile + ") not found or invalid. Falling back to Android STT.");
+                    startListeningQuestion(activity);
+
+                }
+
+                // Lancer Cerence avec le nom complet du fichier de grammaire déterminé
+                startListeningCerenceWithGrammar(activity, grammarToUse);
+
+
+            } else {
+                // Langue Cerence non supportée -> Fallback Android STT
+                Log.d(TAG, "Language '" + currentLang + "' not supported by Cerence. Using Android STT.");
+                startListeningQuestion(activity);
+
+            }
+        }
+        ///-----------------------
+        // ajout des STT Serveur
+        ///-----------------------
+        else if (getparam("STT").trim().equalsIgnoreCase(GOOGLE_STT) || getparam("STT").trim().equalsIgnoreCase(WHISPER_STT)) {
+            startListeningQuestionWav(activityTemp);
+        }
+
+    }
+    public STTTask startListeningCerenceWithGrammar(Activity activity, String fullGammarFileName) {
+        Log.e(TAG, "startListeningCerenceWithGrammar start");
         alreadyGetAnswer = false;
         questionNumber++;
         stopListening(activity);
+        // Construction du chemin complet du fichier de grammaire
+        // Le nom complet du fichier (fullGammarFileName) est utilisé DIRECTEMENT.
+        String fullFilePath = "/storage/emulated/0/grammars/" + fullGammarFileName;
+
+        // Détermination de la Locale
+        Locale locale = null;
+        if (getCurrentLanguage().equals("en")) {
+            locale = Locale.ENGLISH;
+        } else if (getCurrentLanguage().equals("fr")) {
+            locale = Locale.FRENCH;
+        }
+
         try {
             Log.i(TAG, "startListeningCerence: try");
             if (getParamFromFile("Language_Specification_STT", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                Log.i(TAG, "startListeningCerence: if");
+                Log.i(TAG, "startListeningCerence: Free Speech mode (Language_Specification_STT=No)");
                 freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask();
             } else {
-                Log.i(TAG, "startListeningCerence: else");
-                if (getCurrentLanguage().equals("en")) {
-                    Log.e(TAG, "init ENfreeSpeechSttTask en");
-                    freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.ENGLISH);
-                } else {
-                    Log.e(TAG, "init ENfreeSpeechSttTask fr ");
-                    freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.FRENCH);
-                }
+                Log.i(TAG, "startListeningCerence: Task mode with grammar: " + fullFilePath);
+
+                // UTILISATION DU NOM COMPLET
+                freeSpeechSttTask = BuddySDK.Speech.createCerenceTask(locale, fullFilePath);
             }
 
         } catch (Exception e) {
             Log.e(TAG, "Exception lors de la création de cerence " + e);
         }
-
 
         if (freeSpeechSttTask == null) {
             Log.i(TAG, "startListeningCerence: freeSpeechSttTask == null -> falling back to Android STT");
@@ -1167,8 +1279,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
 
         setLed("listening");
-
-
         return freeSpeechSttTask;
 
     }

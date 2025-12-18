@@ -23,7 +23,6 @@ import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.application.BuddyGPTApplication;
 import com.robotique.aevaweb.buddygpt.models.Parameters;
 import com.robotique.aevaweb.buddygpt.models.Request;
-import com.robotique.aevaweb.buddygpt.utilis.PcmToWavConverter;
 import com.robotique.aevaweb.buddygpt.utilis.ResponseCallback;
 
 import org.json.JSONArray;
@@ -130,17 +129,119 @@ public class ResponseFromTeamGPT {
 
     }
 
-    // --- Méthode de Récupération des Paramètres ---
-    public void getParameters(ResponseCallback responseCallback) {
+    public void getEnvironnement(ResponseCallback responseCallback) {
+
+        new Thread(() -> {
+            HttpURLConnection con = null;
+
+            try {
+                // --- Préparation URL et paramètres ---
+                String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
+                String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Env");
+                String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
+
+                Log.i(TAG_STREAM, "getEnvironnement: Endpoint = " + endpoint);
+
+                URL url = new URL(baseUrl + endpoint);
+                con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("GET");
+                con.setRequestProperty("TeamGPT-Key", gptKey);
+                con.setConnectTimeout(5000);
+                con.setReadTimeout(5000);
+
+                int responseCode = con.getResponseCode();
+                Log.i(TAG_STREAM, "HTTP Response Code = " + responseCode);
+
+                // --- Cas 404 : clé invalide ---
+                if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    Log.i(TAG_PARAM, "Invalid TeamGPT Key detected in getEnvironnement");
+
+                    buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.setparam("Environnement", "");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+
+                    responseCallback.onFailure();
+                    return;
+                } else
+
+                // --- Cas 200 OK ---
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+
+                    // Lire réponse JSON
+                    BufferedReader in = new BufferedReader(
+                            new InputStreamReader(con.getInputStream()));
+                    StringBuilder response = new StringBuilder();
+                    String line;
+
+                    while ((line = in.readLine()) != null) {
+                        response.append(line);
+                    }
+                    in.close();
+
+                    Log.i(TAG_STREAM, "Response JSON = " + response);
+
+                    JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
+
+                    if (!jsonObject.has("environment")) {
+                        Log.e(TAG_STREAM, "Missing field 'environment' in JSON response");
+                        buddyGPTApplication.resetSharedPreferences();
+                        buddyGPTApplication.setparam("Environnement", "");
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                        buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                        responseCallback.onFailure();
+                        return;
+                    } else {
+                        // Extraction env
+                        String env = jsonObject.get("environment").getAsString();
+                        buddyGPTApplication.setparam("Environnement", env);
+                        buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+
+                        Log.i(TAG_STREAM, "Environment loaded: " + env);
+
+                        // Enchaînement
+                        getParameters(new ResponseCallback() {
+                            @Override
+                            public void onSuccess() {
+                                Log.i("TAG", "getParameters Success");
+                            }
+
+                            @Override
+                            public void onFailure() {
+                                Log.i("TAG", "getParameters Failure");
+                            }
+                        }, env);
+
+                        responseCallback.onSuccess();
+                    }
+
+                }
+            } catch (Exception e) {
+                Log.e(TAG_STREAM, "Erreur inconnue : " + e.getMessage());
+                buddyGPTApplication.resetSharedPreferences();
+                buddyGPTApplication.setparam("Environnement", "");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                responseCallback.onFailure();
+
+            } finally {
+                if (con != null)
+                    con.disconnect();
+            }
+
+        }).start();
+    }
+
+    public void getParameters(ResponseCallback responseCallback, String env) {
         final CountDownLatch latch = new CountDownLatch(1); // Initialize the latch with count 1
 
         new Thread(() -> {
             try {
-                String url = buddyGPTApplication.getparam("TeamGPT_url");
-                String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
+                String url = buddyGPTApplication.getparam("TeamGPT_Base_url");
+                String endpoint = env + buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
                 String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
-
+                Log.i(TAG_PARAM, "getParameters: " + url + endpoint);
                 URL obj = new URL(url + endpoint);
                 HttpURLConnection con = (HttpURLConnection) obj.openConnection();
                 con.setRequestMethod("GET");
@@ -149,6 +250,7 @@ public class ResponseFromTeamGPT {
 
                 int responseCode = con.getResponseCode();
                 if (responseCode == HttpURLConnection.HTTP_OK) {
+                    Log.i(TAG_PARAM, "getParameters: ");
                     responseCallback.onSuccess();
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
@@ -165,16 +267,17 @@ public class ResponseFromTeamGPT {
 
                     if (contentType != null && contentType.contains("application/json")) {
                         JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
-                        Log.i(TAG_STREAM, "run: PARAMS : " + jsonObject.toString());
+                        Log.i(TAG_PARAM, "run: PARAMS : " + jsonObject.toString());
                         JsonArray parametersArray = jsonObject.getAsJsonArray("parameters");
                         if (parametersArray != null && parametersArray.size() > 0) {
                             JsonObject parametersObject = parametersArray.get(0).getAsJsonObject();
                             Gson gson = new Gson();
                             Parameters parameters = gson.fromJson(parametersObject.toString(), Parameters.class);
-
+                            buddyGPTApplication.setparam(TeamGPTKey, gptKey);
                             if (parameters != null) {
+
+                                buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                                 buddyGPTApplication.setparam("NomCompte", parameters.getNomCompte());
-                                buddyGPTApplication.setparam(TeamGPTKey, parameters.getTeamGptKey());
                                 buddyGPTApplication.setparam("SelectedChatbot", parameters.getSelectedChatbot());
                                 buddyGPTApplication.setparam("STT-TeamGPT", parameters.getStt());
                                 buddyGPTApplication.setparam("TTS-TeamGPT", parameters.getTts());
@@ -215,7 +318,7 @@ public class ResponseFromTeamGPT {
 
                                 if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")
                                         && buddyGPTApplication.getParamFromFile("Change_STT", "BuddyGPT.properties")
-                                        .equalsIgnoreCase("no")) {
+                                                .equalsIgnoreCase("no")) {
                                     buddyGPTApplication.setparam("STT", buddyGPTApplication.getparam("STT_chosen"));
                                     Log.i("USED_STT", " USED_STT : " + buddyGPTApplication.getparam("STT"));
                                 }
@@ -224,12 +327,11 @@ public class ResponseFromTeamGPT {
                                 else
                                     buddyGPTApplication.setparam("TTS", parameters.getTts());
 
+                                buddyGPTApplication.notifyObservers("GET_PARAMETERS_SUCCESS");
                             }
                         }
-
                     }
-                }
-                else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
+                } else if (responseCode == HttpURLConnection.HTTP_BAD_REQUEST) {
                     responseCallback.onSuccess();
                     Log.i(TAG_PARAM, "run: notifyObservers response msg " + con.getResponseMessage());
                     Log.i(TAG_PARAM, "run: notifyObservers INVALID_TEAMGPT_KEY 1");
@@ -237,22 +339,23 @@ public class ResponseFromTeamGPT {
                     buddyGPTApplication.resetSharedPreferences();
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
-                }
-                else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+                } else if (responseCode == HttpURLConnection.HTTP_NOT_FOUND) {
                     responseCallback.onSuccess();
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
-                    buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.resetSharedPreferences();
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.setparam("session_id", "");
                     buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
-                }
-                else {
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
+                } else {
                     responseCallback.onFailure();
                     Log.e(TAG_PARAM, "Unexpected response code: " + responseCode);
                     buddyGPTApplication.setparam("session_id", "");
                     buddyGPTApplication.setparam("ENV_ERROR", "FALSE");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "FALSE");
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_DEVICE_ID", "FALSE");
                 }
                 con.disconnect();
             } catch (Exception e) {
@@ -275,11 +378,19 @@ public class ResponseFromTeamGPT {
     public void sendPutRequestStream(String question, String audioData) {
         Log.i("TAG", "sendPutRequestStream: start ");
         isEmotionNeutral = false;
-        String baseUrl = buddyGPTApplication.getparam("TeamGPT_url");
-        String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response");
+
+        String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
+        String endpoint = buddyGPTApplication.getparam("Environnement")
+                + buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Response");
         String gptKey = buddyGPTApplication.getparam("TeamGPT_Key");
         String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
 
+        Log.i(TAG_STREAM, "---- SEND PUT REQUEST STREAM ----");
+        Log.i(TAG_STREAM, "Base URL: " + baseUrl);
+        Log.i(TAG_STREAM, "Endpoint: " + endpoint);
+        Log.i(TAG_STREAM, "TeamGPT Key: " + gptKey);
+        Log.i(TAG_STREAM, "Device ID: " + imeiDevice);
+        Log.i(TAG_STREAM, "Final URL: " + baseUrl + endpoint);
         Request payload = new Request();
         payload.setImeiIdDevice(imeiDevice);
         payload.setEmotion(buddyGPTApplication.getparam("switch_emotion").equals("true"));
@@ -350,18 +461,22 @@ public class ResponseFromTeamGPT {
 
                     handleStreamingResponse(connection.getInputStream());
                 } else if (responseCode == 400) {
+                    Log.e(TAG_STREAM, "400 Bad Request: INVALID KEY or BAD PAYLOAD");
                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                     buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
                 } else if (responseCode == 500) {
+                    Log.e(TAG_STREAM, "500 Server Error: Session may be invalid");
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("Session_ID_ERROR");
                     buddyGPTApplication.setparam("session_id", "");
                 } else if (responseCode == 404) {
+                    Log.e(TAG_STREAM, "404 Not Found: wrong environment endpoint");
                     buddyGPTApplication.notifyObservers("CANCEL_RESPONSE_TIMEOUT");
                     buddyGPTApplication.notifyObservers("ENV_ERROR");
                     buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
                     buddyGPTApplication.setparam("session_id", "");
                 } else {
+                    Log.e(TAG_STREAM, "Unexpected error -> calling handleError()");
                     handleError();
                 }
 
@@ -463,30 +578,30 @@ public class ResponseFromTeamGPT {
         isDisplayFinished = false;
         if (isError)
             currentDisplayedText = "";
-       if(buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")){
-           final int totalLength = currentDisplayedText.length() + phrase.length();
-           for (int i = 1; i <= phrase.length(); i++) {
-               final String phraseToShow = currentDisplayedText + phrase.substring(0, i);
-               wordsRunnable = () -> {
-                   buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
-                   if (phraseToShow.length() == totalLength) {
-                       isDisplayFinished = true;
-                   }
-               };
-               wordsHandler.postDelayed(wordsRunnable, i);
-           }
-           currentDisplayedText += phrase + " ";
-       }else {
-           final String phraseToShow = currentDisplayedText + phrase;
-           // on affiche UNIQUEMENT la phrase reçue
-           buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
+        if (buddyGPTApplication.getparam("STT-TeamGPT").equalsIgnoreCase("local")) {
+            final int totalLength = currentDisplayedText.length() + phrase.length();
+            for (int i = 1; i <= phrase.length(); i++) {
+                final String phraseToShow = currentDisplayedText + phrase.substring(0, i);
+                wordsRunnable = () -> {
+                    buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
+                    if (phraseToShow.length() == totalLength) {
+                        isDisplayFinished = true;
+                    }
+                };
+                wordsHandler.postDelayed(wordsRunnable, i);
+            }
+            currentDisplayedText += phrase + " ";
+        } else {
 
-           currentDisplayedText += phrase + " ";
-           // IMPORTANT : marquer l'affichage comme terminé après envoi
-           isDisplayFinished = true;
-       }
+            final String phraseToShow = currentDisplayedText + phrase;
+            // on affiche UNIQUEMENT la phrase reçue
+            buddyGPTApplication.notifyObservers("MODE_STREAM_TEXT;SPLIT;" + phraseToShow);
+
+            currentDisplayedText += phrase + " ";
+            // IMPORTANT : marquer l'affichage comme terminé après envoi
+            isDisplayFinished = true;
+        }
     }
-
 
     // --- Gestion du Streaming ---
     private void handleStreamingResponse(InputStream response) {
@@ -544,7 +659,8 @@ public class ResponseFromTeamGPT {
             Log.i(TAG_STREAM, "has is_finished: " + jsonObject.has("is_finished"));
             Log.i(TAG_STREAM, "has Chatbot_is_finished: " + jsonObject.has("Chatbot_is_finished"));
             if (jsonObject.has("Answer")) {
-                Log.i(TAG_STREAM, "✓ Answer value: " + jsonObject.getString("Answer").substring(0, Math.min(50, jsonObject.getString("Answer").length())));
+                Log.i(TAG_STREAM, "✓ Answer value: " + jsonObject.getString("Answer").substring(0,
+                        Math.min(50, jsonObject.getString("Answer").length())));
             }
             if (jsonObject.has("Audio_reponse")) {
                 String audioStr = jsonObject.getString("Audio_reponse");
@@ -585,7 +701,7 @@ public class ResponseFromTeamGPT {
                 if (currentPlayingItem == null && !isPlayingAudio) {
                     if (streamQueue.isEmpty() && phrasesQueue.isEmpty()) {
                         processPhrasesWithDelay();
-                    }else{
+                    } else {
                         Log.i(TAG_STREAM, "processStreamLine: queue not empty");
                     }
                 }
@@ -705,14 +821,15 @@ public class ResponseFromTeamGPT {
                         Log.i(TAG_STREAM, "StreamItem ajouté. Taille actuelle de streamQueue : " + streamQueue.size());
                     }
 
-                    Log.i(TAG_STREAM, "handleAnswer: currentPlayingItem : "+currentPlayingItem+ " isPlayingAudio : "+isPlayingAudio);
+                    Log.i(TAG_STREAM, "handleAnswer: currentPlayingItem : " + currentPlayingItem + " isPlayingAudio : "
+                            + isPlayingAudio);
                     // Tenter de démarrer la lecture si c'est le premier item (
                     // démarrera seulement si un chunk audio arrive dans handleAudioResponse
                     if (currentPlayingItem == null) {
                         Log.i("TAG",
                                 "handleAnswer:  if (currentPlayingItem == null && !isPlayingAudio) " + isPlayingAudio);
                         startNextReadyItemIfAny();
-                        }
+                    }
 
                 } else {
                     // Cas TEXT INPUT -> TEXT OUTPUT (TTS local)
@@ -756,7 +873,7 @@ public class ResponseFromTeamGPT {
 
                         if (chunkIsWav) {
                             // ✅ MODIFICATION : WAV est complet -> stocker en base64 pour streaming immédiat
-                            target.audioChunks.add(base64Audio);  // Garder le base64 pour WAV
+                            target.audioChunks.add(base64Audio); // Garder le base64 pour WAV
                             target.itemIsWav = true;
                             Log.i(TAG_STREAM, "handleAudioResponse: chunk is complete WAV, queued as WAV ("
                                     + decoded.length + " bytes)");
@@ -845,8 +962,17 @@ public class ResponseFromTeamGPT {
                     mainHandler.post(() -> {
                         // same MediaPlayer creation & listeners as before...
                         if (streamPlayer != null) {
-                            try { if (streamPlayer.isPlaying()) streamPlayer.stop(); } catch (Exception ignored) {}
-                            try { streamPlayer.release(); } catch (Exception ignored) {}
+                            try {
+                                if (streamPlayer.isPlaying())
+                                    streamPlayer.stop();
+                            } catch (Exception ignored) {
+                                Log.i(TAG_STREAM, "playNextChunkForCurrentItem: ");
+                            }
+                            try {
+                                streamPlayer.release();
+                            } catch (Exception ignored) {
+                                Log.i(TAG_STREAM, "playNextChunkForCurrentItem: ");
+                            }
                             streamPlayer = null;
                         }
                         streamPlayer = new MediaPlayer();
@@ -859,29 +985,44 @@ public class ResponseFromTeamGPT {
                                     .build());
                             mp.setOnPreparedListener(player -> player.start());
                             mp.setOnCompletionListener(player -> {
-                                try { player.release(); } catch (Exception ignored) {}
-                                if (streamPlayer == player) streamPlayer = null;
-                                if (fileToPlay.exists()) fileToPlay.delete();
+                                try {
+                                    player.release();
+                                } catch (Exception ignored) {
+                                    Log.e(TAG_STREAM, "Error playing WAV chunk", ignored);
+                                }
+                                if (streamPlayer == player)
+                                    streamPlayer = null;
+                                if (fileToPlay.exists())
+                                    fileToPlay.delete();
                                 playNextChunkForCurrentItem();
                             });
                             mp.setOnErrorListener((player, what, extra) -> {
-                                try { player.release(); } catch (Exception ignored) {}
-                                if (streamPlayer == player) streamPlayer = null;
-                                if (fileToPlay.exists()) fileToPlay.delete();
+                                try {
+                                    player.release();
+                                } catch (Exception ignored) {
+                                    Log.e(TAG_STREAM, "Error playing WAV chunk", ignored);
+                                }
+                                if (streamPlayer == player)
+                                    streamPlayer = null;
+                                if (fileToPlay.exists())
+                                    fileToPlay.delete();
                                 playNextChunkForCurrentItem();
                                 return true;
                             });
                             mp.prepareAsync();
                         } catch (Exception e) {
                             Log.e(TAG_STREAM, "Error playing WAV chunk", e);
-                            if (mp != null) mp.release();
-                            if (fileToPlay.exists()) fileToPlay.delete();
+                            if (mp != null)
+                                mp.release();
+                            if (fileToPlay.exists())
+                                fileToPlay.delete();
                             playNextChunkForCurrentItem();
                         }
                     });
                 } catch (Exception e) {
                     Log.e(TAG_STREAM, "Erreur play WAV chunk: " + e.getMessage(), e);
-                    if (outFile != null && outFile.exists()) outFile.delete();
+                    if (outFile != null && outFile.exists())
+                        outFile.delete();
                     playNextChunkForCurrentItem();
                 }
             }).start();
@@ -930,8 +1071,17 @@ public class ResponseFromTeamGPT {
             Handler mainHandler = new Handler(Looper.getMainLooper());
             mainHandler.post(() -> {
                 if (streamPlayer != null) {
-                    try { if (streamPlayer.isPlaying()) streamPlayer.stop(); } catch (Exception ignored) {}
-                    try { streamPlayer.release(); } catch (Exception ignored) {}
+                    try {
+                        if (streamPlayer.isPlaying())
+                            streamPlayer.stop();
+                    } catch (Exception ignored) {
+                        Log.i(TAG_STREAM, "playNextChunkForCurrentItem: ");
+                    }
+                    try {
+                        streamPlayer.release();
+                    } catch (Exception ignored) {
+                        Log.i(TAG_STREAM, "playNextChunkForCurrentItem: ");
+                    }
                     streamPlayer = null;
                 }
                 streamPlayer = new MediaPlayer();
@@ -944,23 +1094,37 @@ public class ResponseFromTeamGPT {
                             .build());
                     mp.setOnPreparedListener(player -> player.start());
                     mp.setOnCompletionListener(player -> {
-                        try { player.release(); } catch (Exception ignored) {}
-                        if (streamPlayer == player) streamPlayer = null;
-                        if (fileToPlay.exists()) fileToPlay.delete();
+                        try {
+                            player.release();
+                        } catch (Exception ignored) {
+                            Log.e(TAG_STREAM, "Error playing PCM->WAV", ignored);
+                        }
+                        if (streamPlayer == player)
+                            streamPlayer = null;
+                        if (fileToPlay.exists())
+                            fileToPlay.delete();
                         onPlaybackFinished(currentPlayingItem);
                     });
                     mp.setOnErrorListener((player, what, extra) -> {
-                        try { player.release(); } catch (Exception ignored) {}
-                        if (streamPlayer == player) streamPlayer = null;
-                        if (fileToPlay.exists()) fileToPlay.delete();
+                        try {
+                            player.release();
+                        } catch (Exception ignored) {
+                            Log.e(TAG_STREAM, "Error playing PCM->WAV", ignored);
+                        }
+                        if (streamPlayer == player)
+                            streamPlayer = null;
+                        if (fileToPlay.exists())
+                            fileToPlay.delete();
                         onPlaybackFinished(currentPlayingItem);
                         return true;
                     });
                     mp.prepareAsync();
                 } catch (Exception e) {
                     Log.e(TAG_STREAM, "Error playing PCM->WAV", e);
-                    if (mp != null) mp.release();
-                    if (fileToPlay.exists()) fileToPlay.delete();
+                    if (mp != null)
+                        mp.release();
+                    if (fileToPlay.exists())
+                        fileToPlay.delete();
                     onPlaybackFinished(currentPlayingItem);
                 }
             });
@@ -978,9 +1142,9 @@ public class ResponseFromTeamGPT {
     // ✅ HELPER 2 : Ajouter en-tête WAV au PCM
     private byte[] addWavHeader(byte[] pcmData) {
         // ✅ Le serveur OpenAI TTS envoie TOUJOURS du 24kHz PCM
-        int sampleRate = 24000;  // ← FIXE : le serveur envoie du 24kHz
-        int numChannels = 1;     // MONO
-        int bitsPerSample = 16;  // 16-bit PCM
+        int sampleRate = 24000; // ← FIXE : le serveur envoie du 24kHz
+        int numChannels = 1; // MONO
+        int bitsPerSample = 16; // 16-bit PCM
 
         Log.i(TAG_STREAM, "addWavHeader: Using fixed sampleRate=24000 Hz (from OpenAI TTS)");
         Log.i(TAG_STREAM, "addWavHeader: PCM data size=" + pcmData.length + " bytes");
@@ -992,7 +1156,10 @@ public class ResponseFromTeamGPT {
         byte[] wavHeader = new byte[44];
 
         // RIFF header
-        wavHeader[0] = 'R'; wavHeader[1] = 'I'; wavHeader[2] = 'F'; wavHeader[3] = 'F';
+        wavHeader[0] = 'R';
+        wavHeader[1] = 'I';
+        wavHeader[2] = 'F';
+        wavHeader[3] = 'F';
         int fileSize = pcmData.length + 36;
         wavHeader[4] = (byte) (fileSize & 0xff);
         wavHeader[5] = (byte) ((fileSize >> 8) & 0xff);
@@ -1000,30 +1167,46 @@ public class ResponseFromTeamGPT {
         wavHeader[7] = (byte) ((fileSize >> 24) & 0xff);
 
         // WAVE format
-        wavHeader[8] = 'W'; wavHeader[9] = 'A'; wavHeader[10] = 'V'; wavHeader[11] = 'E';
+        wavHeader[8] = 'W';
+        wavHeader[9] = 'A';
+        wavHeader[10] = 'V';
+        wavHeader[11] = 'E';
 
         // fmt subchunk
-        wavHeader[12] = 'f'; wavHeader[13] = 'm'; wavHeader[14] = 't'; wavHeader[15] = ' ';
-        wavHeader[16] = 16; wavHeader[17] = 0; wavHeader[18] = 0; wavHeader[19] = 0;  // Subchunk1Size = 16
-        wavHeader[20] = 1; wavHeader[21] = 0;  // AudioFormat = 1 (PCM)
-        wavHeader[22] = (byte) numChannels; wavHeader[23] = 0;  // NumChannels
+        wavHeader[12] = 'f';
+        wavHeader[13] = 'm';
+        wavHeader[14] = 't';
+        wavHeader[15] = ' ';
+        wavHeader[16] = 16;
+        wavHeader[17] = 0;
+        wavHeader[18] = 0;
+        wavHeader[19] = 0; // Subchunk1Size = 16
+        wavHeader[20] = 1;
+        wavHeader[21] = 0; // AudioFormat = 1 (PCM)
+        wavHeader[22] = (byte) numChannels;
+        wavHeader[23] = 0; // NumChannels
         wavHeader[24] = (byte) (sampleRate & 0xff);
         wavHeader[25] = (byte) ((sampleRate >> 8) & 0xff);
         wavHeader[26] = (byte) ((sampleRate >> 16) & 0xff);
-        wavHeader[27] = (byte) ((sampleRate >> 24) & 0xff);  // SampleRate
+        wavHeader[27] = (byte) ((sampleRate >> 24) & 0xff); // SampleRate
         wavHeader[28] = (byte) (byteRate & 0xff);
         wavHeader[29] = (byte) ((byteRate >> 8) & 0xff);
         wavHeader[30] = (byte) ((byteRate >> 16) & 0xff);
-        wavHeader[31] = (byte) ((byteRate >> 24) & 0xff);  // ByteRate
-        wavHeader[32] = (byte) blockAlign; wavHeader[33] = 0;  // BlockAlign
-        wavHeader[34] = (byte) bitsPerSample; wavHeader[35] = 0;  // BitsPerSample
+        wavHeader[31] = (byte) ((byteRate >> 24) & 0xff); // ByteRate
+        wavHeader[32] = (byte) blockAlign;
+        wavHeader[33] = 0; // BlockAlign
+        wavHeader[34] = (byte) bitsPerSample;
+        wavHeader[35] = 0; // BitsPerSample
 
         // data subchunk
-        wavHeader[36] = 'd'; wavHeader[37] = 'a'; wavHeader[38] = 't'; wavHeader[39] = 'a';
+        wavHeader[36] = 'd';
+        wavHeader[37] = 'a';
+        wavHeader[38] = 't';
+        wavHeader[39] = 'a';
         wavHeader[40] = (byte) (pcmData.length & 0xff);
         wavHeader[41] = (byte) ((pcmData.length >> 8) & 0xff);
         wavHeader[42] = (byte) ((pcmData.length >> 16) & 0xff);
-        wavHeader[43] = (byte) ((pcmData.length >> 24) & 0xff);  // Subchunk2Size
+        wavHeader[43] = (byte) ((pcmData.length >> 24) & 0xff); // Subchunk2Size
 
         // Combiner header + data
         byte[] wavFile = new byte[wavHeader.length + pcmData.length];
@@ -1036,7 +1219,8 @@ public class ResponseFromTeamGPT {
 
     // Démarre la lecture pour le prochain StreamItem prêt (avec audio attaché)
     private void startNextReadyItemIfAny() {
-        Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem + ", isPlayingAudio=" + isPlayingAudio);
+        Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem
+                + ", isPlayingAudio=" + isPlayingAudio);
 
         // ✅ MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
         // on peut quand même essayer de lancer le prochain item
@@ -1048,7 +1232,8 @@ public class ResponseFromTeamGPT {
 
         synchronized (streamQueue) {
             for (StreamItem item : streamQueue) {
-                Log.i(TAG_STREAM, "startNextReadyItemIfAny: "+item.text + " audioReady="+item.audioReady + " itemIsWav="+item.itemIsWav + " audioEnd="+item.audioEnd);
+                Log.i(TAG_STREAM, "startNextReadyItemIfAny: " + item.text + " audioReady=" + item.audioReady
+                        + " itemIsWav=" + item.itemIsWav + " audioEnd=" + item.audioEnd);
             }
 
             // 1. Regarder le prochain élément sans le retirer (Peek)
@@ -1057,17 +1242,18 @@ public class ResponseFromTeamGPT {
             if (si != null && si.audioReady) {
                 // IMPORTANT:
                 // - si c'est un WAV on peut jouer dès qu'un chunk est présent
-                // - si c'est du PCM (multi-chunks) on doit attendre audioEnd == true pour récupérer/poller l'item
-                boolean canStart =
-                        si.itemIsWav ||        // wav streaming -> start immediately
-                                si.audioEnd;           // pcm -> only when server signalled end
+                // - si c'est du PCM (multi-chunks) on doit attendre audioEnd == true pour
+                // récupérer/poller l'item
+                boolean canStart = si.itemIsWav || // wav streaming -> start immediately
+                        si.audioEnd; // pcm -> only when server signalled end
 
                 if (!canStart) {
-                    Log.i(TAG_STREAM, "startNextReadyItemIfAny: Item ready but waiting for audioEnd (PCM multi-chunks).");
+                    Log.i(TAG_STREAM,
+                            "startNextReadyItemIfAny: Item ready but waiting for audioEnd (PCM multi-chunks).");
                     return;
                 }
 
-                Log.i(TAG_STREAM, "startNextReadyItemIfAny: size "+streamQueue.size());
+                Log.i(TAG_STREAM, "startNextReadyItemIfAny: size " + streamQueue.size());
                 // 2. L'élément est prêt : le retirer de la queue (Poll)
                 StreamItem itemToPlay = streamQueue.poll();
 
@@ -1084,6 +1270,7 @@ public class ResponseFromTeamGPT {
             }
         }
     }
+
     // Démarre l'affichage du texte et la lecture de l'audio pour un StreamItem
     private void startPlaybackForItem(StreamItem item) {
         Log.i(TAG_STREAM, "🎬 startPlaybackForItem START");
@@ -1117,6 +1304,7 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "🎬 startPlaybackForItem: Calling playNextChunkForCurrentItem DIRECTLY");
         playNextChunkForCurrentItem();
     }
+
     /**
      * Appelée uniquement lorsque la file d'audio est vide ET que audioEnd est vrai.
      */
@@ -1124,8 +1312,8 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "onPlaybackFinished: Item finished: " + finishedItem.text);
 
         // 1. L'action CRUCIALE de nettoyage
-        currentPlayingItem = null;  // nettoyer currentPlayingItem
-        isPlayingAudio = false;      // marquer la fin
+        currentPlayingItem = null; // nettoyer currentPlayingItem
+        isPlayingAudio = false; // marquer la fin
         hasSentAudioResponse = false;
 
         // ✅ FIN LECTURE AUDIO : Remettre expression à NO_EXPRESSION
@@ -1174,7 +1362,8 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "  isDisplayFinished=" + displayFinished);
         Log.i(TAG_STREAM, "  isFullResponseReceived=" + fullResponseReceived);
 
-        boolean result = queueEmpty && noCurrentItem && notPlaying && phrasesEmpty && readyToSpeak && displayFinished && fullResponseReceived;
+        boolean result = queueEmpty && noCurrentItem && notPlaying && phrasesEmpty && readyToSpeak && displayFinished
+                && fullResponseReceived;
         Log.i(TAG_STREAM, "  RESULT=" + result);
 
         return result;
@@ -1225,7 +1414,8 @@ public class ResponseFromTeamGPT {
     private void processPhrasesWithDelay() {
         Log.i(TAG_STREAM, "processPhrasesWithDelay: phrasesQueue.isEmpty()=" + phrasesQueue.isEmpty());
         Log.i(TAG_STREAM, "processPhrasesWithDelay: isDisplayFinished= " + isDisplayFinished);
-        /// ✅ NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item audio prêt
+        /// ✅ NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item
+        /// audio prêt
         if (currentPlayingItem == null && !isPlayingAudio) {
             Log.i(TAG_STREAM, "processPhrasesWithDelay: Attempting to start next ready audio item...");
             startNextReadyItemIfAny();
@@ -1238,7 +1428,8 @@ public class ResponseFromTeamGPT {
                 return;
             }
             // ✅ SI ON TROUVE UN ITEM MAIS PAS D'AUDIO PRÊT :
-            // - Si la réponse est complète (isFullResponseReceived), traiter l'item comme text-only
+            // - Si la réponse est complète (isFullResponseReceived), traiter l'item comme
+            // text-only
             // - Sinon, reschedule et attendre
             StreamItem waitingItem = null;
             synchronized (streamQueue) {
@@ -1248,7 +1439,8 @@ public class ResponseFromTeamGPT {
                 if (isFullResponseReceived) {
                     // ✅ La réponse est complète mais l'audio n'est pas arrivé
                     // Traiter cet item comme text-only : l'afficher et passer au suivant
-                    Log.i(TAG_STREAM, "processPhrasesWithDelay: Item without audio BUT response is complete. Treating as text-only.");
+                    Log.i(TAG_STREAM,
+                            "processPhrasesWithDelay: Item without audio BUT response is complete. Treating as text-only.");
 
                     synchronized (streamQueue) {
                         streamQueue.poll(); // Retirer l'item de la queue
@@ -1258,7 +1450,7 @@ public class ResponseFromTeamGPT {
                     if (waitingItem.text != null && !waitingItem.text.isEmpty()) {
                         if (buddyGPTApplication.getparam("switch_visibility").equals("true")) {
                             showPhrase(waitingItem.text);
-                        }else {
+                        } else {
                             Log.i(TAG_STREAM, "processPhrasesWithDelay: visibility is off");
                         }
                     }
@@ -1574,10 +1766,10 @@ public class ResponseFromTeamGPT {
     }
 
     public void asyncHttpRequest(String urlString,
-                                 String method,
-                                 String jsonBody,
-                                 java.util.Map<String, String> headers,
-                                 AsyncHttpCallback callback) {
+            String method,
+            String jsonBody,
+            java.util.Map<String, String> headers,
+            AsyncHttpCallback callback) {
         if (urlString == null || callback == null)
             return;
         new Thread(() -> {
@@ -1643,14 +1835,36 @@ public class ResponseFromTeamGPT {
     public void reset() {
         Log.i(TAG_STREAM, "------------------reset-------------------");
         isReset = true;
+
+        // ✅ NOUVEAU : Arrêter le MediaPlayer en cours de lecture
+        if (streamPlayer != null) {
+            try {
+                if (streamPlayer.isPlaying()) {
+                    Log.i(TAG_STREAM, "reset: Stopping MediaPlayer...");
+                    streamPlayer.stop();
+                }
+                streamPlayer.release();
+                Log.i(TAG_STREAM, "reset: MediaPlayer released");
+            } catch (Exception e) {
+                Log.e(TAG_STREAM, "reset: Error stopping/releasing streamPlayer: " + e.getMessage());
+            }
+            streamPlayer = null;
+        }
+
         // reset phrasesQueue (TTS local):
         if (phrasesRunnable != null)
             phrasesHandler.removeCallbacks(phrasesRunnable);
         phrasesHandler.removeCallbacksAndMessages(null);
         phrasesQueue.clear();
         isReadyToSpeak = true;
-        answer="";
+        answer = "";
         isResponseTimeSaved = false;
+
+        // ✅ NOUVEAU : Arrêter tous les handlers de playback
+        if (wordsRunnable != null)
+            wordsHandler.removeCallbacks(wordsRunnable);
+        wordsHandler.removeCallbacksAndMessages(null);
+
         // reset streamQueue (Audio serveur):
         synchronized (streamQueue) {
             streamQueue.clear();
@@ -1659,14 +1873,13 @@ public class ResponseFromTeamGPT {
         }
 
         // reset wordsQueue:
-        if (wordsRunnable != null)
-            wordsHandler.removeCallbacks(wordsRunnable);
-        wordsHandler.removeCallbacksAndMessages(null);
         buddyGPTApplication.setResponseFromTeamGPT(null);
         // Réinitialiser les flags d'audio / texte audio pour la session suivante
         hasSentAudioResponse = false;
         hasSentAudioTextInput = false;
         lastCreatedItem = null;
+
+        Log.i(TAG_STREAM, "reset: Complete");
     }
 
 }
