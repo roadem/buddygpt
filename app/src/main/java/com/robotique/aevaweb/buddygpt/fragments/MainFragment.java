@@ -761,12 +761,12 @@ public class MainFragment extends Fragment implements IDBObserver {
         super.onResume();
         Log.d(TAG, "--- MainFragment.onResume() ---");
 
-        // ✅ Réactiver l'activity
+        //  Réactiver l'activity
         if (buddyGPTApplication != null) {
             buddyGPTApplication.setActivityClosed(false);
             Log.i(TAG, "onResume: Activity is ACTIVE again");
 
-            // ✅ Redémarrer TOUS les services (hotword, audio, VAD, etc.)
+            //  Redémarrer TOUS les services (hotword, audio, VAD, etc.)
             Log.i(TAG, "onResume: Calling buddyGPTApplication.resume()");
             buddyGPTApplication.setAppIsListeningToTheQuestion(false);
             buddyGPTApplication.startListeningHotwor(getActivity());
@@ -2271,12 +2271,13 @@ public class MainFragment extends Fragment implements IDBObserver {
     public void initTeamGPTSettings() {
 
         //  Charger les paramètres de base depuis config.json ─────
-        buddyGPTApplication.setparam("TeamGPT_url",
-                buddyGPTApplication.getParamFromFile("TeamGPT_url", configFile));
+        buddyGPTApplication.setparam("TeamGPT_Base_url",
+                buddyGPTApplication.getParamFromFile("TeamGPT_Base_url", configFile));
 
+        buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Env",
+                buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Env", configFile));
         buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Params",
                 buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Params", configFile));
-
         buddyGPTApplication.setparam("TeamGPT_ApiEndpoint_Response",
                 buddyGPTApplication.getParamFromFile("TeamGPT_ApiEndpoint_Response", configFile));
 

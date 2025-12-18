@@ -838,7 +838,7 @@ public class ResponseFromTeamGPT {
                     onNewPhrase(); // Ajoute à phrasesQueue pour TTS local
                 }
             } else {
-                // ✅ NOUVEAU : Answer est vide, ne pas créer d'item
+                //  NOUVEAU : Answer est vide, ne pas créer d'item
                 Log.i(TAG_STREAM, "handleAnswer: Answer is empty, skipping StreamItem creation");
             }
         } else {
@@ -872,13 +872,13 @@ public class ResponseFromTeamGPT {
                         boolean chunkIsWav = isWavFile(decoded);
 
                         if (chunkIsWav) {
-                            // ✅ MODIFICATION : WAV est complet -> stocker en base64 pour streaming immédiat
+                            //  MODIFICATION : WAV est complet -> stocker en base64 pour streaming immédiat
                             target.audioChunks.add(base64Audio); // Garder le base64 pour WAV
                             target.itemIsWav = true;
                             Log.i(TAG_STREAM, "handleAudioResponse: chunk is complete WAV, queued as WAV ("
                                     + decoded.length + " bytes)");
                         } else {
-                            // ✅ PCM chunks -> accumuler jusqu'à audioEnd
+                            //  PCM chunks -> accumuler jusqu'à audioEnd
                             target.pcmAccumulator.write(decoded);
                             target.itemIsWav = false;
                             Log.i(TAG_STREAM, "handleAudioResponse: chunk is PCM, appended to pcmAccumulator, size="
@@ -929,7 +929,7 @@ public class ResponseFromTeamGPT {
         }
 
         // If item uses WAV chunks, keep previous logic (streaming chunk-per-chunk WAV)
-        // ✅ PATH WAV : streaming chunk-par-chunk (pas d'accumulation)
+        //  PATH WAV : streaming chunk-par-chunk (pas d'accumulation)
         if (currentPlayingItem.itemIsWav) {
             String nextChunk = currentPlayingItem.audioChunks.poll();
             Log.i(TAG_STREAM, "playNextChunkForCurrentItem (WAV): nextChunk == null? " + (nextChunk == null));
@@ -1131,7 +1131,7 @@ public class ResponseFromTeamGPT {
         }
     }
 
-    // ✅ HELPER 1 : Vérifier si le fichier est WAV
+    //  HELPER 1 : Vérifier si le fichier est WAV
     private boolean isWavFile(byte[] data) {
         // WAV files start with "RIFF" (0x52 0x49 0x46 0x46)
         return data != null && data.length >= 4
@@ -1139,9 +1139,9 @@ public class ResponseFromTeamGPT {
                 && data[2] == 0x46 && data[3] == 0x46;
     }
 
-    // ✅ HELPER 2 : Ajouter en-tête WAV au PCM
+    //  HELPER 2 : Ajouter en-tête WAV au PCM
     private byte[] addWavHeader(byte[] pcmData) {
-        // ✅ Le serveur OpenAI TTS envoie TOUJOURS du 24kHz PCM
+        //  Le serveur OpenAI TTS envoie TOUJOURS du 24kHz PCM
         int sampleRate = 24000; // ← FIXE : le serveur envoie du 24kHz
         int numChannels = 1; // MONO
         int bitsPerSample = 16; // 16-bit PCM
@@ -1222,7 +1222,7 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem
                 + ", isPlayingAudio=" + isPlayingAudio);
 
-        // ✅ MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
+        //  MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
         // on peut quand même essayer de lancer le prochain item
         if (currentPlayingItem != null && isPlayingAudio) {
             // Une lecture est en cours, ne rien démarrer
@@ -1316,7 +1316,7 @@ public class ResponseFromTeamGPT {
         isPlayingAudio = false; // marquer la fin
         hasSentAudioResponse = false;
 
-        // ✅ FIN LECTURE AUDIO : Remettre expression à NO_EXPRESSION
+        //  FIN LECTURE AUDIO : Remettre expression à NO_EXPRESSION
         try {
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
         } catch (Exception e) {
@@ -1336,7 +1336,7 @@ public class ResponseFromTeamGPT {
         startNextReadyItemIfAny();
         // 4. Vérifier si TOUT est fini (incluant TTS local)
         if (isCompletelyFinished()) {
-            Log.i(TAG_STREAM, "✅ TOUT EST TERMINÉ - Envoi TTS_success");
+            Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
             onFinishStreaming();
             buddyGPTApplication.notifyObservers("TTS_success");
             reset();
@@ -1414,7 +1414,7 @@ public class ResponseFromTeamGPT {
     private void processPhrasesWithDelay() {
         Log.i(TAG_STREAM, "processPhrasesWithDelay: phrasesQueue.isEmpty()=" + phrasesQueue.isEmpty());
         Log.i(TAG_STREAM, "processPhrasesWithDelay: isDisplayFinished= " + isDisplayFinished);
-        /// ✅ NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item
+        ///  NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item
         /// audio prêt
         if (currentPlayingItem == null && !isPlayingAudio) {
             Log.i(TAG_STREAM, "processPhrasesWithDelay: Attempting to start next ready audio item...");
@@ -1427,7 +1427,7 @@ public class ResponseFromTeamGPT {
                 phrasesHandler.postDelayed(phrasesRunnable, 50);
                 return;
             }
-            // ✅ SI ON TROUVE UN ITEM MAIS PAS D'AUDIO PRÊT :
+            //  SI ON TROUVE UN ITEM MAIS PAS D'AUDIO PRÊT :
             // - Si la réponse est complète (isFullResponseReceived), traiter l'item comme
             // text-only
             // - Sinon, reschedule et attendre
@@ -1437,7 +1437,7 @@ public class ResponseFromTeamGPT {
             }
             if (waitingItem != null && !waitingItem.audioReady) {
                 if (isFullResponseReceived) {
-                    // ✅ La réponse est complète mais l'audio n'est pas arrivé
+                    //  La réponse est complète mais l'audio n'est pas arrivé
                     // Traiter cet item comme text-only : l'afficher et passer au suivant
                     Log.i(TAG_STREAM,
                             "processPhrasesWithDelay: Item without audio BUT response is complete. Treating as text-only.");
@@ -1536,7 +1536,7 @@ public class ResponseFromTeamGPT {
             Log.i(TAG_STREAM, "  isFullResponseReceived=" + isFullResponseReceived);
 
             if (isCompletelyFinished()) {
-                Log.i(TAG_STREAM, "✅ FIN CONFIRMÉE");
+                Log.i(TAG_STREAM, " FIN CONFIRMÉE");
                 onFinishStreaming();
                 buddyGPTApplication.notifyObservers("TTS_success");
                 reset();
@@ -1836,7 +1836,7 @@ public class ResponseFromTeamGPT {
         Log.i(TAG_STREAM, "------------------reset-------------------");
         isReset = true;
 
-        // ✅ NOUVEAU : Arrêter le MediaPlayer en cours de lecture
+        //  NOUVEAU : Arrêter le MediaPlayer en cours de lecture
         if (streamPlayer != null) {
             try {
                 if (streamPlayer.isPlaying()) {
@@ -1860,7 +1860,7 @@ public class ResponseFromTeamGPT {
         answer = "";
         isResponseTimeSaved = false;
 
-        // ✅ NOUVEAU : Arrêter tous les handlers de playback
+        //  NOUVEAU : Arrêter tous les handlers de playback
         if (wordsRunnable != null)
             wordsHandler.removeCallbacks(wordsRunnable);
         wordsHandler.removeCallbacksAndMessages(null);

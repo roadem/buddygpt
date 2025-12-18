@@ -633,7 +633,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void processAudio() {
-        // ✅ CRITIQUE : Arrêter le timer AVANT de traiter l'audio
+        //  CRITIQUE : Arrêter le timer AVANT de traiter l'audio
         if (timerEcoute != null) {
             timerEcoute.cancel();
             timerEcoute = null;
@@ -1549,7 +1549,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
         Log.d(TAG, " --- stopListeningFreeSpeech() ---");
 
-        // ✅ Arrêter et nettoyer le timer
+        //  Arrêter et nettoyer le timer
         if (timerEcoute != null) {
             timerEcoute.cancel();
             timerEcoute = null;

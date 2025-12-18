@@ -1654,7 +1654,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 audioRecord.stop();
                 audioRecord.release();
                 audioRecord = null;
-                Log.i(TAG_STREAMING, "✅ audioRecord stopped and released");
+                Log.i(TAG_STREAMING, " audioRecord stopped and released");
             } catch (Exception e) {
                 Log.e(TAG_STREAMING, "Error stopping audioRecord: " + e.getMessage());
             }
@@ -1696,15 +1696,24 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void checkTheHotword(String word){
-        List<String> hotword =getHotwordList();
+        List<String> hotword = getHotwordList();
         boolean rightHottwordDetected = false;
+
         for (int i = 0; i < hotword.size(); i++) {
             Log.i(TAG, "checkTheHotword :" + word);
             if (word.trim().equalsIgnoreCase(hotword.get(i).trim())) {
                 try {
-                    rightHottwordDetected =true;
-                    notifyObservers("STTHotword_success");
+                    rightHottwordDetected = true;
 
+                    //  CRUCIAL : Annuler le retry handler AVANT de notifier
+                    if (noMatchHandler != null) {
+                        noMatchHandler.removeCallbacksAndMessages(null);
+                        Log.i(TAG, "checkTheHotword: Cancelled noMatchHandler (hotword detected)");
+                    }
+
+                    //  Notifier que le hotword est détecté
+                    notifyObservers("STTHotword_success");
+                    Log.i(TAG, "checkTheHotword: Hotword DETECTED - notifying observers");
 
                 } catch (Resources.NotFoundException e) {
                     Log.e(TAG, "Resources not Found " + e);
@@ -1712,7 +1721,10 @@ public class BuddyGPTApplication extends BuddyApplication {
                 break;
             }
         }
-        if (!rightHottwordDetected && speechRecognizer!=null && speechRecognizerIntent2 !=null) {
+
+        //  NOUVEAU : Retryer SEULEMENT si hotword n'est PAS détecté
+        if (!rightHottwordDetected && speechRecognizer != null && speechRecognizerIntent2 != null) {
+            Log.i(TAG, "checkTheHotword: Hotword NOT detected - retrying in 250ms");
             setLed("listening");
 
             // 1. Initialiser le Handler
@@ -1722,6 +1734,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
             // 2. Définir le Runnable de redémarrage
             noMatchRunnable = () -> {
+                Log.i(TAG, "checkTheHotword: noMatchRunnable executing - restarting hotword listener");
                 try {
                     speechRecognizer.startListening(speechRecognizerIntent2);
                 } catch (Exception e) {
@@ -3311,23 +3324,23 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     /**
-     * ✅ Cleanup all running handlers and threads when app closes
+     *  Cleanup all running handlers and threads when app closes
      */
     public void cleanup() {
-        Log.i(TAG, "🛑 cleanup: Stopping all handlers and threads");
+        Log.i(TAG, " cleanup: Stopping all handlers and threads");
 
-        // ✅ CRUCIAL : Arrêter isRecording IMMÉDIATEMENT
+        //  CRUCIAL : Arrêter isRecording IMMÉDIATEMENT
         isRecording = false;
-        Log.i(TAG, "🛑 cleanup: isRecording set to false");
+        Log.i(TAG, " cleanup: isRecording set to false");
 
-        // ✅ Arrêter les threads AVANT de libérer les ressources
+        //  Arrêter les threads AVANT de libérer les ressources
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
             try {
                 thread.join(1000);  // ← Attendre que le thread se termine
-                Log.i(TAG, "🛑 cleanup: thread joined successfully");
+                Log.i(TAG, " cleanup: thread joined successfully");
             } catch (InterruptedException e) {
-                Log.w(TAG, "🛑 cleanup: thread join interrupted: " + e.getMessage());
+                Log.w(TAG, " cleanup: thread join interrupted: " + e.getMessage());
             }
         }
 
@@ -3335,9 +3348,9 @@ public class BuddyGPTApplication extends BuddyApplication {
             thread1.interrupt();
             try {
                 thread1.join(1000);
-                Log.i(TAG, "🛑 cleanup: thread1 joined successfully");
+                Log.i(TAG, " cleanup: thread1 joined successfully");
             } catch (InterruptedException e) {
-                Log.w(TAG, "🛑 cleanup: thread1 join interrupted: " + e.getMessage());
+                Log.w(TAG, " cleanup: thread1 join interrupted: " + e.getMessage());
             }
         }
 
@@ -3347,32 +3360,32 @@ public class BuddyGPTApplication extends BuddyApplication {
                 audioRecord.stop();
                 audioRecord.release();
                 audioRecord = null;
-                Log.i(TAG, "🛑 cleanup: audioRecord stopped");
+                Log.i(TAG, " cleanup: audioRecord stopped");
             } catch (Exception e) {
-                Log.e(TAG, "🛑 cleanup: Error stopping audioRecord: " + e.getMessage());
+                Log.e(TAG, " cleanup: Error stopping audioRecord: " + e.getMessage());
             }
         }
 
         if (handler2 != null) {
             handler2.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: handler2 stopped");
+            Log.i(TAG, " cleanup: handler2 stopped");
         }
         if (retryHotwordHandler != null) {
             retryHotwordHandler.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: retryHotwordHandler stopped");
+            Log.i(TAG, " cleanup: retryHotwordHandler stopped");
         }
         if (noMatchHandler != null) {
             noMatchHandler.removeCallbacksAndMessages(null);
-            Log.i(TAG, "🛑 cleanup: noMatchHandler stopped");
+            Log.i(TAG, " cleanup: noMatchHandler stopped");
         }
         if (periodicTask != null) {
             handler2.removeCallbacks(periodicTask);
-            Log.i(TAG, "🛑 cleanup: periodicTask stopped");
+            Log.i(TAG, " cleanup: periodicTask stopped");
         }
         // Arrêter VAD
         if (vad != null) {
             vad.stop();
-            Log.i(TAG, "🛑 cleanup: VAD stopped");
+            Log.i(TAG, " cleanup: VAD stopped");
         }
 
         // Arrêter STT
@@ -3380,18 +3393,18 @@ public class BuddyGPTApplication extends BuddyApplication {
             try {
                 speechRecognizer.cancel();
                 speechRecognizer.destroy();
-                Log.i(TAG, "🛑 cleanup: speechRecognizer stopped");
+                Log.i(TAG, " cleanup: speechRecognizer stopped");
             } catch (Exception e) {
-                Log.e(TAG, "🛑 cleanup: Error stopping speechRecognizer: " + e.getMessage());
+                Log.e(TAG, " cleanup: Error stopping speechRecognizer: " + e.getMessage());
             }
         }
 
         if (freeSpeechSttTask != null) {
             try {
                 freeSpeechSttTask.stop();
-                Log.i(TAG, "🛑 cleanup: freeSpeechSttTask stopped");
+                Log.i(TAG, " cleanup: freeSpeechSttTask stopped");
             } catch (Exception e) {
-                Log.e(TAG, "🛑 cleanup: Error stopping freeSpeechSttTask: " + e.getMessage());
+                Log.e(TAG, " cleanup: Error stopping freeSpeechSttTask: " + e.getMessage());
             }
         }
 
@@ -3400,19 +3413,19 @@ public class BuddyGPTApplication extends BuddyApplication {
             try {
                 ttsAndroid.stop();
                 ttsAndroid.shutdown();
-                Log.i(TAG, "🛑 cleanup: ttsAndroid stopped");
+                Log.i(TAG, " cleanup: ttsAndroid stopped");
             } catch (Exception e) {
-                Log.e(TAG, "🛑 cleanup: Error stopping ttsAndroid: " + e.getMessage());
+                Log.e(TAG, " cleanup: Error stopping ttsAndroid: " + e.getMessage());
             }
         }
 
         // Arrêter ResponseFromTeamGPT
         if (responseFromTeamGPT != null) {
             responseFromTeamGPT.reset();
-            Log.i(TAG, "🛑 cleanup: responseFromTeamGPT stopped");
+            Log.i(TAG, " cleanup: responseFromTeamGPT stopped");
         }
 
-        Log.i(TAG, "🛑 cleanup: Complete");
+        Log.i(TAG, " cleanup: Complete");
     }
     //#endregion ******************************************************* Fonctions utiles *********************************************************
 

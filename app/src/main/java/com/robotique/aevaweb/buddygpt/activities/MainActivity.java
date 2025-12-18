@@ -239,7 +239,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
             stopCameraCallback = new com.bfr.buddy.vision.shared.IVisionRsp.Stub() {
                 @Override
                 public void onSuccess(String s) {
-                    // ✅ GUARD : Ne pas logger si l'activity est fermée
+                    //  GUARD : Ne pas logger si l'activity est fermée
                     if (!buddyGPTApplication.isActivityClosed()) {
                         Log.i(TAG_TRACKING, "stopCamera(0) onSuccess : " + s);
                     }
@@ -247,7 +247,7 @@ public class MainActivity extends BuddyCompatActivity implements IDBObserver {
 
                 @Override
                 public void onFailed(String s) {
-                    // ✅ GUARD : Ne pas logger si l'activity est fermée
+                    //  GUARD : Ne pas logger si l'activity est fermée
                     if (!buddyGPTApplication.isActivityClosed()) {
                         Log.e(TAG_TRACKING, "stopCamera(0) onFailed : " + s);
                     }
