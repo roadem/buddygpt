@@ -5,6 +5,11 @@ public class Request {
     @SerializedName("Text_input")
     private String textInput;
 
+
+
+    @SerializedName("Audio_input")
+    private String audioInput;
+
     @SerializedName("ID_DEVICE")
     private String imeiIdDevice;
 
@@ -29,7 +34,13 @@ public class Request {
     public void setTextInput(String textInput) {
         this.textInput = textInput;
     }
+    public String getAudioInput() {
+        return audioInput;
+    }
 
+    public void setAudioInput(String audioInput) {
+        this.audioInput = audioInput;
+    }
     public String getImeiIdDevice() {
         return imeiIdDevice;
     }

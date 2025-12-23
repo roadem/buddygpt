@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 8; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 9; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -103,17 +103,22 @@ public class ConfigurationFile {
             props.addPropertyComment("TeamGPT_Key", "");
             props.addPropertyComment("TeamGPT_Key", "TeamGPT Key  for communication with the server TeamGPT");
             setProperty("TeamGPT_Key", "");
-            props.addPropertyComment("TeamGPT_url", "");
-            props.addPropertyComment("TeamGPT_url", "TeamGPT parameters");
-            setProperty("TeamGPT_url", "https://chat.teamgpt.fr/api/");
-            setProperty("TeamGPT_ApiEndpoint_Params", "get_parameters");
-            setProperty("TeamGPT_ApiEndpoint_Response", "get-response");
+            props.addPropertyComment("TeamGPT_Base_url", "");
+            props.addPropertyComment("TeamGPT_Base_url", "TeamGPT parameters");
+            setProperty("TeamGPT_Base_url", "https://chat.teamgpt.fr");
+            setProperty("TeamGPT_ApiEndpoint_Env", "/api/get_env_key");
+            setProperty("TeamGPT_ApiEndpoint_Params", "/get_parameters");
+            setProperty("TeamGPT_ApiEndpoint_Response", "/get_response");
 
             setProperty("TeamGPT_ID_Device", "");
             props.addPropertyComment("Speech_To_Text_List","");
             props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/Cerence");
             setProperty("Speech_To_Text_List","SpeechRecognizer/Cerence");
             setProperty("Speech_To_Text","SpeechRecognizer");
+
+            props.addPropertyComment("Cerence_Grammar_Name","Grammar file to use by the Cerence ASR engine (my_grammar_en.fcf / my_grammar_fr.fcf)");
+            setProperty("Cerence_Grammar_Name_fr","companion_commands_fr.fcf");
+            setProperty("Cerence_Grammar_Name_en","companion_commands_en.fcf");
 
             props.addPropertyComment("Change_STT","");
             props.addPropertyComment("Change_STT","Possibility of changing the STT (Yes/No)");
@@ -127,6 +132,9 @@ public class ConfigurationFile {
             props.addPropertyComment("Language_Specification_STT", "");
             props.addPropertyComment("Language_Specification_STT", "Language_Specification_STT=Yes to specify the language parameter");
             setProperty("Language_Specification_STT", "Yes");
+            props.addPropertyComment("Seuil_dBFS", "");
+            props.addPropertyComment("Seuil_dBFS","Decibel threshold to control the sensitivity of the STT Whisper");
+            setProperty("Seuil_dBFS","-30");
 
             props.addPropertyComment("Text_To_Speech_List", "");
             props.addPropertyComment("Text_To_Speech_List", "Text to Speech : ReadSpeaker/Android");
@@ -182,6 +190,18 @@ public class ConfigurationFile {
             setProperty("Number_of_words", "5");
             setProperty("Detection_confidence_rate", "90");
 
+            props.addPropertyComment("Silence_time","");
+            props.addPropertyComment("Silence_time","Manage end of speech detection");
+            props.addPropertyComment("Silence_time","Silence time in seconds for STT ApiGoogle and Whisper");
+            setProperty("Silence_time","2");
+
+            props.addPropertyComment("Volume_reduction","");
+            props.addPropertyComment("Volume_reduction","Percentage of volume reduction");
+            setProperty("Volume_reduction","3");
+
+            props.addPropertyComment("Duration_sound_level_checked","");
+            props.addPropertyComment("Duration_sound_level_checked", "Duration in seconds, at which the sound level should be checked");
+            setProperty("Duration_sound_level_checked","3");
             props.addPropertyComment("chatBotServerNoResponce_fr", "");
             props.addPropertyComment("chatBotServerNoResponce_fr", "Responses in case of API error");
             setProperty("chatBotServerNoResponce_fr", "Je n’ai pas de réponse ");

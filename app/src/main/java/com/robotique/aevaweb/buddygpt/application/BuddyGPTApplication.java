@@ -12,12 +12,17 @@ import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -33,6 +38,7 @@ import android.speech.SpeechRecognizer;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -69,6 +75,8 @@ import com.ibm.icu.text.BreakIterator;
 import com.knuddels.jtokkit.Encodings;
 import com.knuddels.jtokkit.api.EncodingRegistry;
 import com.konovalov.vad.Vad;
+import com.konovalov.vad.VadConfig;
+import com.konovalov.vad.VadListener;
 import com.robotique.aevaweb.buddygpt.R;
 import com.robotique.aevaweb.buddygpt.chatbotresponse.ResponseFromTeamGPT;
 import com.robotique.aevaweb.buddygpt.models.Langue;
@@ -83,11 +91,13 @@ import com.robotique.aevaweb.buddygpt.utilis.ITTSCallbacks;
 import com.robotique.aevaweb.buddygpt.utilis.PcmToWavConverter;
 import com.robotique.aevaweb.buddygpt.utilis.SettingsContentObserver;
 import com.robotique.aevaweb.buddygpt.utilis.TtsGoogleC;
+import static com.google.android.exoplayer2.audio.OpusUtil.SAMPLE_RATE;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -98,8 +108,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.StringTokenizer;
-
-import darren.googlecloudtts.model.VoicesList;
 
 public class BuddyGPTApplication extends BuddyApplication {
     private static final String TAG = "BuddyGPT_Application";
@@ -114,6 +122,10 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final String langueEn = "Anglais";
     private static final String langueEs = "Espagnol";
     private static final String langueDe = "Allemand";
+    private static final String ANDROID_STT = "Android";
+    private static final String CERENCE_STT = "Cerence";
+    private static final String GOOGLE_STT = "google";
+    private static final String WHISPER_STT = "openai";
     private static final String TAG_STREAMING = "AudioCapture";
     public final IUsbCommadRsp iUsbLedCommandRsp = new IUsbCommadRsp.Stub() {
         @Override
@@ -126,11 +138,14 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.e(TAG, "Led error : " + error);
         }
     };
-    private final Handler handlerListeningHotword = new Handler();
     private final Handler handler2 = new Handler();
     private final Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     private final Intent speechRecognizerIntent2 = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
     int max;
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(
+            SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
     boolean stopTTSReadSpeaker = false;
 
     boolean isFirstLaunch = true;
@@ -141,14 +156,12 @@ public class BuddyGPTApplication extends BuddyApplication {
     public void setFirstLaunch(boolean firstLaunch) {
         isFirstLaunch = firstLaunch;
     }
-    Runnable runnableListeningHotword;
-    SpeechRecognizer speechRecognizer;
+    private SpeechRecognizer speechRecognizer;
     int remainingAttempts;
     private int listeningDuration;
     private int listeningAttempt;
     private int speakVolume;
     private ResponseFromTeamGPT responseFromTeamGPT;
-    private Replica reponse;
     private Setting setting;
     private Boolean fileCreate = true;
     private ArrayList<Session> listSession = new ArrayList<>();
@@ -165,19 +178,14 @@ public class BuddyGPTApplication extends BuddyApplication {
     private int questionNumber = 0;
     private int currentQuestionNubmer = 0;
     private boolean alreadyGetAnswer = false;
-    private boolean openaialreadySwitchEmotion = false;
     private boolean timeoutExpired = false;
     private long questionTime = 0;
     private String storedResponse = "";
-    private Boolean buddyFaceisTired = false;
     private int bestTextSize = 0;
     private TextToSpeech ttsAndroid;
-    private Boolean shouldPlayEmotion = false;
-    private String currentEmotion = "";
     private Boolean messageError = false;
     private Langue langue;
     private Dialog dialog;
-    private File fileupdate;
     private int currentIndexText = 0;
     private boolean allTextPronoucedSuccess = true;
     private STTTask freeSpeechSttTask;
@@ -188,8 +196,8 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String translatedList = "";
     private String languageDetected = "";
     private Boolean usingReadSpeaker;
-    private boolean alreadyCalled = false;
     private Vad vad;
+    private Boolean endRecordingAudio = false;
     private AudioRecord audioRecord;
     private boolean isRecording = false;
     private String currentState = "";
@@ -205,35 +213,15 @@ public class BuddyGPTApplication extends BuddyApplication {
     private Boolean appIsListeningToTheQuestion = false;
     private String toastSttAndroidIndispo;
     private String toastTtsAndroidIndispo;
-    private TtsGoogleC googleCloudTTS;
-    private VoicesList voiceList;
-    private String chosenTTS = "";
     private Boolean appIsCurrentlyDealingWithTheQuestion = false;
     private Boolean bIExecution = false;
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
-    private String imeiRobot;
     private Toast mToast;
-
-    public static Locale getLocale(String language) {
-
-        Locale[] locales = Locale.getAvailableLocales();
-
-        for (Locale locale : locales) {
-            if (locale.toString().equals(language)) {
-                Log.w("GoogleSTT", "getLocale(" + language + ") result : " + locale);
-                return locale;
-            }
-        }
-
-        Log.e("GoogleSTT", "getLocale(" + language + ") result : null");
-
-        return Locale.ENGLISH;
-    }
-
-    public boolean isAlreadyChatting() {
-        return alreadyChatting;
-    }
-
+    private TranscribeTask transcribeTask;
+    private Handler retryHotwordHandler;
+    private Runnable retryHotwordRunnable;
+    private Handler noMatchHandler;          //  Pour les faux positifs/no match (checkTheHotword)
+    private Runnable noMatchRunnable;
     public void setAlreadyChatting(boolean alreadyChatting) {
         this.alreadyChatting = alreadyChatting;
     }
@@ -262,20 +250,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.remainingAttempts = remainingAttempts;
     }
 
-
-
-    public EncodingRegistry getRegistry() {
-        return registry;
-    }
-
     public Dialog getDialog() {
         return dialog;
     }
-
-    public void setDialog(Dialog dialog) {
-        this.dialog = dialog;
-    }
-
 
     public Boolean getAppIsListeningToTheQuestion() {
         return appIsListeningToTheQuestion;
@@ -293,10 +270,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.englishLanguageSelectedTranslator = englishLanguageSelectedTranslator;
     }
 
-    public Translator getLanguageSelectedEnglishTranslator() {
-        return languageSelectedEnglishTranslator;
-    }
-
     public void setLanguageSelectedEnglishTranslator(Translator languageSelectedEnglishTranslator) {
         this.languageSelectedEnglishTranslator = languageSelectedEnglishTranslator;
     }
@@ -311,10 +284,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public Boolean getUsingReadSpeaker() {
         return usingReadSpeaker;
-    }
-
-    public void setUsingReadSpeaker(Boolean usingReadSpeaker) {
-        this.usingReadSpeaker = usingReadSpeaker;
     }
 
     public String getLanguageDetected() {
@@ -337,16 +306,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         return listeningDuration;
     }
 
-    public void setListeningDuration(int listeningDuration) {
-        this.listeningDuration = listeningDuration;
-    }
-
     public int getListeningAttempt() {
         return listeningAttempt;
-    }
-
-    public void setListeningAttempt(int listeningAttempt) {
-        this.listeningAttempt = listeningAttempt;
     }
 
     public int getSpeakVolume() {
@@ -355,11 +316,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setSpeakVolume(int speakVolume) {
         this.speakVolume = speakVolume;
-    }
-
-
-    public Setting getSetting() {
-        return setting;
     }
 
     public void setSetting(Setting setting) {
@@ -378,33 +334,21 @@ public class BuddyGPTApplication extends BuddyApplication {
         return listSession;
     }
 
-    public void setListSession(ArrayList<Session> listSession) {
-        this.listSession = listSession;
-    }
 
     public void listSessionClear() {
         listSession.clear();
     }
 
-    public String getSwitchVisibility() {
-        return switchVisibility;
-    }
 
     public void setSwitchVisibility(String switchVisibility) {
         this.switchVisibility = switchVisibility;
     }
 
-    public String getSwitchEmotion() {
-        return switchEmotion;
-    }
 
     public void setSwitchEmotion(String switchEmotion) {
         this.switchEmotion = switchEmotion;
     }
 
-    public String getSwitchdetectLanguage() {
-        return switchdetectLanguage;
-    }
 
     public void setSwitchdetectLanguage(String switchdetectLanguage) {
         this.switchdetectLanguage = switchdetectLanguage;
@@ -419,9 +363,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         isSpeaking = speaking;
     }
 
-    public Boolean getNotYet() {
-        return notYet;
-    }
 
     public void setNotYet(Boolean notYet) {
         this.notYet = notYet;
@@ -500,9 +441,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         this.responseTime = responseTime;
     }
 
-    public Boolean getAnswerHasExceededTimeOut() {
-        return answerHasExceededTimeOut;
-    }
 
     public void setAnswerHasExceededTimeOut(Boolean answerHasExceededTimeOut) {
         this.answerHasExceededTimeOut = answerHasExceededTimeOut;
@@ -520,14 +458,36 @@ public class BuddyGPTApplication extends BuddyApplication {
         return bestTextSize;
     }
 
-    public void setBestTextSize(int bestTextSize) {
-        this.bestTextSize = bestTextSize;
-    }
 
+    private class TranscribeTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... audioData) {
+            Log.e(TAG,"doInBackground stopProcessus---------- "+stopProcessus);
 
+            String question = audioData[0];
+                    if (Boolean.FALSE.equals(stopProcessus)){
+                        Log.e(TAG,"envoie traitement de la question");
+                        notifyObservers("STTQuestion_success;SPLIT;NONE;SPLIT;"+question);
+                        BuddySDK.UI.stopListenAnimation();
+                        setLed("neutral");
+                        }
+                    else {
+                    if (Boolean.FALSE.equals(endRecordingAudio) && activityTemp!=null){
+                            activityTemp.runOnUiThread(() -> startListeningQuestionWav(activityTemp));
+                    }
+            }
+            return question;
+        }
 
-    public Boolean getMessageError() {
-        return messageError;
+        @Override
+        protected void onPostExecute(String transcription) {
+            if (transcription != null) {
+                Log.i(TAG, "------it took: ms");
+            } else {
+                // Gestion des erreurs
+
+            }
+        }
     }
 
     public void setMessageError(Boolean messageError) {
@@ -593,25 +553,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         notifyObservers("properties file done;SPLIT;"+initOrMajOrNone);
     }
 
-    public String getIMEI() {
-        String imei = "";
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            // For Android 8.0 and above
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null && ContextCompat.checkSelfPermission(this, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED) {
-                imei = telephonyManager.getImei();
-            }
-
-        } else {
-            // For Android versions below 8.0
-            TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
-            if (telephonyManager != null) {
-                imei = telephonyManager.getDeviceId();
-            }
-        }
-        return imei;
-    }
-
     private void initListeningSettings() {
         if (getparam(listeningDurationPseudo).isEmpty()) {
             setparam(listeningDurationPseudo, getParamFromFile("Listening_time", configurationFilePseudo));
@@ -643,6 +584,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         setparam("SelectedChatbot", "");
         setparam("chatbotModel", "");
         setparam("STT-TeamGPT", "");
+        setparam("Environnement", "");
         setparam("TTS-TeamGPT", "");
         setparam("Header", "");
         setparam("Entete", "");
@@ -932,9 +874,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         getTranslateHotwordList();
         neutralAnimation();
         isSpeaking = false;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
-
         stopListening(activity);
 
         setAlreadyChatting(false);
@@ -1041,7 +980,40 @@ public class BuddyGPTApplication extends BuddyApplication {
                                         break;
                                 }
                                 Log.i(TAG, "onError: speechRecognizer.startListening 2");
-                                speechRecognizer.startListening(speechRecognizerIntent2);
+                                try {
+                                    speechRecognizer.cancel();
+                                    speechRecognizer.destroy();
+                                } catch (Exception ignored) {
+                                    Log.i(TAG, "onError: "+ignored.getMessage());
+                                }
+
+                                // --- LOGIQUE DE REDÉMARRAGE AVEC RÉFÉRENCE ---
+
+                                // 1. Initialiser le Handler et le Runnable si nécessaire
+                                if (retryHotwordHandler == null) {
+                                    retryHotwordHandler = new Handler(Looper.getMainLooper());
+                                }
+
+                                // 2. Définir le Runnable de redémarrage
+                                retryHotwordRunnable = () -> {
+                                    try {
+                                        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
+                                        speechRecognizer.setRecognitionListener(this); // 'this' est le RecognitionListener
+                                        speechRecognizer.startListening(speechRecognizerIntent2);
+                                        Log.i(TAG, "SpeechRecognizer redémarré après erreur.");
+
+                                        // Une fois redémarré, l'objet Runnable n'est plus nécessaire dans le Handler
+                                        retryHotwordRunnable = null;
+
+                                    } catch (Exception e) {
+                                        Log.e(TAG, "Failed recreating speechRecognizer: " + e);
+                                        // Si l'échec persiste, vous pouvez choisir de ne pas relancer
+                                    }
+                                };
+
+                                // 3. Annuler tout redémarrage précédent et poster le nouveau
+                                retryHotwordHandler.removeCallbacksAndMessages(null);
+                                retryHotwordHandler.postDelayed(retryHotwordRunnable, 600);
                             }
 
                             @Override
@@ -1052,8 +1024,6 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     checkTheHotword(data.get(0));
                                 } else {
                                     Log.e(TAG, "Hotword result  size = 0 : ");
-                                    Log.i(TAG, "onError: speechRecognizer.startListening 3");
-                                    speechRecognizer.startListening(speechRecognizerIntent2);
                                 }
                             }
 
@@ -1102,33 +1072,157 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public STTTask startListeningCerence(Activity activity) {
-        Log.e(TAG, "startListeningFreeSpeechStt fonction start");
+    /**
+     * Vérifie si le nom de fichier complet de la grammaire est valide pour la langue courante
+     * et si le fichier existe et est accessible.
+     *
+     * @param fullGrammarFileName Le nom complet du fichier de grammaire (ex: 'BuddyCompanion_Combined_fr.fcf').
+     * @return true si le fichier est trouvé et lisible et correspond à la langue, false sinon.
+     */
+    public boolean isValidGrammarFile(String fullGrammarFileName) {
+        String TAG = "BuddyApp";
+        String currentLang = getCurrentLanguage();
+        String expectedSuffix;
+
+        // Déterminer le suffixe attendu
+        if (currentLang.equals("en")) {
+            expectedSuffix = "_en.fcf";
+        } else if (currentLang.equals("fr")) {
+            expectedSuffix = "_fr.fcf";
+        } else {
+            Log.e(TAG, "isValidGrammarFile: Language '" + currentLang + "' not supported for Cerence grammar check.");
+            return false;
+        }
+
+        // Vérifier que le nom de fichier configuré correspond au suffixe de la langue
+        if (!fullGrammarFileName.toLowerCase().endsWith(expectedSuffix.toLowerCase())) {
+            Log.w(TAG, "isValidGrammarFile: Configured file name '" + fullGrammarFileName +
+                    "' does not match expected suffix for language " + currentLang +
+                    " (expected " + expectedSuffix + ")");
+            return false;
+        }
+
+        // Obtenir le chemin de stockage externe (correspond à /storage/emulated/0/)
+        File externalStorageDir = Environment.getExternalStorageDirectory();
+
+        // Construire le chemin complet : /storage/emulated/0/grammars/NOM_FICHIER.fcf
+        File grammarDir = new File(externalStorageDir, "grammars");
+        File grammarFile = new File(grammarDir, fullGrammarFileName);
+
+        String filePath = grammarFile.getAbsolutePath(); // Pour le logging
+
+        if (grammarFile.exists() && grammarFile.isFile() && grammarFile.canRead()) {
+            Log.i(TAG, "isValidGrammarFile: Grammar file found and valid at: " + filePath);
+            return true;
+        } else {
+            Log.w(TAG, "isValidGrammarFile: Grammar file NOT found or invalid at: " + filePath);
+            return false;
+        }
+    }
+
+    public void startListeningSTTForQuestion(Activity activity) {
+        Log.e(TAG, "startListeningSTTForQuestion start");
+
+        setAppIsListeningToTheQuestion(true);
+        // Si Android STT est le moteur par défaut
+        if (getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
+            startListeningQuestion(activity);
+        }
+
+        // Si Cerence STT est le moteur par défaut
+        else if (getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
+
+            String currentLang = getCurrentLanguage();
+
+            // Vérification de la langue supportée par Cerence avec grammaire
+            if (currentLang.equals("fr") || currentLang.equals("en")) {
+
+                String grammarParamKey = "Cerence_Grammar_Name_" + currentLang;
+                String defaultGrammarFile = "companion_commands_" + currentLang + ".fcf";
+                String grammarToUse = "";
+
+                // récupérer le fichier de grammaire depuis le fichier de config
+                String configuredGrammar = getParamFromFile(grammarParamKey, configurationFilePseudo).trim();
+
+                if (!configuredGrammar.isEmpty() && isValidGrammarFile(configuredGrammar)) {
+                    grammarToUse = configuredGrammar;
+
+                } else if (isValidGrammarFile(defaultGrammarFile)) {
+                    // Fichier par défaut trouvé et valide de companion
+                    grammarToUse = defaultGrammarFile;
+
+                } else {
+                    if (getLangue().getNom().equals(langueEn)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_en));
+                    } else if (getLangue().getNom().equals(langueFr)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_fr));
+                    } else if (getLangue().getNom().equals(langueEs)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_es));
+                    } else if (getLangue().getNom().equals(langueDe)) {
+                        showToast(getString(R.string.toast_teamgpt_cerencefcf_de));
+                    } else {
+                        getEnglishLanguageSelectedTranslator()
+                                .translate(getString(R.string.toast_teamgpt_cerencefcf_en))
+                                .addOnSuccessListener(translatedText -> showToast(translatedText))
+                                .addOnFailureListener(e -> showToast(getString(R.string.toast_teamgpt_cerencefcf_en)));
+                    }
+                    // Ni l'un ni l'autre n'est valide : FALLBACK sur Android STT
+                    Log.w(TAG, "Cerence grammar (Configured: " + configuredGrammar + " | Default: " + defaultGrammarFile + ") not found or invalid. Falling back to Android STT.");
+                    startListeningQuestion(activity);
+
+                }
+
+                // Lancer Cerence avec le nom complet du fichier de grammaire déterminé
+                startListeningCerenceWithGrammar(activity, grammarToUse);
+
+
+            } else {
+                // Langue Cerence non supportée -> Fallback Android STT
+                Log.d(TAG, "Language '" + currentLang + "' not supported by Cerence. Using Android STT.");
+                startListeningQuestion(activity);
+
+            }
+        }
+        ///-----------------------
+        // ajout des STT Serveur
+        ///-----------------------
+        else if (getparam("STT").trim().equalsIgnoreCase(GOOGLE_STT) || getparam("STT").trim().equalsIgnoreCase(WHISPER_STT)) {
+            startListeningQuestionWav(activityTemp);
+        }
+
+    }
+    public STTTask startListeningCerenceWithGrammar(Activity activity, String fullGammarFileName) {
+        Log.e(TAG, "startListeningCerenceWithGrammar start");
         alreadyGetAnswer = false;
         questionNumber++;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
         stopListening(activity);
+        // Construction du chemin complet du fichier de grammaire
+        // Le nom complet du fichier (fullGammarFileName) est utilisé DIRECTEMENT.
+        String fullFilePath = "/storage/emulated/0/grammars/" + fullGammarFileName;
+
+        // Détermination de la Locale
+        Locale locale = null;
+        if (getCurrentLanguage().equals("en")) {
+            locale = Locale.ENGLISH;
+        } else if (getCurrentLanguage().equals("fr")) {
+            locale = Locale.FRENCH;
+        }
+
         try {
             Log.i(TAG, "startListeningCerence: try");
             if (getParamFromFile("Language_Specification_STT", configurationFilePseudo).trim().equalsIgnoreCase("No")) {
-                Log.i(TAG, "startListeningCerence: if");
+                Log.i(TAG, "startListeningCerence: Free Speech mode (Language_Specification_STT=No)");
                 freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask();
             } else {
-                Log.i(TAG, "startListeningCerence: else");
-                if (getCurrentLanguage().equals("en")) {
-                    Log.e(TAG, "init ENfreeSpeechSttTask en");
-                    freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.ENGLISH);
-                } else {
-                    Log.e(TAG, "init ENfreeSpeechSttTask fr ");
-                    freeSpeechSttTask = BuddySDK.Speech.createCerenceFreeSpeechTask(Locale.FRENCH);
-                }
+                Log.i(TAG, "startListeningCerence: Task mode with grammar: " + fullFilePath);
+
+                // UTILISATION DU NOM COMPLET
+                freeSpeechSttTask = BuddySDK.Speech.createCerenceTask(locale, fullFilePath);
             }
 
         } catch (Exception e) {
             Log.e(TAG, "Exception lors de la création de cerence " + e);
         }
-
 
         if (freeSpeechSttTask == null) {
             Log.i(TAG, "startListeningCerence: freeSpeechSttTask == null -> falling back to Android STT");
@@ -1166,7 +1260,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                 "\nScore : " + result.getConfidence() + //the recognition score
                                 "\nUtterance: " + result.getUtterance() +  //actual phrase pronounced by the user and recognised by free speech (google/cerence)
                                 "\nRule: " + result.getRule()); //the respective tag of the Uterrance, as described in the grammar
-                        notifyObservers("STTQuestion_success;" + result.getUtterance());
+                        notifyObservers("STTQuestion_success;SPLIT;" + result.getUtterance()+";SPLIT;NONE;");
                         setLed("neutral");
 
                     }
@@ -1185,8 +1279,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
 
         setLed("listening");
-
-
         return freeSpeechSttTask;
 
     }
@@ -1237,8 +1329,6 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         alreadyGetAnswer = false;
         questionNumber++;
-        currentEmotion = "";
-        shouldPlayEmotion = false;
 
         // Arrêter l'écoute précédente (garde l'usage de activity)
         stopListening(activity);
@@ -1353,7 +1443,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         ArrayList<String> data = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onResults  : " + data.get(0));
-                            notifyObservers("STTQuestion_success;" + data.get(0));
+                            notifyObservers("STTQuestion_success;SPLIT;" + data.get(0)+";SPLIT;NONE;");
                             BuddySDK.UI.stopListenAnimation();
                             setLed("neutral");
                         } else {
@@ -1374,7 +1464,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                         if (data != null && !data.isEmpty()) {
                             Log.e(TAG, "question result onPartialResults  : " + data.get(0));
                             if (!data.get(0).trim().equals("")) {
-                                notifyObservers("STTQuestion_success;" + data.get(0));
+                                notifyObservers("STTQuestion_success;SPLIT;" + data.get(0)+";SPLIT;NONE;");
                                 BuddySDK.UI.stopListenAnimation();
                                 setLed("neutral");
                             } else {
@@ -1413,91 +1503,136 @@ public class BuddyGPTApplication extends BuddyApplication {
             e.printStackTrace();
         }
     }
-
-    private void readAudioFile() throws IOException {
-        // Convert PCM data to WAV format
-        String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
-        PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
-
-        Log.d("FilePath", "File path: " + outputFileWav);
-        File audioFileWav = new File(outputFileWav);
-        if (audioFileWav.exists()) {
-            Files.readAllBytes(audioFileWav.toPath());
-        } else {
-            // Handle the case where the file does not exist
-            Log.e("FileError", "The file does not exist at the specified path.");
-        }
-    }
-    Runnable periodicTask = new Runnable() {
-        @Override
-        public void run() {
-            try {
-                readAudioFile();
-            } catch (IOException e) {
-                e.printStackTrace();
+    public void stopRecordingSTT(Boolean shouldRestartListening,Boolean shouldRestartNewCycle) {
+        Log.i(TAG, "stopRecordingSTT: start");
+        try {
+            String audioDataF = convertBase64Wav(); // Read the recorded audio data
+            // Annuler la tâche précédente si elle existe
+            if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
+                transcribeTask.cancel(true);
             }
-            Log.e("MRAE", "start dbfs calcul 3---------------");
-            if (thread1 != null && thread1.isAlive()) {
-                thread1.interrupt();
+            Log.e(TAG,"start dbfs calcul");
+            if (thread != null && thread.isAlive()) {
+                thread.interrupt();
             }
-            thread1 = new Thread(() -> {
+            thread =new Thread(() -> {
                 if (!Python.isStarted()) {
                     Python.start(new AndroidPlatform(activityTemp));
                 }
                 Python py = Python.getInstance();
                 PyObject pyobj = py.getModule("calculDBFS");
                 try {
-                    PyObject pyObject;
+                    PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de votre fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
-                    pyObject = pyobj.callAttr("main", parameters.getString("fichier_audio"));
+                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
                     //Mettre  le dernier fichier json envoyé à l’API
-                    Log.e("MRAE", "test comparaison flot--------------- " + pyObject.toString());
-                    Log.e("MRAE", "result dBFS python--------------- " + pyObject);
-                    Log.e("MRAE", "previousVolume--------------- " + previousVolume);
-                    Log.e("MRAE", "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
-                    if (!pyObject.toString().trim().equals("-inf")) {
+
+
+
+                    Log.e(TAG,"result dBFS python "+reponse.toString());
+                    if (!reponse.toString().trim().equals("-inf")) {
+                        if (Float.parseFloat(reponse.toString()) >= Float.parseFloat(getParamFromFile("Seuil_dBFS", configurationFilePseudo))) {
+                            Log.d(TAG, "volume est bien : " + Float.parseFloat(reponse.toString()));
+                            transcribeTask = new TranscribeTask();
+                            transcribeTask.execute(audioDataF); // Transcribe the audio
+                        } else {
+                            Log.d(TAG, "volume est trop bas : " + Float.parseFloat(reponse.toString()));
+                            startListeningQuestionWav(activityTemp);
+
+                        }
+                    }
+                    else {
+                        if (Boolean.TRUE.equals(shouldRestartListening)) {
+                            startListeningQuestionWav(activityTemp);
+                        } else {
+                            if (Boolean.TRUE.equals(shouldRestartNewCycle)){
+                                activityTemp.runOnUiThread(() -> notifyObservers("restartNewCycle"));
+                            }
+                            else {
+                                activityTemp.runOnUiThread(() -> notifyObservers("restartListeningHotword"));
+                            }
+                        }
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        return; // Terminer le thread s'il a été interrompu
+                    }
+
+
+                } catch (PyException | JSONException p) {
+                    Log.e(TAG, "Exception "+p);
+                }
+
+            });
+            thread.start();
+        } catch (Exception e) {
+            Log.e(TAG, "Exception " + e);
+        }
+
+    }
+
+    Runnable periodicTask = new Runnable() {
+        @Override
+        public void run() {
+            convertBase64Wav();
+            Log.e(TAG,"start dbfs calcul 3---------------");
+            if (thread1 != null && thread1.isAlive()) {
+                thread1.interrupt();
+            }
+            thread1 =new Thread(() -> {
+                if (!Python.isStarted()) {
+                    Python.start(new AndroidPlatform(activityTemp));
+                }
+                Python py = Python.getInstance();
+                PyObject pyobj = py.getModule("calculDBFS");
+                try {
+                    PyObject reponse;
+                    JSONObject parameters = new JSONObject();
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
+
+                    // Appel de la fonction main avec le chemin du fichier audio
+                    reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
+
+                    //Mettre  le dernier fichier json envoyé à l’API
+                    Log.e(TAG, "test comparaison flot--------------- " + reponse.toString());
+                    Log.e(TAG, "result dBFS python--------------- " + reponse.toString());
+                    Log.e(TAG, "previousVolume--------------- " + previousVolume);
+                    Log.e(TAG, "previousVolume after traitement--------------- " + (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100)));
+                    if (!reponse.toString().trim().equals("-inf")){
                         if (previousVolume == 0) {
-                            Log.e("MRAE", "result dBFS if--------------- ");
+                            Log.e(TAG, "result dBFS if--------------- ");
                             previousVolume = Float.parseFloat(reponse.toString());
                         } else {
-                            if (Float.parseFloat(pyObject.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
+                            if (Float.parseFloat(reponse.toString()) <= (previousVolume - (Math.abs(previousVolume) * Float.parseFloat(getParamFromFile("Volume_reduction", configurationFilePseudo)) / 100))) {
                                 traitementAudio();
                                 previousVolume = Float.valueOf(0);
-                                Log.e("MRAE", "result dBFS else if--------------- ");
+                                Log.e(TAG, "result dBFS else if--------------- ");
 
                             } else {
-                                Log.e("MRAE", "result dBFS else else--------------- ");
+                                Log.e(TAG, "result dBFS else else--------------- ");
                                 previousVolume = Float.parseFloat(reponse.toString());
                             }
                         }
                     }
 
                     if (Thread.currentThread().isInterrupted()) {
-                        // Terminer le thread s'il a été interrompu
+                        return; // Terminer le thread s'il a été interrompu
                     }
 
 
                 } catch (PyException | JSONException p) {
-                    Log.e("MRAE", "exception dBFS python " + p);
+                    Log.e(TAG,"exception dBFS python "+p);
                 }
 
             });
             thread1.start();
-            handler2.postDelayed(this, (long) Integer.valueOf(getParamFromFile("Duration_sound_level_checked", configurationFilePseudo)) * 1000);
+            handler2.postDelayed(this, Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000);
         }
     };
 
-    public String getImeiRobot() {
-        return imeiRobot;
-    }
-
-    public void setImeiRobot(String imeiRobot) {
-        this.imeiRobot = imeiRobot;
-    }
 
     public void stopRecording() {
         if (handler2 != null && periodicTask != null) {
@@ -1507,24 +1642,31 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.d(TAG_STREAMING, "Not recording");
             return;
         }
+
+        // Arrêter la boucle du thread AVANT de libérer audioRecord
+        isRecording = false;
+
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
         }
-        isRecording = false;
         if (audioRecord != null) {
-            audioRecord.stop();
-            audioRecord.release();
-            audioRecord = null;
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+                audioRecord = null;
+                Log.i(TAG_STREAMING, " audioRecord stopped and released");
+            } catch (Exception e) {
+                Log.e(TAG_STREAMING, "Error stopping audioRecord: " + e.getMessage());
+            }
         }
         if (vad != null) {
-            Log.e("MRA", "+++++++++++++++++++++++++++++++++vad stop");
+            Log.e(TAG, "+++++++++++++++++++++++++++++++++vad stop");
             vad.stop();
         }
     }
 
     public void traitementAudio() {
         currentState = "NOISE";
-
         alReadyHadSpoke = false;
         stopProcessus = false;
         stopRecording();
@@ -1554,15 +1696,24 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     public void checkTheHotword(String word){
-        List<String> hotword =getHotwordList();
+        List<String> hotword = getHotwordList();
         boolean rightHottwordDetected = false;
+
         for (int i = 0; i < hotword.size(); i++) {
             Log.i(TAG, "checkTheHotword :" + word);
             if (word.trim().equalsIgnoreCase(hotword.get(i).trim())) {
                 try {
-                    rightHottwordDetected =true;
-                    notifyObservers("STTHotword_success");
+                    rightHottwordDetected = true;
 
+                    //  CRUCIAL : Annuler le retry handler AVANT de notifier
+                    if (noMatchHandler != null) {
+                        noMatchHandler.removeCallbacksAndMessages(null);
+                        Log.i(TAG, "checkTheHotword: Cancelled noMatchHandler (hotword detected)");
+                    }
+
+                    //  Notifier que le hotword est détecté
+                    notifyObservers("STTHotword_success");
+                    Log.i(TAG, "checkTheHotword: Hotword DETECTED - notifying observers");
 
                 } catch (Resources.NotFoundException e) {
                     Log.e(TAG, "Resources not Found " + e);
@@ -1570,14 +1721,32 @@ public class BuddyGPTApplication extends BuddyApplication {
                 break;
             }
         }
-        if (!rightHottwordDetected && speechRecognizer!=null && speechRecognizerIntent2 !=null) {
-                setLed("listening");
-                speechRecognizer.startListening(speechRecognizerIntent2);
+
+        //  NOUVEAU : Retryer SEULEMENT si hotword n'est PAS détecté
+        if (!rightHottwordDetected && speechRecognizer != null && speechRecognizerIntent2 != null) {
+            Log.i(TAG, "checkTheHotword: Hotword NOT detected - retrying in 250ms");
+            setLed("listening");
+
+            // 1. Initialiser le Handler
+            if (noMatchHandler == null) {
+                noMatchHandler = new Handler(Looper.getMainLooper());
+            }
+
+            // 2. Définir le Runnable de redémarrage
+            noMatchRunnable = () -> {
+                Log.i(TAG, "checkTheHotword: noMatchRunnable executing - restarting hotword listener");
+                try {
+                    speechRecognizer.startListening(speechRecognizerIntent2);
+                } catch (Exception e) {
+                    Log.e(TAG, "Retry failed in checkTheHotword: " + e);
+                }
+            };
+
+            // 3. Annuler l'ancien post et poster le nouveau
+            noMatchHandler.removeCallbacksAndMessages(null);
+            noMatchHandler.postDelayed(noMatchRunnable, 250);
         }
-
-
     }
-
     /**
      * Cette fonction permet d'arrêter l'écoute STT Free Speech
      */
@@ -1588,16 +1757,19 @@ public class BuddyGPTApplication extends BuddyApplication {
                         activity.runOnUiThread(() -> {
 
                             stopProcessus = true;
-
-                            if (handlerListeningHotword != null && runnableListeningHotword != null) {
-
-                                handlerListeningHotword.removeCallbacksAndMessages(null);
-                                handlerListeningHotword.removeCallbacks(runnableListeningHotword);
-
+                            // ---  ANNULLER LE HANDLER D'ERREUR DE REDÉMARRAGE ---
+                            if (retryHotwordHandler != null) {
+                                // Annuler tous les messages postés, y compris le Runnable de redémarrage
+                                retryHotwordHandler.removeCallbacksAndMessages(null);
+                                Log.i(TAG, "stopListening: Hotword Retry Handler annulé.");
+                            }
+                            // --- NOUVEAU : Annuler le Handler de Re-tentative après non-match ---
+                            if (noMatchHandler != null) {
+                                noMatchHandler.removeCallbacksAndMessages(null);
+                                Log.i(TAG, "stopListening: NoMatch Retry Handler annulé.");
                             }
                             try {
                                 if (speechRecognizer != null) {
-                                    speechRecognizer.stopListening();
                                     speechRecognizer.stopListening();
                                     speechRecognizer.destroy();
                                 }
@@ -1792,7 +1964,7 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void speakTTS(final String texteToSpeak, LabialExpression expression, String type) {
         setAlreadyChatting(true);
-        Log.e("MEHDI", "texteToSpeak " + texteToSpeak);
+        Log.e("TTS", "texteToSpeak " + texteToSpeak);
         currentIndexText = 0;
         stopTTSReadSpeaker = false;
         Log.w(TAG, "speakTTS : " + texteToSpeak);
@@ -1999,9 +2171,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         if (ttsAndroid != null) {
             ttsAndroid.stop();
         }
-        if (googleCloudTTS != null) {
-            googleCloudTTS.stop();
-        }
         setLanguageDetected("");
     }
 
@@ -2016,12 +2185,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
-    public void setTTSLanguage(String language) {
-        Log.e("TEST", "setTTSLanguage " + language);
-        Log.e("TEST", "usingReadSpeaker language" + language);
-        Log.e("TEST", "language code      -----------   " + getLangue().getLanguageCode());
+    public void setTTSLanguage(String language){
+        Log.e("TEST","setTTSLanguage "+language);
+        Log.e("TEST","usingReadSpeaker language"+language);
+        Log.e("TEST","language code      -----------   "+getLangue().getLanguageCode());
         try {
-            switch (language) {
+            switch(language){
                 case "en":
                     setEnglishTTSLanguage();
                     break;
@@ -2042,7 +2211,6 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.e(TAG, "Erreur pendant l'initialisation de la langue TTS : " + e);
         }
     }
-
     private void setEnglishTTSLanguage() {
         if (getparam("TTS").equalsIgnoreCase("ReadSpeaker")) {
             if (getLangue().getLanguageCode().equals("en-US")) {
@@ -2194,6 +2362,8 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
+
+
     public String getSecondTTSfromTTSList() {
         String[] listTTS = getParamFromFile("Text_To_Speech_List", configurationFilePseudo).split("/");
         if (listTTS.length > 1) {
@@ -2263,6 +2433,316 @@ public class BuddyGPTApplication extends BuddyApplication {
 
         }, "com.google.android.tts");
     }
+    private AudioRecord initAudioRecordWithFallback() {
+        int sampleRate = 8000;
+        int[] audioSources = new int[]{
+                MediaRecorder.AudioSource.MIC,
+                MediaRecorder.AudioSource.VOICE_COMMUNICATION,
+                MediaRecorder.AudioSource.VOICE_RECOGNITION
+        };
+
+            for (int src : audioSources) {
+                int minBuf = AudioRecord.getMinBufferSize(sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT);
+                Log.i(TAG_STREAMING, "Trying AudioRecord sr=" + sampleRate + " src=" + src + " minBuf=" + minBuf);
+                if (minBuf == AudioRecord.ERROR || minBuf == AudioRecord.ERROR_BAD_VALUE) continue;
+                int buf = Math.max(minBuf * 2, sampleRate / 10); // safety margin
+                try {
+                    AudioRecord ar = new AudioRecord(src, sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT, buf);
+                    if (ar.getState() == AudioRecord.STATE_INITIALIZED) {
+                        // update globals used elsewhere
+                        // Note: SAMPLE_RATE constant may be used elsewhere; prefer to use local sr where needed
+                        Log.i(TAG_STREAMING, "AudioRecord initialized (sr=" + sampleRate + ", src=" + src + ", buf=" + buf + ")");
+                        return ar;
+                    } else {
+                        ar.release();
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG_STREAMING, "initAudioRecordWithFallback exception", e);
+                }
+            }
+
+        return null;
+    }
+
+    public void startListeningQuestionWav(Activity activity){
+        Log.d(TAG_STREAMING, "startListeningQuestionWav start");
+        // Post sur le thread UI de façon sûre (activity peut être null / finishing)
+        Handler mainHandler = new Handler(Looper.getMainLooper());
+        mainHandler.post(this::listeningAnimation);
+        speechRecognizer.destroy();
+        stopListening(activity);
+
+        if (isRecording) {
+            Log.d(TAG_STREAMING, "Already recording");
+            return;
+        }
+
+        if (PackageManager.PERMISSION_GRANTED != ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)) {
+            Log.e(TAG_STREAMING, "RECORD_AUDIO permission not granted");
+            // notify to request permission
+            notifyObservers("RECORD_AUDIO_PERMISSION_NEEDED");
+            return;
+        }
+
+        // init audioRecord with fallback
+        AudioRecord ar = initAudioRecordWithFallback();
+        if (ar == null) {
+            Log.e(TAG_STREAMING, "No valid AudioRecord configuration found");
+            return;
+        }
+        audioRecord = ar;
+
+        String outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
+
+        try {
+            setLed("listening");
+            audioRecord.startRecording();
+            Log.i(TAG_STREAMING, "after startRecording: recordingState=" + audioRecord.getRecordingState() + " audioRecord state: " + audioRecord.getState());
+            if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
+                Log.e(TAG_STREAMING, "startRecording did not put AudioRecord into RECORDING state");
+                audioRecord.release();
+                audioRecord = null;
+                return;
+            }
+            isRecording = true;
+            currentState = "";
+            // start VAD (keeps using configured sample rate - VAD expects matching sample rate)
+            startVAD();
+            processAudio(outputFile);
+        } catch (Exception e) {
+            Log.e(TAG_STREAMING, "Failed to start recording", e);
+            if (audioRecord != null) {
+                try { audioRecord.release(); } catch (Exception ignored) {
+                    Log.i(TAG, "startListeningQuestionWav: Exception "+ignored.getMessage());
+                }
+                audioRecord = null;
+            }
+        }
+    }
+
+
+
+    /*
+     * VAD library only accepts 16-bit mono PCM audio stream and can work with the next Sample Rates and Frame Sizes :
+     *
+     *  Valid Sample Rate     Valid Frame Size
+     *      8000Hz              80, 160, 240
+     *      16000Hz             160, 320, 480
+     *      32000Hz             320, 640, 960
+     *      48000Hz             480, 960, 1440
+     *
+     * the number of bytes received by the BlueMic is by default 40 (AUDIO_PACKAGE_SIZE=40).
+     * in order to be able to pass the audio stream to the VAD function with a SampleRate of 8000Hz
+     * we have to find a way to modify the number of processed bytes to 80 bytes (AUDIO_PACKAGE_SIZE=80)
+     *
+     * we are going to build a new shorts[80] which is the combination of two shorts[40] received from the BlueMic.
+     *
+     * Algo:
+     * I store each new short[40] in a circularBuffer and wait for the next short[40] to be received.
+     * Once received, I combine the two in a short[80] and send it in the callback : onNewAudioData
+     */
+    private final VadListener vadListener = new VadListener() {
+        @Override
+        public void onSpeechDetected() {
+            Log.d(TAG_STREAMING, "Speech detected!");
+            // lorsque la parole est détectée
+            if (!currentState.equals("SPEECH")) {
+                currentState = "SPEECH";
+                alReadyHadSpoke=true;
+                if (!getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("")
+                        && !getParamFromFile("Volume_reduction",configurationFilePseudo).trim().equals("0")
+                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("")
+                        && !getParamFromFile("Duration_sound_level_checked",configurationFilePseudo).trim().equals("0")
+                ){
+                    handler2.postDelayed(periodicTask,Integer.valueOf(getParamFromFile("Duration_sound_level_checked",configurationFilePseudo))*1000 );
+                }
+            }
+        }
+
+        @Override
+        public void onNoiseDetected() {
+            Log.d(TAG_STREAMING, "Noise detected!");
+            // lorsque du bruit est détecté
+            if (!currentState.equals("NOISE")) {
+                currentState = "NOISE";
+                if(Boolean.TRUE.equals(alReadyHadSpoke)){
+                    alReadyHadSpoke=false;
+                    stopProcessus =false;
+                    stopRecording();
+                    stopRecordingSTT(true,false);
+                }
+
+            }
+        }
+
+    };
+    private void startVAD() {
+        Log.i(TAG, "startVAD: start 1");
+        int silenceTime;
+        if (!getParamFromFile("Silence_time",configurationFilePseudo).trim().equals("")){
+            try {
+                silenceTime= Integer.parseInt(getParamFromFile("Silence_time",configurationFilePseudo).trim()) *1000;
+            }
+            catch (Exception e){
+                silenceTime = 500;
+            }
+        }
+        else{
+            silenceTime = 500;
+        }
+        // Configure and start VAD
+        vad = new Vad(VadConfig.newBuilder()
+                .setSampleRate(VadConfig.SampleRate.SAMPLE_RATE_8K)
+                .setFrameSize(VadConfig.FrameSize.FRAME_SIZE_80)
+                .setMode(VadConfig.Mode.VERY_AGGRESSIVE)
+                .setSilenceDurationMillis(silenceTime)
+                .setVoiceDurationMillis(500)
+                .build());
+        vad.start();
+    }
+
+    private void processAudio(String outputFile) {
+        Log.i(TAG, "processAudio: start 1");
+        Log.i(TAG, "processAudio: start 1 FILE"+outputFile);
+
+        new Thread(() -> {
+            short[] buffer = new short[BUFFER_SIZE / 2]; // Divided by 2 because each short is 2 bytes
+            try {
+                Log.i(TAG, "processAudio: start try");
+                // Vérifier que audioRecord n'est pas null
+                if (audioRecord == null) {
+                    Log.w(TAG, "processAudio: audioRecord is null, exiting thread");
+                    return;
+                }
+                Log.i(TAG, "recordingState: " + audioRecord.getRecordingState());
+                FileOutputStream fos = new FileOutputStream(outputFile);
+                while (isRecording) {
+                    //  Vérifier que audioRecord n'est pas null à chaque itération
+                    if (audioRecord == null) {
+                        Log.w(TAG, "processAudio: audioRecord became null, stopping loop");
+                        fos.close();
+                        return;
+                    }
+                    Log.i(TAG, "processAudio: start try FOS "+fos);
+                    int numRead = audioRecord.read(buffer, 0, buffer.length);
+                    Log.i(TAG, "processAudio: start try : "+numRead);
+
+                    if (numRead > 0) {
+                        Log.i(TAG, "processAudiof: >0");
+                        // Vérifier que vad n'est pas null non plus
+                        if (vad != null) {
+                            vad.addContinuousSpeechListener(buffer, vadListener);
+                        }
+                        Log.i(TAG, "processAudiof: fos");
+                        fos.write(shortArrayToByteArray(buffer), 0, numRead * 2);
+                    }
+                }
+                fos.close();
+            } catch (NullPointerException e) {
+                Log.e(TAG, "❌ processAudio: NullPointerException (likely audioRecord was released): " + e.getMessage());
+            } catch (IOException e) {
+                Log.e(TAG, "❌ processAudio: IOException: " + e.getMessage());
+                e.printStackTrace();
+            } finally {
+                Log.e(TAG,"processAudioFinally");
+            }
+        }).start();
+    }
+
+    // Convertir un tableau de shorts en un tableau de bytes (pour le buffer combiné)
+    private byte[] shortArrayToByteArray(short[] shortArray) {
+        int length = shortArray.length;
+        byte[] byteArray = new byte[length * 2]; // Each short is 2 bytes
+        for (int i = 0; i < length; i++) {
+            byteArray[i * 2] = (byte) (shortArray[i] & 0xFF);
+            byteArray[i * 2 + 1] = (byte) ((shortArray[i] >> 8) & 0xFF);
+        }
+        return byteArray;
+    }
+    public void readAudioBase64(String base64) {
+        if (base64 == null || base64.trim().isEmpty()) {
+            Log.w(getClass().getSimpleName(), "readAudioBase64: base64 string empty");
+            return;
+        }
+        Log.i(TAG, "readAudioBase64: start");
+        // Décodage et écriture sur un thread background
+        new Thread(() -> {
+            Log.i(TAG, "readAudioBase64: start");
+            File outFile = new File(Environment.getExternalStorageDirectory(), "audio_response.wav");
+
+            try {
+                Log.i(TAG, "readAudioBase64: start try");
+                byte[] audioBytes = Base64.decode(base64, Base64.DEFAULT);
+                try (FileOutputStream fos = new FileOutputStream(outFile)) {
+                    fos.write(audioBytes);
+                    fos.flush();
+
+                    Log.i(TAG, "readAudioBase64: audio written to " + outFile.getAbsolutePath());
+// Lecture sur le thread UI
+                    Handler mainHandler = new Handler(Looper.getMainLooper());
+                    mainHandler.post(() -> {
+                        if (outFile == null || !outFile.exists() || outFile.length() == 0) {
+                            Log.e(TAG, "readAudioBase64: fichier introuvable ou vide: " + (outFile != null ? outFile.getAbsolutePath() : "null"));
+                            return;
+                        }
+                        MediaPlayer mp = new MediaPlayer();
+                        try {
+                            mp.setDataSource(outFile.getAbsolutePath());
+                            mp.setAudioAttributes(new AudioAttributes.Builder()
+                                             .setUsage(AudioAttributes.USAGE_MEDIA)
+                                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                    .build());
+                            mp.setOnPreparedListener(mediaPlayer -> {
+                                mediaPlayer.setVolume(1f, 1f);
+                                mediaPlayer.start();
+                            });
+                            mp.setOnCompletionListener(mediaPlayer -> {
+                                try {
+                                    mediaPlayer.reset();
+                                    mediaPlayer.release();
+                                } catch (Exception ignored) {
+                                    Log.i(TAG, "readAudioBase64: "+ignored.getMessage());
+                                }
+                                Log.i(TAG, "readAudioBase64: lecture terminée");
+                            });
+                            mp.prepareAsync();
+                        } catch (IOException e) {
+                            Log.e(TAG, "readAudioBase64: erreur préparation MediaPlayer", e);
+                        }
+
+                    });
+                }
+            } catch (Exception e) {
+                Log.e(getClass().getSimpleName(), "readAudioBase64: decode/write failed", e);
+                if (outFile != null && outFile.exists()) outFile.delete();
+            }
+        }).start();
+    }
+    private String convertBase64Wav() {
+        try {
+            String inputPcm = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
+            String outputWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav";
+
+            // Convert PCM → WAV
+            PcmToWavConverter.convert(inputPcm, outputWav);
+
+            File wavFile = new File(outputWav);
+            if (!wavFile.exists()) {
+                Log.e("FileError", "WAV file does not exist");
+                return null;
+            }
+
+            // Read WAV → bytes
+            byte[] wavBytes = Files.readAllBytes(wavFile.toPath());
+
+            // Convert bytes → Base64
+            return Base64.encodeToString(wavBytes, Base64.NO_WRAP);
+
+        } catch (Exception e) {
+            Log.e("ERR", "Error converting PCM → WAV → Base64", e);
+            return null;
+        }
+    }
 
     //#endregion ******************************************************* TTS **********************************************************************
 
@@ -2271,7 +2751,7 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void playUsingReadSpeakerCaseError(String text, ITTSCallbacks ittsCallbacks) {
         if (Boolean.TRUE.equals(usingReadSpeaker)) {
-            ittsCallbacks.onError("error is in readspeaker not tts_android");
+            ittsCallbacks.onError("error is in readspeaker not ttsAndroid");
             return;
         }
         String voice = getVoiceForCurrentLanguage();
@@ -2654,7 +3134,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 wordCount++;
             }
         }
-        Log.e("MEHDI", "nombre de mots  ------------ " + wordCount);
+        Log.e("TTS", "nombre de mots  ------------ " + wordCount);
         return wordCount >= Integer.parseInt(getParamFromFile("Number_of_words", configurationFilePseudo));
     }
 
@@ -2843,8 +3323,110 @@ public class BuddyGPTApplication extends BuddyApplication {
     //fonction pour push files
 
 
+    /**
+     *  Cleanup all running handlers and threads when app closes
+     */
+    public void cleanup() {
+        Log.i(TAG, " cleanup: Stopping all handlers and threads");
 
+        //  CRUCIAL : Arrêter isRecording IMMÉDIATEMENT
+        isRecording = false;
+        Log.i(TAG, " cleanup: isRecording set to false");
 
+        //  Arrêter les threads AVANT de libérer les ressources
+        if (thread != null && thread.isAlive()) {
+            thread.interrupt();
+            try {
+                thread.join(1000);  // ← Attendre que le thread se termine
+                Log.i(TAG, " cleanup: thread joined successfully");
+            } catch (InterruptedException e) {
+                Log.w(TAG, " cleanup: thread join interrupted: " + e.getMessage());
+            }
+        }
+
+        if (thread1 != null && thread1.isAlive()) {
+            thread1.interrupt();
+            try {
+                thread1.join(1000);
+                Log.i(TAG, " cleanup: thread1 joined successfully");
+            } catch (InterruptedException e) {
+                Log.w(TAG, " cleanup: thread1 join interrupted: " + e.getMessage());
+            }
+        }
+
+        // PUIS libérer audioRecord
+        if (audioRecord != null) {
+            try {
+                audioRecord.stop();
+                audioRecord.release();
+                audioRecord = null;
+                Log.i(TAG, " cleanup: audioRecord stopped");
+            } catch (Exception e) {
+                Log.e(TAG, " cleanup: Error stopping audioRecord: " + e.getMessage());
+            }
+        }
+
+        if (handler2 != null) {
+            handler2.removeCallbacksAndMessages(null);
+            Log.i(TAG, " cleanup: handler2 stopped");
+        }
+        if (retryHotwordHandler != null) {
+            retryHotwordHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, " cleanup: retryHotwordHandler stopped");
+        }
+        if (noMatchHandler != null) {
+            noMatchHandler.removeCallbacksAndMessages(null);
+            Log.i(TAG, " cleanup: noMatchHandler stopped");
+        }
+        if (periodicTask != null) {
+            handler2.removeCallbacks(periodicTask);
+            Log.i(TAG, " cleanup: periodicTask stopped");
+        }
+        // Arrêter VAD
+        if (vad != null) {
+            vad.stop();
+            Log.i(TAG, " cleanup: VAD stopped");
+        }
+
+        // Arrêter STT
+        if (speechRecognizer != null) {
+            try {
+                speechRecognizer.cancel();
+                speechRecognizer.destroy();
+                Log.i(TAG, " cleanup: speechRecognizer stopped");
+            } catch (Exception e) {
+                Log.e(TAG, " cleanup: Error stopping speechRecognizer: " + e.getMessage());
+            }
+        }
+
+        if (freeSpeechSttTask != null) {
+            try {
+                freeSpeechSttTask.stop();
+                Log.i(TAG, " cleanup: freeSpeechSttTask stopped");
+            } catch (Exception e) {
+                Log.e(TAG, " cleanup: Error stopping freeSpeechSttTask: " + e.getMessage());
+            }
+        }
+
+        // Arrêter TTS
+        if (ttsAndroid != null) {
+            try {
+                ttsAndroid.stop();
+                ttsAndroid.shutdown();
+                Log.i(TAG, " cleanup: ttsAndroid stopped");
+            } catch (Exception e) {
+                Log.e(TAG, " cleanup: Error stopping ttsAndroid: " + e.getMessage());
+            }
+        }
+
+        // Arrêter ResponseFromTeamGPT
+        if (responseFromTeamGPT != null) {
+            responseFromTeamGPT.reset();
+            Log.i(TAG, " cleanup: responseFromTeamGPT stopped");
+        }
+
+        Log.i(TAG, " cleanup: Complete");
+    }
     //#endregion ******************************************************* Fonctions utiles *********************************************************
 
 }

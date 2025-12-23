@@ -42,7 +42,6 @@
                 android:layout_centerInParent="true"
                 android:src="@drawable/cog"/>
         </RelativeLayout>
-
         <!--  Chat btn  -->
         <RelativeLayout
             android:id="@+id/lyt_open_menu_chat"

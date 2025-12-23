@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -82,11 +83,12 @@ public class ChatFragment extends Fragment implements IDBObserver {
     private static final String SPLITER = ";SPLIT;";
     private static final String NOTHEALYSA = "nothealysa";
     private static final String SESSION_TYPE = "Session";
-    private static final String INVALID_DEVICE_ID = "INVALID_TEAMGPT_DEVICE_ID";
     private static final String INVALID_KEY = "INVALID_TEAMGPT_KEY";
     private static final String TEAMGPT_KEY = "TeamGPT_Key";
     private static final String ANDROID_STT = "Android";
     private static final String CERENCE_STT = "Cerence";
+    private static final String GOOGLE_STT = "google";
+    private static final String WHISPER_STT = "openai";
     private static final String NEUTRAL = "neutral";
     private static final String HOUR_PATTERN = "HH:mm:ss";
     private static final String SELECTED_CHATBOT = "SelectedChatbot";
@@ -129,6 +131,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     private ResponseFromTeamGPT responseFromTeamGPT;
     private Runnable runnableTTSError;
     private boolean isClickedBtnCloseChat = false;
+    private boolean islocalSTTMode = false;
     private Runnable runnablePauseTime;
 
 
@@ -162,18 +165,22 @@ public class ChatFragment extends Fragment implements IDBObserver {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_chat, container, false);
-        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.registerObserver(this);
-        buddyGPTApplication.hideSystemUI(getActivity());
         initializeApplication();
+        buddyGPTApplication.hideSystemUI(getActivity());
         configureSystemUI();
+        buddyGPTApplication.registerObserver(this);
+
+
         initializeResponseHandler();
         initializeViews(view);
         setupClickListeners();
         init();
         return view;
     }
-
+    private void initializeApplication() {
+        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
+        buddyGPTApplication.setInitSharedpreferences(false);
+    }
     @Override
     public void onDestroyView() {
         // Annule le timer de délai de réponse s'il est actif
@@ -183,6 +190,10 @@ public class ChatFragment extends Fragment implements IDBObserver {
         if (runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
             handlerTTSError.removeCallbacksAndMessages(null); // Supprime tous les messages restants
+        }
+        if (runnablePauseTime != null) {
+            handlerPauseTime.removeCallbacks(runnablePauseTime);
+            handlerPauseTime.removeCallbacksAndMessages(null); // Supprime tous les messages restants
         }
 
         // Réinitialise l’état de démarrage du SDK et l'attente de réponse
@@ -220,10 +231,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
     // -------------------------------------Initialisation---------------------------------------
 
-    private void initializeApplication() {
-        buddyGPTApplication = (BuddyGPTApplication) getActivity().getApplicationContext();
-        buddyGPTApplication.setInitSharedpreferences(false);
-    }
+
 
     private void configureSystemUI() {
         int uiFlags = buddyGPTApplication.hideSystemUI(getActivity());
@@ -267,7 +275,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void init() {
-        click = 1;
 
         // Initialisation des paramètres utilisateur
         initSettings();
@@ -467,9 +474,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     public void onClickMicro() {
         resetTimeoutsAndHandlers();
 
-        if (isInvalidTeamGPTDeviceId()) {
-            notifyInvalidTeamGPTDeviceId();
-        } else if (isInvalidTeamGPTKey()) {
+        if (isInvalidTeamGPTKey()) {
             notifyInvalidTeamGPTKey();
         } else if (isEnvError()) {
             Log.i(TAG, "run: notifyObservers ENV_ERROR 3");
@@ -482,24 +487,43 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void resetTimeoutsAndHandlers() {
-        if (responseTimeout != null) responseTimeout.cancel();
-        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
+        Log.i(TAG, "resetTimeoutsAndHandlers: START");
+        // Réinitialiser l'état d'écoute AVANT d'arrêter le timer
+        isListeningFreeSpeech = false;
+        Log.i(TAG, "resetTimeoutsAndHandlers: isListeningFreeSpeech set to FALSE");
+        // Arrêter le timer d'écoute
+        if (timerEcoute != null) {
+            timerEcoute.cancel();
+            timerEcoute = null;
+            Log.i(TAG, "resetTimeoutsAndHandlers: timerEcoute CANCELLED");
+        }
+
+        // Arrêter le timeout de réponse
+        if (responseTimeout != null) {
+            responseTimeout.cancel();
+            responseTimeout = null;
+            Log.i(TAG, "resetTimeoutsAndHandlers: responseTimeout CANCELLED");
+        }
+
+        // Arrêter la réponse précédente
+        if (buddyGPTApplication.getResponseFromTeamGPT() != null) {
             buddyGPTApplication.getResponseFromTeamGPT().reset();
+            Log.i(TAG, "resetTimeoutsAndHandlers: ResponseFromTeamGPT RESET");
+        }
+
+        // Arrêter les erreurs TTS
         if (handlerTTSError != null && runnableTTSError != null) {
             handlerTTSError.removeCallbacks(runnableTTSError);
             handlerTTSError.removeCallbacksAndMessages(null);
+            Log.i(TAG, "resetTimeoutsAndHandlers: TTS error handler CLEARED");
         }
+
+        Log.i(TAG, "resetTimeoutsAndHandlers: COMPLETE");
     }
 
-    private boolean isInvalidTeamGPTDeviceId() {
-        return buddyGPTApplication.getparam(INVALID_DEVICE_ID).equalsIgnoreCase("TRUE")
-                && !buddyGPTApplication.getparam(TEAMGPT_KEY).equalsIgnoreCase("");
-    }
 
-    private void notifyInvalidTeamGPTDeviceId() {
-        Log.i("TAG", "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
-        buddyGPTApplication.notifyObservers(INVALID_DEVICE_ID);
-    }
+
+
 
     private boolean isInvalidTeamGPTKey() {
         return buddyGPTApplication.getparam(INVALID_KEY).equalsIgnoreCase("TRUE")
@@ -544,26 +568,43 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void handleMicroClick() {
+        Log.i(TAG, "handleMicroClick: click=" + click + ", isListeningFreeSpeech=" + isListeningFreeSpeech);
+        
+        //  État 1 : NOT LISTENING -> START LISTENING
         if (click == 1) {
+            click = 2;
             startListening();
-        } else if (click == 2) {
+            Log.i(TAG, "handleMicroClick: SWITCHED TO STATE 2 (LISTENING)");
+        }
+        //  État 2 : LISTENING -> STOP LISTENING
+        else if (click == 2) {
+            click = 1;
+            isListeningFreeSpeech = false;
+            Log.i(TAG, "handleMicroClick: SWITCHED TO STATE 1 (NOT LISTENING)");
             stopListeningOrProcessAudio();
         }
     }
 
     private void startListening() {
-        click = 2;
+        Log.i(TAG, "startListening: isListeningFreeSpeech=" + isListeningFreeSpeech + ", isWaitingForResponse=" + isWaitingForResponse);
         if (!isListeningFreeSpeech && !isWaitingForResponse) {
+            Log.i(TAG, "startListening: Starting free speech recognition");
             buddyGPTApplication.stopTTS();
             startlisten = true;
             startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
+            Log.i(TAG, "startListening: Micro should be ON now");
+        } else {
+            Log.w(TAG, "startListening: Already listening or waiting for response, skipping");
         }
     }
 
     private void stopListeningOrProcessAudio() {
+        Log.i(TAG, "stopListeningOrProcessAudio: shouldStopListening=" + shouldStopListening());
         if (shouldStopListening()) {
+            Log.i(TAG, "stopListeningOrProcessAudio: Stopping listening");
             resetListeningState();
         } else {
+            Log.i(TAG, "stopListeningOrProcessAudio: Processing audio");
             processAudio();
         }
     }
@@ -575,7 +616,8 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void resetListeningState() {
-        click = 1;
+        Log.i(TAG, "resetListeningState: Stopping listening and resetting state");
+        
         isListeningFreeSpeech = false;
         isWaitingForResponse = false;
         startlisten = false;
@@ -587,13 +629,22 @@ public class ChatFragment extends Fragment implements IDBObserver {
             Log.e(TAG, BUDDY_SDK_EXCEPTION + e);
         }
         stopListeningFreeSpeech();
+        Log.i(TAG, "resetListeningState: Complete, micro should be OFF now");
     }
 
     private void processAudio() {
+        //  CRITIQUE : Arrêter le timer AVANT de traiter l'audio
+        if (timerEcoute != null) {
+            timerEcoute.cancel();
+            timerEcoute = null;
+            Log.i(TAG, "processAudio: timerEcoute CANCELLED");
+        }
         buddyGPTApplication.setLed(NEUTRAL);
         microBtn.setImageResource(R.drawable.micro_off);
         buddyGPTApplication.setAppIsListeningToTheQuestion(false);
         buddyGPTApplication.traitementAudio();
+        Log.i(TAG, "processAudio: COMPLETE");
+
     }
 
     private void setAddMailDestinationText() {
@@ -874,14 +925,38 @@ public class ChatFragment extends Fragment implements IDBObserver {
                     }
                 });
             }
+            if (message.contains("MODE_STREAM_TEXT;SPLIT;")) {
+                if(buddyGPTApplication.getparam("TTS").equalsIgnoreCase(GOOGLE_STT)|| buddyGPTApplication.getparam("TTS").equalsIgnoreCase(WHISPER_STT)){
+                    getActivity().runOnUiThread(() -> {
+                        if (message.split(";SPLIT;").length > 1) {
+                            String response = message.split(";SPLIT;")[1];
+                            handleResponseSpeak(response,false);
+                        }
+                    });
+                }else
+                    Log.i(TAG, "update: MODE_STREAM_TEXT;SPLIT; else");
+
+            }
+            if (message.contains("restartNewCycle")){
+                runnablePauseTime = () -> {
+                    startNextCycle();
+                    Log.e("ARR","startNextCycle  after handler ");
+                };
+                handlerPauseTime.postDelayed(runnablePauseTime,1000);
+
+            }
             if (message.contains("STTQuestion_success")) {
-                getActivity().runOnUiThread(() -> {
+                String[] parts = message.split(";SPLIT;");
+                Log.i(TAG, "update: PARTS 1 "+parts[1]);
+                if (parts.length > 1 && !parts[1].equals("NONE")) {
+                    Log.i(TAG, "Result: " + parts[1]);
+                    getActivity().runOnUiThread(() -> {
                     buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                     isWaitingForResponse = true;
 
                     stopListeningFreeSpeech();
 
-                    String detectedSTTMessage = message.split(";")[1].replaceAll("' ", "'");
+                    String detectedSTTMessage =parts[1].replaceAll("' ", "'");
 
 
                     buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getCurrentQuestionNubmer() + 1);
@@ -900,7 +975,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
                     if (buddyGPTApplication.getResponseFromTeamGPT() == null)
                         buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
-                    buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage);
+                    buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(detectedSTTMessage,null);
                     if (
                             (Integer.parseInt(buddyGPTApplication.getParamFromFile("Response_Timeout_in_seconds", configFile)) != 0)
                                     && (
@@ -959,10 +1034,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                             }
                                             if (Boolean.FALSE.equals(buddyGPTApplication.getSpeaking())) {
                                                 Log.d(TAG, "Mouth touched2");
-                                                if (buddyGPTApplication.getparam("INVALID_TEAMGPT_DEVICE_ID").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
-                                                    Log.i(TAG, "run: notifyObservers INVALID_TEAMGPT_DEVICE_ID 3");
-                                                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_DEVICE_ID");
-                                                } else if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
+                                                if (buddyGPTApplication.getparam("INVALID_TEAMGPT_KEY").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
                                                     Log.i(TAG, "run: notifyObservers INVALID_TEAMGPT_KEY 3");
                                                     buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
                                                 } else if (buddyGPTApplication.getparam("ENV_ERROR").equalsIgnoreCase("TRUE") && !buddyGPTApplication.getparam("TeamGPT_Key").equalsIgnoreCase("")) {
@@ -981,23 +1053,14 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                                     } else {
                                                         buddyGPTApplication.getEnglishLanguageSelectedTranslator()
                                                                 .translate(getString(R.string.toast_teamgpt_key_indispo_en))
-                                                                .addOnSuccessListener(new OnSuccessListener<String>() {
-                                                                    @Override
-                                                                    public void onSuccess(String translatedText) {
-                                                                        buddyGPTApplication.showToast(translatedText);
-                                                                    }
-                                                                })
-                                                                .addOnFailureListener(new OnFailureListener() {
-                                                                    @Override
-                                                                    public void onFailure(@NonNull Exception e) {
-                                                                        buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en));
-                                                                    }
-                                                                });
+                                                                .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
+                                                                .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_key_indispo_en)));
                                                     }
                                                 } else {
                                                     buddyGPTApplication.setStartRecording(true);
                                                     buddyGPTApplication.setSpeaking(true);
                                                     if (!isListeningFreeSpeech) {
+                                                        Log.i(TAG, "onFinish: *****************************************************************************************************");
                                                         isListeningFreeSpeech = true;
                                                         buddyGPTApplication.setActivityClosed(false);
                                                         startListeningFreeSpeech(buddyGPTApplication.getListeningDuration());
@@ -1006,8 +1069,10 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
                                             } else if (Boolean.TRUE.equals(buddyGPTApplication.getSpeaking())) {
                                                 Log.d(TAG, "Mouth touched3 STT  " + buddyGPTApplication.getparam("STT") + " AUTRE " + buddyGPTApplication.getAppIsListeningToTheQuestion());
-                                                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Android")
-                                                        || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase("Cerence")
+                                                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)
+                                                        || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)
+                                                        || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(GOOGLE_STT)
+                                                        || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(WHISPER_STT)
                                                         || Boolean.TRUE.equals(!buddyGPTApplication.getAppIsListeningToTheQuestion())) {
                                                     BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                                                     buddyGPTApplication.setStartRecording(false);
@@ -1063,12 +1128,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
                                                     speak(translatedText, "timeOutExpired");
                                                 }
 
-                                            }).addOnFailureListener(new OnFailureListener() {
-                                                @Override
-                                                public void onFailure(@NonNull Exception e) {
-                                                    Log.e(TAG, "translatedText exception  " + e);
-                                                }
-                                            });
+                                            }).addOnFailureListener(e -> Log.e(TAG, "translatedText exception  " + e));
 
                                         }
 
@@ -1081,6 +1141,42 @@ public class ChatFragment extends Fragment implements IDBObserver {
                         });
                     }
                 });
+                } else {
+                    getActivity().runOnUiThread(() -> {
+                        stopListeningFreeSpeech();
+                        isWaitingForResponse = true;
+                        BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                        BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                        buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
+                        SystemClock.sleep(200);
+                        buddyGPTApplication.setAppIsListeningToTheQuestion(false);
+                        logLargeString(TAG, "update: message google or whisper : "+message.split(";SPLIT;")[2]);
+                        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
+                            buddyGPTApplication.getResponseFromTeamGPT().reset();
+                        if (buddyGPTApplication.getResponseFromTeamGPT() == null)
+                            buddyGPTApplication.setResponseFromTeamGPT(new ResponseFromTeamGPT(buddyGPTApplication));
+                        buddyGPTApplication.getResponseFromTeamGPT().sendPutRequestStream(null,message.split(";SPLIT;")[2]);
+                    });
+                }
+            }
+            if(message.contains("AUDIO_TEXT_INPUT;")){
+                String[] parts = message.split(";SPLIT;");
+                Log.i(TAG, "update: AUDIO_TEXT_INPUT PARTS 1 "+parts[1]);
+                if (!parts[1].equals("NONE")) {
+                    Log.i(TAG, "Result: " + parts[1]);
+                    getActivity().runOnUiThread(() -> {
+                        buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber() + 1);
+                        String time = new SimpleDateFormat("HH:mm:ss").format(new Date());
+                        Replica question = new Replica();
+                        question.setType("Question");
+                        question.setTime(time);
+                        question.setValue(parts[1]);
+                        listRep.add(question);
+                        listRepGlobale.add(question);
+                        updateChat();
+                        buddyGPTApplication.setActivityClosed(false);
+                    });
+                }
             }
             if (message.contains("TTS_success")) {
                 getActivity().runOnUiThread(() -> {
@@ -1243,6 +1339,28 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
 
             }
+            if(message.contains("EnvInProgress")){
+                buddyGPTApplication.setparam("EnvInProgress", "true");
+                if (buddyGPTApplication.getLangue().getNom().equals(langueEn)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_en));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueFr)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_fr));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueEs)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_es));
+                } else if (buddyGPTApplication.getLangue().getNom().equals(langueDe)) {
+                    buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_de));
+                } else {
+                    buddyGPTApplication.getEnglishLanguageSelectedTranslator()
+                            .translate(getString(R.string.toast_teamgpt_EnvProgress_en))
+                            .addOnSuccessListener(translatedText -> buddyGPTApplication.showToast(translatedText))
+                            .addOnFailureListener(e -> buddyGPTApplication.showToast(getString(R.string.toast_teamgpt_EnvProgress_en)));
+                }
+            }
+            if(message.contains("GET_PARAMETERS_SUCCESS")){
+                buddyGPTApplication.setparam("EnvInProgress","false");
+                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY","false");
+                Log.i(TAG, "afterTextChanged: success");
+            }
             if (message.contains("Session_ID_ERROR")) {
 
                 if (buddyGPTApplication.getLangue().getNom().equals("Anglais")) {
@@ -1342,20 +1460,11 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
     private void startListeningFreeSpeech(int duration) {
         Log.d(TAG, " --- startListeningFreeSpeech(" + duration + ") ---");
+        Log.i(TAG, "startListeningFreeSpeech: //////////////////////////////////////////////////////////////////////////////////////////////////");
         isListeningFreeSpeech = true;
         buddyGPTApplication.setAppIsListeningToTheQuestion(true);
 
-
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
-            buddyGPTApplication.startListeningQuestion(getActivity());
-        } else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
-            if (buddyGPTApplication.getCurrentLanguage().equals("fr") || buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                buddyGPTApplication.startListeningCerence(getActivity());
-            } else {
-                buddyGPTApplication.startListeningQuestion(getActivity());
-            }
-        }
-
+        buddyGPTApplication.startListeningSTTForQuestion(getActivity());
 
         if (timerEcoute != null) timerEcoute.cancel();
         timerEcoute = new CountDownTimer(duration * 1000, 1000) {
@@ -1366,11 +1475,11 @@ public class ChatFragment extends Fragment implements IDBObserver {
 
             @Override
             public void onFinish() {
-
+                click = 1;
                 if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT) || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
                     Log.i(TAG, "timerEcoute onFinish");
                     stopListeningFreeSpeech();
-                    click = 1;
+
                 } else {
                     buddyGPTApplication.notifyObservers("Obtain audio transcription after the listening time has elapsed;SPLIT;false");
                 }
@@ -1383,20 +1492,10 @@ public class ChatFragment extends Fragment implements IDBObserver {
     }
 
     private void startCycle() {
+        Log.i(TAG, "startCycle: $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
         isListeningFreeSpeech = true;
-        buddyGPTApplication.setAppIsListeningToTheQuestion(true);
 
-        if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT)) {
-            buddyGPTApplication.startListeningQuestion(getActivity());
-
-        } else if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
-            if (buddyGPTApplication.getCurrentLanguage().equals("fr") || buddyGPTApplication.getCurrentLanguage().equals("en")) {
-                buddyGPTApplication.startListeningCerence(getActivity());
-            } else {
-                buddyGPTApplication.startListeningQuestion(getActivity());
-            }
-        }
-
+        buddyGPTApplication.startListeningSTTForQuestion(getActivity());
 
         if (timerEcoute != null) timerEcoute.cancel();
         timerEcoute = new CountDownTimer(buddyGPTApplication.getListeningDuration() * 1000, 1000) {
@@ -1408,7 +1507,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
             @Override
             public void onFinish() {
                 Log.i(TAG, "timerEcoute onFinish");
-                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT) || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)) {
+                if (buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(ANDROID_STT) || buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(CERENCE_STT)|| buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(GOOGLE_STT)|| buddyGPTApplication.getparam("STT").trim().equalsIgnoreCase(WHISPER_STT)) {
                     buddyGPTApplication.notifyObservers("end of cycle");
                     runnablePauseTime = () -> startNextCycle();
                     handlerPauseTime.postDelayed(runnablePauseTime, 1000);
@@ -1436,14 +1535,26 @@ public class ChatFragment extends Fragment implements IDBObserver {
             // Si toutes les tentatives ont été épuisées, vous pouvez faire quelque chose ici si nécessaire
         }
     }
-
+    private void logLargeString(String TAG,String str) {
+        if(str.length() > 3000) {
+            Log.i(TAG, str.substring(0, 3000));
+            logLargeString(TAG,str.substring(3000));
+        } else {
+            Log.i(TAG, str);
+        }
+    }
     private void stopListeningFreeSpeech() {
 
         isListeningFreeSpeech = false;
 
         Log.d(TAG, " --- stopListeningFreeSpeech() ---");
 
-        if (timerEcoute != null) timerEcoute.cancel();
+        //  Arrêter et nettoyer le timer
+        if (timerEcoute != null) {
+            timerEcoute.cancel();
+            timerEcoute = null;
+            Log.i(TAG, "stopListeningFreeSpeech: timerEcoute CANCELLED");
+        }
         buddyGPTApplication.stopListening(getActivity());
         buddyGPTApplication.setLed(NEUTRAL);
         microBtn.setImageResource(R.drawable.micro_off);
@@ -1460,13 +1571,21 @@ public class ChatFragment extends Fragment implements IDBObserver {
         if (responseTimeout != null) responseTimeout.cancel();
 
         if (type.equals(NOTHEALYSA) || type.equals("storedResponse")) {
-            handleResponseSpeak(texte);
+            handleResponseSpeak(texte,true);
         } else if (type.equals("timeOutExpired")) {
             buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, type);
         }
     }
 
-    private void handleResponseSpeak(String texte) {
+    private void handleResponseSpeak(String texte, boolean isSpeakTTS) {
+        Log.i(TAG, "handleResponseSpeak: speak "+isSpeakTTS);
+        Log.i(TAG, "handleResponseSpeak: speak "+!listRep.isEmpty());
+        Log.i(TAG, "handleResponseSpeak: speak "+texte);
+        if(isSpeakTTS){
+            buddyGPTApplication.setAlreadyGetAnswer(true);
+            buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);
+        }else
+            Log.i(TAG, "handleResponseSpeak: no speak tts");
         buddyGPTApplication.setAlreadyGetAnswer(true);
         String time = new SimpleDateFormat(HOUR_PATTERN).format(new Date());
 
@@ -1476,7 +1595,6 @@ public class ChatFragment extends Fragment implements IDBObserver {
             updateExistingResponseReplica(texte);
         }
 
-        buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);
     }
 
     private void createNewResponseReplica(String texte, String time) {
@@ -1500,7 +1618,13 @@ public class ChatFragment extends Fragment implements IDBObserver {
         Replica lastReplica = listRepGlobale.get(listRepGlobale.size() - 1);
         if (lastReplica.getType().equals(KEY_RESPONSE)) {
             if (responseFromTeamGPT != null && !responseFromTeamGPT.isError) {
-                lastReplica.setValue(lastReplica.getValue() + texte);
+                if(buddyGPTApplication.getparam("TTS").equalsIgnoreCase("google") || buddyGPTApplication.getparam("TTS").equalsIgnoreCase("openai")){
+                    Log.i(TAG, "updateExistingResponseReplica: 1111111111");
+                    lastReplica.setValue(texte);
+                } else {
+                    Log.i(TAG, "updateExistingResponseReplica: 22222222222");
+                    lastReplica.setValue(lastReplica.getValue() + texte);
+                }
             } else {
                 lastReplica.setValue(texte);
             }
