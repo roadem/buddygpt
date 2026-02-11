@@ -139,17 +139,24 @@ public class ResponseFromTeamGPT {
                 String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
                 String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Env");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
+                String maskedKey = (gptKey == null)
+                    ? "null"
+                    : (gptKey.length() <= 8
+                    ? "len=" + gptKey.length()
+                    : gptKey.substring(0, 4) + "..." + gptKey.substring(gptKey.length() - 4) + " (len=" + gptKey.length() + ")");
 
+                Log.i("CLE", "getEnvironnement url=" + baseUrl + endpoint + " key=" + maskedKey);
                 Log.i(TAG_STREAM, "getEnvironnement: Endpoint = " + endpoint);
 
                 URL url = new URL(baseUrl + endpoint);
                 con = (HttpURLConnection) url.openConnection();
                 con.setRequestMethod("GET");
                 con.setRequestProperty("TeamGPT-Key", gptKey);
-                con.setConnectTimeout(5000);
-                con.setReadTimeout(5000);
+                con.setConnectTimeout(15000);
+                con.setReadTimeout(15000);
 
                 int responseCode = con.getResponseCode();
+                Log.i("CLE", "getEnvironnement responseCode=" + responseCode);
                 Log.i(TAG_STREAM, "HTTP Response Code = " + responseCode);
 
                 // --- Cas 404 : clé invalide ---
@@ -217,11 +224,17 @@ public class ResponseFromTeamGPT {
 
                 }
             } catch (Exception e) {
+                Log.e("CLE", "getEnvironnement exception", e);
                 Log.e(TAG_STREAM, "Erreur inconnue : " + e.getMessage());
                 buddyGPTApplication.resetSharedPreferences();
                 buddyGPTApplication.setparam("Environnement", "");
-                buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
-                buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                if (e instanceof java.net.SocketTimeoutException) {
+                    buddyGPTApplication.setparam("ENV_ERROR", "TRUE");
+                    buddyGPTApplication.notifyObservers("ENV_ERROR");
+                } else {
+                    buddyGPTApplication.setparam("INVALID_TEAMGPT_KEY", "TRUE");
+                    buddyGPTApplication.notifyObservers("INVALID_TEAMGPT_KEY");
+                }
                 responseCallback.onFailure();
 
             } finally {
@@ -241,6 +254,12 @@ public class ResponseFromTeamGPT {
                 String endpoint = env + buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
                 String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
+                String maskedKey = (gptKey == null)
+                    ? "null"
+                    : (gptKey.length() <= 8
+                    ? "len=" + gptKey.length()
+                    : gptKey.substring(0, 4) + "..." + gptKey.substring(gptKey.length() - 4) + " (len=" + gptKey.length() + ")");
+                Log.i("CLE", "getParameters url=" + url + endpoint + " key=" + maskedKey + " ID-Device=" + imeiDevice);
                 Log.i(TAG_PARAM, "getParameters: " + url + endpoint);
                 URL obj = new URL(url + endpoint);
                 HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -249,6 +268,7 @@ public class ResponseFromTeamGPT {
                 con.setRequestProperty("ID-Device", imeiDevice);
 
                 int responseCode = con.getResponseCode();
+                Log.i("CLE", "getParameters responseCode=" + responseCode);
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     Log.i(TAG_PARAM, "getParameters: ");
                     responseCallback.onSuccess();
@@ -264,6 +284,7 @@ public class ResponseFromTeamGPT {
                     in.close();
 
                     String contentType = con.getHeaderField("Content-Type");
+                    Log.i("CLE", "getParameters contentType=" + contentType);
 
                     if (contentType != null && contentType.contains("application/json")) {
                         JsonObject jsonObject = JsonParser.parseString(response.toString()).getAsJsonObject();
@@ -360,6 +381,7 @@ public class ResponseFromTeamGPT {
                 con.disconnect();
             } catch (Exception e) {
                 responseCallback.onFailure();
+                Log.e("CLE", "getParameters exception", e);
                 Log.e(TAG_STREAM, "Exception in getParameters: ", e);
             } finally {
                 latch.countDown(); // Ensure latch is counted down regardless of success or failure
