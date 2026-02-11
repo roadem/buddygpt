@@ -25,7 +25,7 @@ android {
                 install "pydub"
 
             }
-            buildPython "C:/Users/hayat/AppData/Local/Programs/Python/Python310/python.exe"
+            buildPython "C:/Users/Aevaweb/AppData/Local/Programs/Python/Python311/python.exe"
         }
         sourceSets {
             main {
