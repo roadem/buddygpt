@@ -218,6 +218,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private boolean alreadyChatting = false; // pour savoir si BUDDY doit prononcer l'invitation au dialogue ou non
     private Toast mToast;
     private TranscribeTask transcribeTask;
+    private volatile boolean stopRecordingSttInProgress = false;
     private Handler retryHotwordHandler;
     private Runnable retryHotwordRunnable;
     private Handler noMatchHandler;          //  Pour les faux positifs/no match (checkTheHotword)
@@ -459,12 +460,13 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
 
-    private class TranscribeTask extends AsyncTask<String, Void, String> {
+    private class TranscribeTask extends AsyncTask<byte[], Void, String> {
         @Override
-        protected String doInBackground(String... audioData) {
+        protected String doInBackground(byte[]... audioData) {
             Log.e(TAG,"doInBackground stopProcessus---------- "+stopProcessus);
 
-            String question = audioData[0];
+            String question = Base64.encodeToString(audioData[0], Base64.NO_WRAP);
+                    Log.i("FZE", "STT non local flux: TranscribeTask doInBackground length=" + (question == null ? "null" : question.length()));
                     if (Boolean.FALSE.equals(stopProcessus)){
                         Log.e(TAG,"envoie traitement de la question");
                         notifyObservers("STTQuestion_success;SPLIT;NONE;SPLIT;"+question);
@@ -1505,8 +1507,17 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
     public void stopRecordingSTT(Boolean shouldRestartListening,Boolean shouldRestartNewCycle) {
         Log.i(TAG, "stopRecordingSTT: start");
+
+        Log.i("nv", "STT non local flux: stopRecordingSTT");
+
+        if (stopRecordingSttInProgress) {
+            Log.i("FZE", "STT non local flux: stopRecordingSTT already running -> skip");
+            return;
+        }
+        stopRecordingSttInProgress = true;
         try {
-            String audioDataF = convertBase64Wav(); // Read the recorded audio data
+            byte[] audioDataF = readAudioFile(); // Read the recorded audio data
+            Log.i("FZE", "STT non local flux: audio base64 length=" + (audioDataF == null ? "null" : audioDataF.length));
             // Annuler la tâche précédente si elle existe
             if (transcribeTask != null && transcribeTask.getStatus() == AsyncTask.Status.RUNNING) {
                 transcribeTask.cancel(true);
@@ -1516,20 +1527,20 @@ public class BuddyGPTApplication extends BuddyApplication {
                 thread.interrupt();
             }
             thread =new Thread(() -> {
-                if (!Python.isStarted()) {
-                    Python.start(new AndroidPlatform(activityTemp));
-                }
-                Python py = Python.getInstance();
-                PyObject pyobj = py.getModule("calculDBFS");
                 try {
+                    if (!Python.isStarted()) {
+                        Python.start(new AndroidPlatform(activityTemp));
+                    }
+                    Python py = Python.getInstance();
+                    PyObject pyobj = py.getModule("calculDBFS");
                     PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
                     reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
 
-                    //Mettre  le dernier fichier json envoyé à l’API
+                    //Mettre  le dernier fichier json envoyé à l'API
 
 
 
@@ -1538,22 +1549,39 @@ public class BuddyGPTApplication extends BuddyApplication {
                         if (Float.parseFloat(reponse.toString()) >= Float.parseFloat(getParamFromFile("Seuil_dBFS", configurationFilePseudo))) {
                             Log.d(TAG, "volume est bien : " + Float.parseFloat(reponse.toString()));
                             transcribeTask = new TranscribeTask();
+                            Log.i("FZE", "STT non local flux: transcribeTask execute");
                             transcribeTask.execute(audioDataF); // Transcribe the audio
                         } else {
                             Log.d(TAG, "volume est trop bas : " + Float.parseFloat(reponse.toString()));
-                            startListeningQuestionWav(activityTemp);
+                            if (activityTemp != null) {
+                                startListeningQuestionWav(activityTemp);
+                            } else {
+                                Log.w(TAG, "stopRecordingSTT: activityTemp is null, skip restart listening");
+                            }
 
                         }
                     }
                     else {
                         if (Boolean.TRUE.equals(shouldRestartListening)) {
-                            startListeningQuestionWav(activityTemp);
+                            if (activityTemp != null) {
+                                startListeningQuestionWav(activityTemp);
+                            } else {
+                                Log.w(TAG, "stopRecordingSTT: activityTemp is null, skip restart listening");
+                            }
                         } else {
                             if (Boolean.TRUE.equals(shouldRestartNewCycle)){
-                                activityTemp.runOnUiThread(() -> notifyObservers("restartNewCycle"));
+                                if (activityTemp != null) {
+                                    activityTemp.runOnUiThread(() -> notifyObservers("restartNewCycle"));
+                                } else {
+                                    notifyObservers("restartNewCycle");
+                                }
                             }
                             else {
-                                activityTemp.runOnUiThread(() -> notifyObservers("restartListeningHotword"));
+                                if (activityTemp != null) {
+                                    activityTemp.runOnUiThread(() -> notifyObservers("restartListeningHotword"));
+                                } else {
+                                    notifyObservers("restartListeningHotword");
+                                }
                             }
                         }
                     }
@@ -1564,12 +1592,15 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                 } catch (PyException | JSONException p) {
                     Log.e(TAG, "Exception "+p);
+                } finally {
+                    stopRecordingSttInProgress = false;
                 }
 
             });
             thread.start();
         } catch (Exception e) {
             Log.e(TAG, "Exception " + e);
+            stopRecordingSttInProgress = false;
         }
 
     }
@@ -1577,7 +1608,11 @@ public class BuddyGPTApplication extends BuddyApplication {
     Runnable periodicTask = new Runnable() {
         @Override
         public void run() {
-            convertBase64Wav();
+            try {
+                readAudioFile();
+            } catch (IOException e) {
+                Log.e(TAG, "periodicTask readAudioFile error: " + e);
+            }
             Log.e(TAG,"start dbfs calcul 3---------------");
             if (thread1 != null && thread1.isAlive()) {
                 thread1.interrupt();
@@ -1591,10 +1626,13 @@ public class BuddyGPTApplication extends BuddyApplication {
                 try {
                     PyObject reponse;
                     JSONObject parameters = new JSONObject();
-                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav"); // Chemin de fichier audio
+                    parameters.put("fichier_audio", Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav"); // Chemin de fichier audio
 
                     // Appel de la fonction main avec le chemin du fichier audio
                     reponse = pyobj.callAttr("main", parameters.getString("fichier_audio"));
+
+                    //Mettre  le dernier fichier json envoyé à l'API
+                    Log.e(TAG, "test comparaison flot--------------- " + reponse.toString());
 
                     //Mettre  le dernier fichier json envoyé à l’API
                     Log.e(TAG, "test comparaison flot--------------- " + reponse.toString());
@@ -1640,11 +1678,14 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
         if (!isRecording) {
             Log.d(TAG_STREAMING, "Not recording");
+            Log.i("FZE", "STT non local flux: stopRecording called but not recording");
             return;
         }
 
         // Arrêter la boucle du thread AVANT de libérer audioRecord
+        boolean wasRecording = isRecording;
         isRecording = false;
+        Log.i("FZE", "STT non local flux: stopRecording -> isRecording=false");
 
         if (thread != null && thread.isAlive()) {
             thread.interrupt();
@@ -1663,6 +1704,8 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.e(TAG, "+++++++++++++++++++++++++++++++++vad stop");
             vad.stop();
         }
+
+
     }
 
     public void traitementAudio() {
@@ -1670,6 +1713,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         alReadyHadSpoke = false;
         stopProcessus = false;
         stopRecording();
+        stopRecordingSTT(true, false);
     }
 
     public List<String> getHotwordList() {
@@ -1752,11 +1796,14 @@ public class BuddyGPTApplication extends BuddyApplication {
      */
     public void stopListening(Activity activity) {
         Log.i(TAG, "stopListening: start");
+        Log.i("FZE", "STT non local flux: stopListening (stopProcessus->true)");
 
                     if (activity != null && !activity.isFinishing() ) {
                         activity.runOnUiThread(() -> {
 
+                            boolean wasRecording = isRecording;
                             stopProcessus = true;
+                            Log.i("FZE", "STT non local flux: stopListening in UI thread, isRecording=" + isRecording);
                             // ---  ANNULLER LE HANDLER D'ERREUR DE REDÉMARRAGE ---
                             if (retryHotwordHandler != null) {
                                 // Annuler tous les messages postés, y compris le Runnable de redémarrage
@@ -1787,6 +1834,8 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
                             stopRecording();
+
+                          
 
 
                         });
@@ -2447,6 +2496,10 @@ public class BuddyGPTApplication extends BuddyApplication {
                 if (minBuf == AudioRecord.ERROR || minBuf == AudioRecord.ERROR_BAD_VALUE) continue;
                 int buf = Math.max(minBuf * 2, sampleRate / 10); // safety margin
                 try {
+                    if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+                        Log.w(TAG_STREAMING, "RECORD_AUDIO permission not granted");
+                        return null;
+                    }
                     AudioRecord ar = new AudioRecord(src, sampleRate, CHANNEL_CONFIG, AUDIO_FORMAT, buf);
                     if (ar.getState() == AudioRecord.STATE_INITIALIZED) {
                         // update globals used elsewhere
@@ -2466,6 +2519,9 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void startListeningQuestionWav(Activity activity){
         Log.d(TAG_STREAMING, "startListeningQuestionWav start");
+        Log.i("FZE", "STT non local flux: startListeningQuestionWav");
+        alReadyHadSpoke=false;
+        activityTemp = activity;
         // Post sur le thread UI de façon sûre (activity peut être null / finishing)
         Handler mainHandler = new Handler(Looper.getMainLooper());
         mainHandler.post(this::listeningAnimation);
@@ -2498,6 +2554,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             setLed("listening");
             audioRecord.startRecording();
             Log.i(TAG_STREAMING, "after startRecording: recordingState=" + audioRecord.getRecordingState() + " audioRecord state: " + audioRecord.getState());
+            Log.i("FZE", "STT non local flux: startRecording state=" + audioRecord.getRecordingState());
             if (audioRecord.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING) {
                 Log.e(TAG_STREAMING, "startRecording did not put AudioRecord into RECORDING state");
                 audioRecord.release();
@@ -2507,7 +2564,9 @@ public class BuddyGPTApplication extends BuddyApplication {
             isRecording = true;
             currentState = "";
             // start VAD (keeps using configured sample rate - VAD expects matching sample rate)
+            Log.i("FZE", "STT non local flux: startVAD");
             startVAD();
+            Log.i("FZE", "STT non local flux: processAudio file=" + outputFile);
             processAudio(outputFile);
         } catch (Exception e) {
             Log.e(TAG_STREAMING, "Failed to start recording", e);
@@ -2545,6 +2604,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         public void onSpeechDetected() {
             Log.d(TAG_STREAMING, "Speech detected!");
+            Log.i("FZE", "STT non local flux: VAD speech detected");
             // lorsque la parole est détectée
             if (!currentState.equals("SPEECH")) {
                 currentState = "SPEECH";
@@ -2562,10 +2622,12 @@ public class BuddyGPTApplication extends BuddyApplication {
         @Override
         public void onNoiseDetected() {
             Log.d(TAG_STREAMING, "Noise detected!");
+            Log.i("nv", "STT non local flux: VAD noise detected");
+
             // lorsque du bruit est détecté
             if (!currentState.equals("NOISE")) {
                 currentState = "NOISE";
-                if(Boolean.TRUE.equals(alReadyHadSpoke)){
+                if(alReadyHadSpoke){
                     alReadyHadSpoke=false;
                     stopProcessus =false;
                     stopRecording();
@@ -2578,6 +2640,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     };
     private void startVAD() {
         Log.i(TAG, "startVAD: start 1");
+        Log.i("FZE", "STT non local flux: startVAD init");
         int silenceTime;
         if (!getParamFromFile("Silence_time",configurationFilePseudo).trim().equals("")){
             try {
@@ -2599,11 +2662,13 @@ public class BuddyGPTApplication extends BuddyApplication {
                 .setVoiceDurationMillis(500)
                 .build());
         vad.start();
+        Log.i("FZE", "STT non local flux: VAD started");
     }
 
     private void processAudio(String outputFile) {
         Log.i(TAG, "processAudio: start 1");
         Log.i(TAG, "processAudio: start 1 FILE"+outputFile);
+        Log.i("FZE", "STT non local flux: processAudio start");
 
         new Thread(() -> {
             short[] buffer = new short[BUFFER_SIZE / 2]; // Divided by 2 because each short is 2 bytes
@@ -2645,6 +2710,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 e.printStackTrace();
             } finally {
                 Log.e(TAG,"processAudioFinally");
+                Log.i("FZE", "STT non local flux: processAudio end");
             }
         }).start();
     }
@@ -2721,7 +2787,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     private String convertBase64Wav() {
         try {
             String inputPcm = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm";
-            String outputWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioFile.wav";
+            String outputWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
 
             // Convert PCM → WAV
             PcmToWavConverter.convert(inputPcm, outputWav);
@@ -2744,6 +2810,21 @@ public class BuddyGPTApplication extends BuddyApplication {
         }
     }
 
+    private byte[] readAudioFile() throws IOException {
+        // Convert PCM data to WAV format
+        String outputFileWav = Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.wav";
+        PcmToWavConverter.convert(Environment.getExternalStorageDirectory().getAbsolutePath() + "/audioF.pcm", outputFileWav);
+
+        Log.d("FilePath", "File path: " + outputFileWav);
+        File audioFileWav = new File(outputFileWav);
+        if (audioFileWav.exists()) {
+            return Files.readAllBytes(audioFileWav.toPath());
+        } else {
+            // Handle the case where the file does not exist
+            Log.e("FileError", "The file does not exist at the specified path.");
+            return null;
+        }
+    }
     //#endregion ******************************************************* TTS **********************************************************************
 
 

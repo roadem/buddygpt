@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -99,6 +100,7 @@ public class ChatFragment extends Fragment implements IDBObserver {
     private static final Handler handlerTTSError = new Handler();
     private static final String configFile = "BuddyGPT.properties";
     private static final Handler handlerPauseTime = new Handler();
+    private final Handler handler = new Handler(Looper.getMainLooper());
     private final Random random = new Random();
     private final ArrayList<Replica> listRepGlobale = new ArrayList<>();
     int click = 1;
@@ -951,6 +953,14 @@ public class ChatFragment extends Fragment implements IDBObserver {
                 if (parts.length > 1 && !parts[1].equals("NONE")) {
                     Log.i(TAG, "Result: " + parts[1]);
                     getActivity().runOnUiThread(() -> {
+                    buddyGPTApplication.setAlreadyGetAnswer(false);
+                    BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                    BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                    handler.postDelayed(() -> {
+                        if (!buddyGPTApplication.isAlreadyGetAnswer()) {
+                            BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                        }
+                    }, 250);
                     buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                     isWaitingForResponse = true;
 
@@ -1145,8 +1155,15 @@ public class ChatFragment extends Fragment implements IDBObserver {
                     getActivity().runOnUiThread(() -> {
                         stopListeningFreeSpeech();
                         isWaitingForResponse = true;
-                        BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                        Log.i("FFF", "STT non local: envoi audio -> visage THINKING");
+                        buddyGPTApplication.setAlreadyGetAnswer(false);
+                        BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
                         BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                        handler.postDelayed(() -> {
+                            if (!buddyGPTApplication.isAlreadyGetAnswer()) {
+                                BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                            }
+                        }, 250);
                         buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
                         SystemClock.sleep(200);
                         buddyGPTApplication.setAppIsListeningToTheQuestion(false);
@@ -1581,6 +1598,13 @@ public class ChatFragment extends Fragment implements IDBObserver {
         Log.i(TAG, "handleResponseSpeak: speak "+isSpeakTTS);
         Log.i(TAG, "handleResponseSpeak: speak "+!listRep.isEmpty());
         Log.i(TAG, "handleResponseSpeak: speak "+texte);
+        if (texte != null && !texte.trim().isEmpty()) {
+            Log.i("FFF", "Response received (chat) -> visage NEUTRAL, len=" + texte.length());
+            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            isWaitingForResponse = false;
+        } else {
+            Log.i("FFF", "Response empty (chat) -> keep THINKING");
+        }
         if(isSpeakTTS){
             buddyGPTApplication.setAlreadyGetAnswer(true);
             buddyGPTApplication.speakTTS(texte, LabialExpression.SPEAK_NEUTRAL, NOTHEALYSA);

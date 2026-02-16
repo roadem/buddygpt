@@ -432,6 +432,7 @@ public class ResponseFromTeamGPT {
         // Add audio if provided
         if (audioData != null && !audioData.trim().isEmpty()) {
             Log.i(TAG_STREAM, "sendPutRequestStream: audio");
+            Log.i("FZE", "STT non local flux: payload audio prêt, taille=" + audioData.length());
             payload.setAudioInput(audioData);
         }
 
@@ -448,6 +449,7 @@ public class ResponseFromTeamGPT {
             HttpURLConnection connection = null;
             try {
                 URL url = new URL(baseUrl + endpoint);
+                Log.i("FZE", "STT non local flux: POST -> " + url);
                 connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
@@ -457,6 +459,24 @@ public class ResponseFromTeamGPT {
                 connection.setChunkedStreamingMode(0);
                 Gson gson = new Gson();
                 String jsonPayload = gson.toJson(payload);
+                String logPayload = jsonPayload;
+                try {
+                    JsonObject logObj = JsonParser.parseString(jsonPayload).getAsJsonObject();
+                    if (logObj.has("Audio_input") && !logObj.get("Audio_input").isJsonNull()) {
+                        String audio = logObj.get("Audio_input").getAsString();
+                        logObj.addProperty("Audio_input", "<base64 length=" + audio.length() + ">");
+                    }
+                    if (logObj.has("Text_input") && !logObj.get("Text_input").isJsonNull()) {
+                        String text = logObj.get("Text_input").getAsString();
+                        if (text.length() > 200) {
+                            logObj.addProperty("Text_input", text.substring(0, 200) + "…(len=" + text.length() + ")");
+                        }
+                    }
+                    logPayload = logObj.toString();
+                } catch (Exception e) {
+                    logPayload = "{payload_length=" + jsonPayload.length() + "}";
+                }
+                Log.i("FZE", "STT non local flux: POST payload=" + logPayload);
 
                 try (OutputStream os = connection.getOutputStream()) {
                     byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
@@ -466,7 +486,12 @@ public class ResponseFromTeamGPT {
 
                 int responseCode = connection.getResponseCode();
 
+                String contentType = connection.getHeaderField("Content-Type");
+                String contentLength = connection.getHeaderField("Content-Length");
+                Log.i("FZE", "STT non local flux: response headers contentType=" + contentType + " contentLength=" + contentLength);
+
                 Log.i("TAG", "sendPutRequestStream responseCode : " + responseCode);
+                Log.i("FZE", "STT non local flux: réponse POST code=" + responseCode);
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     if (question != null) {
                         long responseStartTime = System.currentTimeMillis();
@@ -636,6 +661,7 @@ public class ResponseFromTeamGPT {
             String fileName = "TeamGPT-recv-stream";
             StringBuilder formattedContent = new StringBuilder();
             String line;
+            int receivedLines = 0;
             Log.i(TAG_STREAM, "handleStreamingResponse: !isReset " + !isReset);
             Log.i(TAG_STREAM, "handleStreamingResponse: !isError " + !isError);
 
@@ -643,12 +669,17 @@ public class ResponseFromTeamGPT {
             while ((line = reader.readLine()) != null && !isReset && !isError) {
                 if (line.trim().isEmpty())
                     continue;
+                receivedLines++;
                 try {
                     Log.w("HOU_DEBUG", "Received line: " + line);
                     processStreamLine(line, formattedContent);
                 } catch (JSONException e) {
                     Log.e(TAG_STREAM, "Invalid JSON data: " + line, e);
                 }
+            }
+            Log.i("FZE", "STT non local flux: stream lines=" + receivedLines + " formattedBytes=" + formattedContent.length());
+            if (receivedLines == 0) {
+                Log.w("FZE", "STT non local flux: stream is empty (no data lines)");
             }
             updateHistoryWithResponse();
             storeStreamResponse(fileName, formattedContent.toString());
@@ -687,6 +718,30 @@ public class ResponseFromTeamGPT {
             if (jsonObject.has("Audio_reponse")) {
                 String audioStr = jsonObject.getString("Audio_reponse");
                 Log.i(TAG_STREAM, "✓ Audio_reponse size: " + audioStr.length() + " chars");
+            }
+
+            if (jsonObject.has("Answer") && !jsonObject.getString("Answer").trim().isEmpty()) {
+                String answerText = jsonObject.getString("Answer");
+                String answerPreview = answerText.length() > 200 ? answerText.substring(0, 200) + "…" : answerText;
+                String sessionId = jsonObject.optString("session_id", "");
+                String textInput = jsonObject.optString("Text_input", "");
+                String emotion = jsonObject.optString("Emotion", "");
+                String commandes = jsonObject.optString("Commandes", "");
+                String audioResp = jsonObject.optString("Audio_reponse", "");
+                boolean sttFinished = jsonObject.optBoolean("STT_is_finished", false);
+                boolean ttsFinished = jsonObject.optBoolean("TTS_is_finished", false);
+                boolean chatbotFinished = jsonObject.optBoolean("Chatbot_is_finished", false);
+                boolean isFinished = jsonObject.optBoolean("is_finished", false);
+                Log.i("FFF", "Stream Answer received -> session_id=" + sessionId
+                        + " Answer=\"" + answerPreview + "\""
+                        + " Audio_reponse_len=" + (audioResp.isEmpty() ? 0 : audioResp.length())
+                        + " Text_input_len=" + (textInput.isEmpty() ? 0 : textInput.length())
+                        + " Emotion=\"" + emotion + "\""
+                        + " Commandes=\"" + commandes + "\""
+                        + " STT_is_finished=" + sttFinished
+                        + " TTS_is_finished=" + ttsFinished
+                        + " Chatbot_is_finished=" + chatbotFinished
+                        + " is_finished=" + isFinished);
             }
 
             // Gérer Text_input (transcription STT)

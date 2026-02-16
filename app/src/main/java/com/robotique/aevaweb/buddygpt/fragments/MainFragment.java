@@ -123,6 +123,7 @@ public class MainFragment extends Fragment implements IDBObserver {
     private boolean frenchIsDownloaded = false;
     private boolean languageToenglishIsDownloaded = false;
     private boolean isSpeaking = false;
+    private boolean isWaitingForResponse = false;
     private boolean isReTrack = false;
     private final boolean regardeCamera = false;
     private CountDownTimer timerEcoute;
@@ -868,6 +869,14 @@ public class MainFragment extends Fragment implements IDBObserver {
 
     private void showStream(String responseTitle, String response) {
         if (!buddyGPTApplication.isActivityClosed()) {
+            if (response != null && !response.trim().isEmpty()) {
+                String preview = response.length() > 200 ? response.substring(0, 200) + "…" : response;
+                Log.i("FFF", "Response received (stream) -> visage NEUTRAL, len=" + response.length() + " title=" + responseTitle + " text=\"" + preview + "\"");
+                BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                isWaitingForResponse = false;
+            } else {
+                Log.i("FFF", "Response empty (stream) -> keep THINKING");
+            }
             buddyTexteResp.setText(String.format("%s : %s", responseTitle, response));
             buddyTexteRespLyt.setVisibility(View.VISIBLE);
             buddyTexteResp.setMovementMethod(new ScrollingMovementMethod());
@@ -1393,6 +1402,7 @@ public class MainFragment extends Fragment implements IDBObserver {
         buddyGPTApplication.setAlreadyChatting(false);
         buddyGPTApplication.stopListening(getActivity());
 
+        Log.i("FZE", "STT non local flux: startListeningFreeSpeech duration=" + duration + " STT=" + buddyGPTApplication.getparam("STT"));
         Log.d(TAG, " --- startListeningFreeSpeech(" + duration + ") ---");
         Log.d(TAG, " --- startListeningFreeSpeech( STT" + buddyGPTApplication.getparam("STT") + ") ---");
 
@@ -1427,6 +1437,7 @@ public class MainFragment extends Fragment implements IDBObserver {
 
     private void stopListeningFreeSpeech() {
         isListeningFreeSpeech = false;
+        Log.i("FZE", "STT non local flux: stopListeningFreeSpeech STT=" + buddyGPTApplication.getparam("STT"));
         Log.d(TAG, " --- stopListeningFreeSpeech() ---");
         if (timerEcoute != null) timerEcoute.cancel();
         buddyGPTApplication.stopListening(getActivity());
@@ -1494,6 +1505,14 @@ public class MainFragment extends Fragment implements IDBObserver {
 
             if (!buddyGPTApplication.isActivityClosed()) {
                 if (type.equals("nothealysa") || type.equals("storedResponse")) {
+                    if (texte != null && !texte.trim().isEmpty()) {
+                        String preview = texte.length() > 200 ? texte.substring(0, 200) + "…" : texte;
+                        Log.i("FFF", "Response received (speak) -> visage NEUTRAL, len=" + texte.length() + " text=\"" + preview + "\"");
+                        BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                        isWaitingForResponse = false;
+                    } else {
+                        Log.i("FFF", "Response empty (speak) -> keep THINKING");
+                    }
                     buddyGPTApplication.setAlreadyGetAnswer(true);
 
                     if (settingClass.getSwitchVisibility().equals("true")) {
@@ -1721,7 +1740,14 @@ public class MainFragment extends Fragment implements IDBObserver {
                         Log.i("HOU", "HOU run: " + detectedSTTMessage);
                         if (!buddyGPTApplication.isActivityClosed()) {
                             buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber() + 1);
+                            isWaitingForResponse = true;
+                            buddyGPTApplication.setAlreadyGetAnswer(false);
                             BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                            handler.postDelayed(() -> {
+                                if (!buddyGPTApplication.isAlreadyGetAnswer()) {
+                                    BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                                }
+                            }, 250);
                             if (settingClass.getSwitchVisibility().equals("true")) {
                                 if (buddyGPTApplication.getCurrentLanguage().equals("en")) {
                                     buddyTexteQst.setText(format("I heard :  %s ", detectedSTTMessage));
@@ -1941,12 +1967,21 @@ public class MainFragment extends Fragment implements IDBObserver {
                 }else {
                    getActivity().runOnUiThread(() -> {
                        stopListeningFreeSpeech();
-                       BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                       Log.i("FFF", "STT non local: envoi audio -> visage THINKING");
+                       isWaitingForResponse = true;
+                       buddyGPTApplication.setAlreadyGetAnswer(false);
+                       BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                       handler.postDelayed(() -> {
+                           if (!buddyGPTApplication.isAlreadyGetAnswer()) {
+                               BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                           }
+                       }, 250);
                        BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
                        buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
                        SystemClock.sleep(200);
                        buddyGPTApplication.setAppIsListeningToTheQuestion(false);
                        logLargeString(TAG, "update: message google or whisper : "+message.split(";SPLIT;")[2]);
+                       Log.i("FZE", "STT non local flux: audio capturé, envoi POST au serveur");
                        if (buddyGPTApplication.getResponseFromTeamGPT() != null)
                            buddyGPTApplication.getResponseFromTeamGPT().reset();
                        if (buddyGPTApplication.getResponseFromTeamGPT() == null)
@@ -1965,6 +2000,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                     getActivity().runOnUiThread(() -> {
                         buddyGPTApplication.setQuestionNumber(buddyGPTApplication.getQuestionNumber() + 1);
                         BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+                        isWaitingForResponse = true;
                         stopListeningFreeSpeech();
                         buddyGPTApplication.setAppIsCurrentlyDealingWithTheQuestion(true);
                         SystemClock.sleep(200);
