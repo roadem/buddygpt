@@ -139,13 +139,6 @@ public class ResponseFromTeamGPT {
                 String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
                 String endpoint = buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Env");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
-                String maskedKey = (gptKey == null)
-                    ? "null"
-                    : (gptKey.length() <= 8
-                    ? "len=" + gptKey.length()
-                    : gptKey.substring(0, 4) + "..." + gptKey.substring(gptKey.length() - 4) + " (len=" + gptKey.length() + ")");
-
-                Log.i("CLE", "getEnvironnement url=" + baseUrl + endpoint + " key=" + maskedKey);
                 Log.i(TAG_STREAM, "getEnvironnement: Endpoint = " + endpoint);
 
                 URL url = new URL(baseUrl + endpoint);
@@ -254,12 +247,6 @@ public class ResponseFromTeamGPT {
                 String endpoint = env + buddyGPTApplication.getparam("TeamGPT_ApiEndpoint_Params");
                 String gptKey = buddyGPTApplication.getparam(TeamGPTKey);
                 String imeiDevice = buddyGPTApplication.getparam("TeamGPT_ID_Device");
-                String maskedKey = (gptKey == null)
-                    ? "null"
-                    : (gptKey.length() <= 8
-                    ? "len=" + gptKey.length()
-                    : gptKey.substring(0, 4) + "..." + gptKey.substring(gptKey.length() - 4) + " (len=" + gptKey.length() + ")");
-                Log.i("CLE", "getParameters url=" + url + endpoint + " key=" + maskedKey + " ID-Device=" + imeiDevice);
                 Log.i(TAG_PARAM, "getParameters: " + url + endpoint);
                 URL obj = new URL(url + endpoint);
                 HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -750,18 +737,57 @@ public class ResponseFromTeamGPT {
             }
 
             boolean isChatbotFinished = jsonObject.optBoolean("Chatbot_is_finished", false);
+            boolean isTTSFinished = jsonObject.optBoolean("TTS_is_finished", false);
 
-            if (isChatbotFinished) {
-                Log.i(TAG_STREAM, "🎯 Chatbot_is_finished received");
-                Log.i(TAG_STREAM, "  lastAddedItem is null? " + (lastAddedItem == null));
+            // IMPORTANT : Les chunks audio continuent d'arriver APRÈS Chatbot_is_finished=true
+            // Donc on marque audioEnd=true seulement quand TTS_is_finished=true
+            if (isTTSFinished) {
+                Log.i(TAG_STREAM, "🎯🎯🎯 TTS_is_finished=true RECEIVED - marking audioEnd=true on ALL items 🎯🎯🎯");
+                
+                // 🔧 FIX: Mark audioEnd=true on ALL items in the queue, not just the last one!
+                // This is critical for PCM playback which checks the FIRST item's audioEnd flag
+                int itemsMarked = 0;
+                for (StreamItem item : streamQueue) {
+                    if (!item.audioEnd) {
+                        item.audioEnd = true;
+                        itemsMarked++;
+                        Log.i(TAG_STREAM, "  ✓ Marked audioEnd=true for item: " + item.text);
+                    }
+                }
+                Log.i(TAG_STREAM, "  Total items marked: " + itemsMarked + " / Queue size: " + streamQueue.size());
+                
                 if (lastAddedItem != null) {
                     Log.i(TAG_STREAM, "  lastAddedItem.text: " + lastAddedItem.text);
-                    Log.i(TAG_STREAM, "  lastAddedItem.audioEnd before: " + lastAddedItem.audioEnd);
-                    lastAddedItem.audioEnd = true;
-                    Log.i(TAG_STREAM, "  lastAddedItem.audioEnd after: " + lastAddedItem.audioEnd);
+                    Log.i(TAG_STREAM, "  lastAddedItem.audioReady: " + lastAddedItem.audioReady);
+                    Log.i(TAG_STREAM, "  lastAddedItem.itemIsWav: " + lastAddedItem.itemIsWav);
+                    Log.i(TAG_STREAM, "  lastAddedItem.pcmAccumulator.size(): " + lastAddedItem.pcmAccumulator.size());
+                    
+                    // Appeler startNextReadyItemIfAny() pour démarrer la lecture PCM
+                    // maintenant que audioEnd=true (tous les chunks audio sont arrivés)
+                    Log.i(TAG_STREAM, "  currentPlayingItem: " + currentPlayingItem);
+                    Log.i(TAG_STREAM, "  isPlayingAudio: " + isPlayingAudio);
+                    if (currentPlayingItem == null && !isPlayingAudio) {
+                        Log.i(TAG_STREAM, "  🚀 TTS_is_finished: Calling startNextReadyItemIfAny() 🚀");
+                        startNextReadyItemIfAny();
+                    } else {
+                        Log.w(TAG_STREAM, "  ⚠️ TTS_is_finished: NOT calling startNextReadyItemIfAny() because playback already active");
+                    }
+                } else {
+                    Log.w(TAG_STREAM, "  ⚠️ TTS_is_finished but lastAddedItem is NULL! 🚨");
                 }
-                lastAddedItem = null;
             }
+            
+            if (isChatbotFinished) {
+                Log.i(TAG_STREAM, "🎯 Chatbot_is_finished received (but NOT marking audioEnd yet)");
+                // NE PAS marquer audioEnd ici car les chunks audio arrivent APRÈS
+            }
+
+            // TOUJOURS traiter les handlers AVANT de vérifier is_finished
+            // car le dernier paquet peut contenir Answer ou Audio_reponse
+            handleEmotion(jsonObject);
+            handleSessionId(jsonObject);
+            handleAnswer(jsonObject);
+            handleAudioResponse(jsonObject);
 
             // Gérer le cas où tous les flags de fin sont à 'true'
             if (jsonObject.has("is_finished") && jsonObject.getBoolean("is_finished")
@@ -773,6 +799,10 @@ public class ResponseFromTeamGPT {
                 isDisplayFinished = true;
                 isFullResponseReceived = true;
                 isSessionIdProcessed = false;
+                
+                // Maintenant on peut mettre lastAddedItem à null car tout est fini
+                lastAddedItem = null;
+                Log.i(TAG_STREAM, "is_finished=true: set lastAddedItem=null");
 
                 // Logique de nettoyage et de fin de lecture
                 if (currentPlayingItem == null && !isPlayingAudio) {
@@ -782,13 +812,6 @@ public class ResponseFromTeamGPT {
                         Log.i(TAG_STREAM, "processStreamLine: queue not empty");
                     }
                 }
-            } else {
-                // Ces handlers doivent s'exécuter même si Chatbot_is_finished est true,
-                // au cas où il y ait un dernier Answer ou Audio_reponse dans le même paquet.
-                handleEmotion(jsonObject);
-                handleSessionId(jsonObject);
-                handleAnswer(jsonObject);
-                handleAudioResponse(jsonObject);
             }
 
         } catch (JSONException e) {
@@ -895,7 +918,12 @@ public class ResponseFromTeamGPT {
                         streamQueue.add(item);
                         // Mettre à jour la référence au dernier item ajouté
                         lastAddedItem = item;
-                        Log.i(TAG_STREAM, "StreamItem ajouté. Taille actuelle de streamQueue : " + streamQueue.size());
+                        Log.i(TAG_STREAM, "📌 handleAnswer: StreamItem created and added to queue");
+                        Log.i(TAG_STREAM, "   Queue size: " + streamQueue.size());
+                        Log.i(TAG_STREAM, "   lastAddedItem.text: " + lastAddedItem.text);
+                        Log.i(TAG_STREAM, "   lastAddedItem.audioReady: " + lastAddedItem.audioReady);
+                        Log.i(TAG_STREAM, "   lastAddedItem.audioEnd: " + lastAddedItem.audioEnd);
+                        Log.i(TAG_STREAM, "   lastAddedItem.itemIsWav: " + lastAddedItem.itemIsWav);
                     }
 
                     Log.i(TAG_STREAM, "handleAnswer: currentPlayingItem : " + currentPlayingItem + " isPlayingAudio : "
@@ -965,15 +993,25 @@ public class ResponseFromTeamGPT {
                         // Mark ready when we have at least some audio data
                         if (!target.audioReady) {
                             target.audioReady = true;
+                            Log.i(TAG_STREAM, "📌 handleAudioResponse: audioReady set to TRUE");
                         }
 
                         // If server marks end, set audioEnd
                         if (jsonObject.optBoolean("Audio_end", false)) {
                             target.audioEnd = true;
-                            Log.i(TAG_STREAM, "handleAudioResponse: Audio_end flag set to true");
+                            Log.i(TAG_STREAM, "📌 handleAudioResponse: Audio_end flag from server, audioEnd set to TRUE");
                         }
 
                         lastAddedItem = target;
+                        Log.i(TAG_STREAM, "📌 handleAudioResponse: Audio chunk processed");
+                        Log.i(TAG_STREAM, "   target.text: " + target.text);
+                        Log.i(TAG_STREAM, "   target.audioReady: " + target.audioReady);
+                        Log.i(TAG_STREAM, "   target.audioEnd: " + target.audioEnd);
+                        Log.i(TAG_STREAM, "   target.itemIsWav: " + target.itemIsWav);
+                        Log.i(TAG_STREAM, "   target.pcmAccumulator.size(): " + target.pcmAccumulator.size());
+                        Log.i(TAG_STREAM, "   target.audioChunks.size(): " + target.audioChunks.size());
+                        Log.i(TAG_STREAM, "   target.pcmAccumulator.size(): " + target.pcmAccumulator.size());
+                        Log.i(TAG_STREAM, "   target.audioChunks.size(): " + target.audioChunks.size());
 
                     } catch (IOException e) {
                         Log.e(TAG_STREAM, "handleAudioResponse: error processing chunk", e);
@@ -1324,9 +1362,15 @@ public class ResponseFromTeamGPT {
                 boolean canStart = si.itemIsWav || // wav streaming -> start immediately
                         si.audioEnd; // pcm -> only when server signalled end
 
+                Log.i(TAG_STREAM, "🔍 startNextReadyItemIfAny: Checking if can start playback");
+                Log.i(TAG_STREAM, "   si.itemIsWav: " + si.itemIsWav);
+                Log.i(TAG_STREAM, "   si.audioEnd: " + si.audioEnd);
+                Log.i(TAG_STREAM, "   canStart: " + canStart);
+
                 if (!canStart) {
-                    Log.i(TAG_STREAM,
-                            "startNextReadyItemIfAny: Item ready but waiting for audioEnd (PCM multi-chunks).");
+                    Log.w(TAG_STREAM,
+                            "⚠️⚠️⚠️ startNextReadyItemIfAny: Item ready but WAITING for audioEnd (PCM multi-chunks). ⚠️⚠️⚠️");
+                    Log.w(TAG_STREAM, "   This is the BLOCKING condition! audioEnd must be TRUE for PCM playback!");
                     return;
                 }
 
