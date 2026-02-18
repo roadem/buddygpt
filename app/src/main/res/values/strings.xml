@@ -261,6 +261,8 @@
     <string name="toast_teamgpt_env_invalid_fr">Connexion à TeamGPT échouée \nImpossible de se connecter. Veuillez vérifier la configuration.</string>
     <string name="toast_teamgpt_session_fr">Une nouvelle session a été créée</string>
     <string name="toast_teamgpt_invalid_fr">Attention !</string>
+    <string name="toast_no_recognizable_audio_fr">Aucun mot reconnaissable dans l\'audio. Veuillez réessayer.</string>
+
     <!--english-->
     <string name="toast_teamgpt_key_indispo_en">TeamGPT key not inserted</string>
     <string name="toast_teamgpt_EnvProgress_en">Environment progress ...</string>
@@ -272,6 +274,7 @@
     <string name="toast_teamgpt_params_invalid_en">The parameters received from the TeamGPT server are invalid.</string>
     <string name="toast_teamgpt_session_en">A new session has been created</string>
     <string name="toast_teamgpt_env_invalid_en">Connection to TeamGPT failed.\nUnable to connect. Please check your configuration.</string>
+<string name="toast_no_recognizable_audio_en">No recognizable words in the audio. Please try again.</string>
 
     <!-- spanish -->
    
@@ -282,6 +285,8 @@
     <string name="toast_teamgpt_key_invalid_es">La clave no es válida</string>
     <string name="toast_teamgpt_session_es">La sesión ha expirado</string>
     <string name="toast_teamgpt_invalid_es">Atención !</string>
+    <string name="toast_no_recognizable_audio_es">No hay palabras reconocibles en el audio. Por favor, inténtelo de nuevo.</string>
+
     <!-- allemand -->
     <string name="permission_required_message">Autorisations requises manquent: veuillez les accepter pour continuer.</string>
     <string name="toast_teamgpt_key_indispo_de">Der TeamGPT-Schlüssel wurde nicht eingefügt</string>
@@ -290,5 +295,7 @@
     <string name="toast_teamgpt_key_invalid_de">Der Schlüssel ist ungültig</string>
     <string name="toast_teamgpt_session_de">Die Sitzung ist abgelaufen</string>
     <string name="toast_teamgpt_invalid_de">Aufmerksamkeit !</string>
+    <string name="toast_no_recognizable_audio_de">Keine erkennbaren Worte im Audio. Bitte versuchen Sie es erneut.</string>
+
 
 </resources>
