@@ -425,26 +425,6 @@ public class ResponseFromTeamGPT {
             payload.setAudioInput(audioData);
         }
 
-        // Force the audio input to use a specific file
-        // Read audio input from file
-        try {
-            AssetManager assetManager = buddyGPTApplication.getAssets();
-            InputStream inputStream = assetManager.open("audio_input.txt");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder stringBuilder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-            String audioDataFromFile = stringBuilder.toString();
-            Log.i(TAG_STREAM, "sendPutRequestStream: Forcing audio input to use a specific file");
-            payload.setAudioInput(audioDataFromFile);
-        } catch (IOException e) {
-            Log.e(TAG_STREAM, "Failed to load audio input from file.", e);
-        }
-
-        saveRequestToFile(payload);
-
         long requestStartTime = System.currentTimeMillis();
         sdf = new SimpleDateFormat("HH:mm:ss:SSS");
         if (question != null) {

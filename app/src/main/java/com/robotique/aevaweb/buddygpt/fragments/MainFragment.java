@@ -1504,11 +1504,14 @@ public class MainFragment extends Fragment implements IDBObserver {
             if (responseTimeout != null) responseTimeout.cancel();
 
             if (!buddyGPTApplication.isActivityClosed()) {
-                if (type.equals("nothealysa") || type.equals("storedResponse")) {
+                    if (type.equals("nothealysa") || type.equals("storedResponse")) {
                     if (texte != null && !texte.trim().isEmpty()) {
                         String preview = texte.length() > 200 ? texte.substring(0, 200) + "…" : texte;
                         Log.i("FFF", "Response received (speak) -> visage NEUTRAL, len=" + texte.length() + " text=\"" + preview + "\"");
-                        BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                        // Preserve the current facial emotion during TTS when emotion switching is enabled in settings.
+                        if (settingClass == null || !"true".equals(settingClass.getSwitchEmotion())) {
+                            BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+                        }
                         isWaitingForResponse = false;
                     } else {
                         Log.i("FFF", "Response empty (speak) -> keep THINKING");
