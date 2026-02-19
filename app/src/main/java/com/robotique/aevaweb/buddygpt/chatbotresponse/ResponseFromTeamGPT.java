@@ -896,11 +896,15 @@ public class ResponseFromTeamGPT {
 private void handleTextInput(JSONObject jsonObject) throws JSONException {
     if (!hasSentAudioTextInput && jsonObject.has("Text_input")) {
         String textInput = jsonObject.optString("Text_input", "");
+        if (textInput.isEmpty() || textInput.equals("null")) {
+            Log.i(TAG_STREAM, "handleTextInput: Text_input is empty or 'null', SKIPPING");
+            return; // ← NE PAS CONTINUER si vide ou "null"!
+        }
         String normalized = textInput.replace('\u00A0', ' ')
                 .replaceAll("\\p{C}", "")
                 .replaceAll("\\s+", " ")
                 .trim();
-
+  
         hasSentAudioTextInput = true;
         long requestStartTime = System.currentTimeMillis();
         buddyGPTApplication.setQuestionTime(requestStartTime);
