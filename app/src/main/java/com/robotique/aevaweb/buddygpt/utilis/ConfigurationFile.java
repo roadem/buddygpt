@@ -110,7 +110,7 @@ public class ConfigurationFile {
             setProperty("TeamGPT_ApiEndpoint_Params", "/get_parameters");
             setProperty("TeamGPT_ApiEndpoint_Response", "/get_response");
 
-            setProperty("TeamGPT_ID_Device", "1");
+            setProperty("TeamGPT_ID_Device", "3");
             props.addPropertyComment("Speech_To_Text_List","");
             props.addPropertyComment("Speech_To_Text_List","Speech to Text : SpeechRecognizer/Cerence");
             setProperty("Speech_To_Text_List","SpeechRecognizer/Cerence");
@@ -194,6 +194,9 @@ public class ConfigurationFile {
             props.addPropertyComment("Silence_time","Manage end of speech detection");
             props.addPropertyComment("Silence_time","Silence time in seconds for STT ApiGoogle and Whisper");
             setProperty("Silence_time","2");
+
+            props.addPropertyComment("Processing_the_audio_sequence","Activate processing of the audio sequence for click on the mouth and volume reduction");
+            setProperty("Processing_the_audio_sequence","Yes");
 
             props.addPropertyComment("Volume_reduction","");
             props.addPropertyComment("Volume_reduction","Percentage of volume reduction");
