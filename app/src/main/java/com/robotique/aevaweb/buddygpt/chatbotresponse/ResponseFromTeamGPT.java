@@ -427,7 +427,7 @@ public class ResponseFromTeamGPT {
 
           // Force the audio input to use a specific file
         // Read audio input from file *********************************************/////////////
-        try {
+      /*  try {
             AssetManager assetManager = buddyGPTApplication.getAssets();
             InputStream inputStream = assetManager.open("audio_input.txt");
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -443,7 +443,7 @@ public class ResponseFromTeamGPT {
             Log.e(TAG_STREAM, "Failed to load audio input from file.", e);
         }
 
-        saveRequestToFile(payload);
+        saveRequestToFile(payload);*/
         long requestStartTime = System.currentTimeMillis();
         sdf = new SimpleDateFormat("HH:mm:ss:SSS");
         if (question != null) {
@@ -836,10 +836,18 @@ public class ResponseFromTeamGPT {
     }
 
     // TOUJOURS traiter les handlers AVANT de vérifier is_finished
+    Log.i("BBB", "→ About to call handleEmotion()");
     handleEmotion(jsonObject);
+    Log.i("BBB", "← handleEmotion() returned");
+    Log.i("BBB", "→ About to call handleSessionId()");
     handleSessionId(jsonObject);
+    Log.i("BBB", "← handleSessionId() returned");
+    Log.i("BBB", "→ About to call handleAnswer()");
     handleAnswer(jsonObject);
+    Log.i("BBB", "← handleAnswer() returned");
+    Log.i("BBB", "→ About to call handleAudioResponse()");
     handleAudioResponse(jsonObject);
+    Log.i("BBB", "← handleAudioResponse() returned");
 
     // 🔧 APRÈS les handlers : appliquer le flag aux NOUVEAUX items créés
     if (ttsFinishedFlagReceived) {
@@ -978,10 +986,12 @@ private void handleTextInput(JSONObject jsonObject) throws JSONException {
     }
 // Modifier handleAnswer() pour appliquer le flag
 private void handleAnswer(JSONObject jsonObject) throws JSONException {
+    Log.i("BBB", "handleAnswer: START");
     if (jsonObject.has("Answer") && !jsonObject.getString("Answer").equalsIgnoreCase("")) {
         String resp = jsonObject.getString("Answer");
         if (!resp.isEmpty()) {
             Log.i(TAG_STREAM, "handleAnswer: received -> " + resp);
+            Log.i("BBB", "handleAnswer: Answer found: \"" + resp + "\"");
             answer += " " + resp;
 
             if (hasSentAudioTextInput) {
@@ -1015,7 +1025,9 @@ private void handleAnswer(JSONObject jsonObject) throws JSONException {
 
                 if (currentPlayingItem == null) {
                     Log.i("TAG", "handleAnswer: if (currentPlayingItem == null && !isPlayingAudio) " + isPlayingAudio);
+                    Log.i("BBB", "⚠️ handleAnswer: About to call startNextReadyItemIfAny() - THIS MAY RESET EXPRESSION!");
                     startNextReadyItemIfAny();
+                    Log.i("BBB", "← startNextReadyItemIfAny() returned");
                 }
 
             } else {
@@ -1241,7 +1253,7 @@ private void playNextChunkForCurrentItem() {
                                     Log.i("KKK", "  [RESET MOUTH] Posted to main handler...");
                                     try {
                                         Log.i("KKK", "  [RESET MOUTH] Calling setLabialExpression(NO_EXPRESSION)...");
-                                        BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                                        BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.playNextChunkForCurrentItem() - last chunk");
                                         Log.i("KKK", "✓✓✓ MOUTH RESET SUCCESS (NO_EXPRESSION) ✓✓✓");
                                     } catch (Exception e) {
                                         Log.e("KKK", "❌ Exception resetting mouth: " + e.getMessage(), e);
@@ -1486,6 +1498,7 @@ private void playNextChunkForCurrentItem() {
 
     // Démarre la lecture pour le prochain StreamItem prêt (avec audio attaché)
     private void startNextReadyItemIfAny() {
+        Log.i("BBB", "➤ startNextReadyItemIfAny() CALLED - checking if audio is ready to play");
         Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem
                 + ", isPlayingAudio=" + isPlayingAudio);
 
@@ -1546,6 +1559,7 @@ private void playNextChunkForCurrentItem() {
 
     // Démarre l'affichage du texte et la lecture de l'audio pour un StreamItem
     private void startPlaybackForItem(StreamItem item) {
+        Log.i("BBB", "🎬 startPlaybackForItem CALLED - THIS IS WHERE EXPRESSION MAY BE RESET!");
         Log.i(TAG_STREAM, "🎬 startPlaybackForItem START");
         Log.i(TAG_STREAM, "  item.text: " + item.text);
         Log.i(TAG_STREAM, "  item.audioChunks.size(): " + item.audioChunks.size());
@@ -1560,7 +1574,19 @@ private void playNextChunkForCurrentItem() {
 
         // DÉBUT LECTURE AUDIO : Afficher expression SPEAK
         try {
+            Log.i("BBB", "⚠️ About to call setLabialExpression(SPEAK_NEUTRAL) - may reset facial expression");
             BuddySDK.UI.setLabialExpression(LabialExpression.SPEAK_NEUTRAL);
+            Log.i("BBB", "✓ setLabialExpression(SPEAK_NEUTRAL) done");
+            
+            // 🔥 FIX: Restore the facial expression if an emotion is active
+            if (BuddyGPTApplication.currentActiveEmotion != null && 
+                !BuddyGPTApplication.currentActiveEmotion.equalsIgnoreCase("BuddyFace_Neutral")) {
+                Log.i("BBB", "🔄 RESTORING emotion after setLabialExpression: " + BuddyGPTApplication.currentActiveEmotion);
+                buddyGPTApplication.setAnimation(BuddyGPTApplication.currentActiveEmotion);
+                Log.i("BBB", "✅ Emotion restored!");
+            } else {
+                Log.i("BBB", "⏭️ No active emotion to restore (neutral or null)");
+            }
         } catch (Exception e) {
             Log.e(TAG_STREAM, "BuddySDK Exception in startPlaybackForItem: " + e);
         }
@@ -1589,12 +1615,9 @@ private void playNextChunkForCurrentItem() {
         isPlayingAudio = false; // marquer la fin
         hasSentAudioResponse = false;
 
-        //  FIN LECTURE AUDIO : Remettre expression à NO_EXPRESSION
-        try {
-            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
-        } catch (Exception e) {
-            Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished: " + e);
-        }
+        // 🔴 FIX: NE PAS reset l'émotion ici si on a d'autres items à jouer!
+        // On garde l'émotion jusqu'à la fin COMPLÈTE de la réponse
+        
         // 2. Notifier l'UI/autres systèmes si nécessaire
         buddyGPTApplication.notifyObservers("AUDIO_PLAYBACK_FINISHED;SPLIT;");
         // Reschedule la vérification du prochain item
@@ -1610,6 +1633,15 @@ private void playNextChunkForCurrentItem() {
         // 4. Vérifier si TOUT est fini (incluant TTS local)
         if (isCompletelyFinished()) {
             Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
+            // 🔴 ONLY NOW reset emotion at the very end
+            try {
+                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                Log.i("🔍_NEUTRAL_HUNT", "🔍 Resetting labial expression ONLY at final completion (onPlaybackFinished)");
+                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.onPlaybackFinished() - FINAL COMPLETION");
+            } catch (Exception e) {
+                Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished final reset: " + e);
+            }
             onFinishStreaming();
             buddyGPTApplication.notifyObservers("TTS_success");
             reset();
@@ -1902,6 +1934,12 @@ private void playNextChunkForCurrentItem() {
 
     private void resetLabialExpression() {
         try {
+            Log.i("🔍_NEUTRAL_HUNT", "═══ CALLING setLabialExpression(NO_EXPRESSION) in resetLabialExpression() ═══");
+            Log.i("🔍_NEUTRAL_HUNT", "Current active emotion: " + BuddyGPTApplication.currentActiveEmotion);
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            for (int i = 1; i < Math.min(5, stackTrace.length); i++) {
+                Log.i("🔍_NEUTRAL_HUNT", "  [" + i + "] " + stackTrace[i].getClassName() + "." + stackTrace[i].getMethodName() + ":" + stackTrace[i].getLineNumber());
+            }
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
         } catch (Exception e) {
             Log.e(TAG_STREAM, "BuddySDK Exception  " + e);

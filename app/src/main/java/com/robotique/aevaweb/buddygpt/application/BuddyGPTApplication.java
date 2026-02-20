@@ -127,6 +127,30 @@ public class BuddyGPTApplication extends BuddyApplication {
     private static final String GOOGLE_STT = "google";
     private static final String WHISPER_STT = "openai";
     private static final String TAG_STREAMING = "AudioCapture";
+    public static String currentActiveEmotion = null; // Tracks the current active emotion for restoration
+    
+    /**
+     * Helper method to log and call setLabialExpression(NO_EXPRESSION) with stack trace
+     * This method creates a single tracking point for all NO_EXPRESSION calls
+     */
+    public static void logAndResetLabialExpression(String callerName) {
+        try {
+            Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+            Log.i("🔍_NEUTRAL_HUNT", "🔍 setLabialExpression(NO_EXPRESSION) called from: " + callerName);
+            Log.i("🔍_NEUTRAL_HUNT", "🔍 Current active emotion: " + currentActiveEmotion);
+            
+            StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+            for (int i = 1; i < Math.min(6, stackTrace.length); i++) {
+                Log.i("🔍_NEUTRAL_HUNT", "   └─ [" + i + "] " + stackTrace[i].getClassName() + "." + stackTrace[i].getMethodName() + ":" + stackTrace[i].getLineNumber());
+            }
+            Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+            
+            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+        } catch (Exception e) {
+            Log.e("🔍_NEUTRAL_HUNT", "Error resetting expression: " + e.getMessage());
+        }
+    }
+    
     public final IUsbCommadRsp iUsbLedCommandRsp = new IUsbCommadRsp.Stub() {
         @Override
         public void onSuccess(String success) {
@@ -1885,7 +1909,15 @@ public class BuddyGPTApplication extends BuddyApplication {
             Log.i(TAG, "handler_all start ");
 
             try {
+                Log.i("BBB", "⚠️ About to call setLabialExpression(NO_EXPRESSION) in startSpeakingSplittedText");
+                Log.i("🔍_NEUTRAL_HUNT", "═══ CALLING setLabialExpression(NO_EXPRESSION) in startSpeakingSplittedText ═══");
+                Log.i("🔍_NEUTRAL_HUNT", "Current active emotion: " + currentActiveEmotion);
+                StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+                for (int i = 1; i < Math.min(5, stackTrace.length); i++) {
+                    Log.i("🔍_NEUTRAL_HUNT", "  [" + i + "] " + stackTrace[i].getClassName() + "." + stackTrace[i].getMethodName() + ":" + stackTrace[i].getLineNumber());
+                }
                 BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+                Log.i("BBB", "✓ setLabialExpression(NO_EXPRESSION) done");
             } catch (Exception e) {
                 Log.e(TAG, "BuddySDK Exception  " + e);
             }
@@ -1893,6 +1925,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             if (currentIndexText < texteToSpeakSplitted.length) {
 
                 Log.e("HOU_DEBUG", "call startSpeaking");
+                Log.i("BBB", "⚠️ About to call BuddySDK.Speech.startSpeaking with text part [" + currentIndexText + "]=\"" + texteToSpeakSplitted[currentIndexText] + "\" and expression=" + expression);
 
                 BuddySDK.Speech.startSpeaking(
                         texteToSpeakSplitted[currentIndexText],
@@ -1901,6 +1934,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                             @Override
                             public void onSuccess(String iText) {
                                 Log.i(TAG, "Succès de prononciation : " + iText);
+                                Log.i("BBB", "✓ TTS phrase [" + (currentIndexText - 1) + "] spoken successfully");
 
                                 Log.w("HOU_DEBUG", "onSuccess");
 
@@ -1911,6 +1945,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                                     Handler handler = new Handler(Looper.getMainLooper());
                                     handler.postDelayed(() -> {
                                         Log.w("HOU_DEBUG", "onSuccess 2");
+                                        Log.i("BBB", "➤ Calling next phrase in recursion, currentIndexText=" + currentIndexText);
                                         startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
                                     }, 150);
                                 }
@@ -1980,6 +2015,7 @@ public class BuddyGPTApplication extends BuddyApplication {
      * Cette fonction s'exécute lorsque le TTS prononce la réponse du ChatBot.
      */
     public void allTextPronouced(final String texteToSpeak, String type) {
+        Log.i("BBB", "✓ allTextPronouced CALLED - All text has been spoken! type='" + type + "'");
 
         if (type.equals("timeOutExpired")) {
             timeoutExpired = false;
@@ -1990,6 +2026,7 @@ public class BuddyGPTApplication extends BuddyApplication {
             }
         } else if (type.equals("storedResponse")) {
             questionNumber++;
+            Log.i("BBB", "→ Notifying TTS_success");
             notifyObservers("TTS_success;" + texteToSpeak);
             storedResponse = "";
             setLanguageDetected("");
@@ -2000,6 +2037,7 @@ public class BuddyGPTApplication extends BuddyApplication {
                 if (getResponseFromTeamGPT() != null)
                     getResponseFromTeamGPT().onTTSEnd();
             } else {
+                Log.i("BBB", "→ Notifying TTS_success");
                 notifyObservers("TTS_success;" + texteToSpeak);
             }
         }
@@ -2017,6 +2055,7 @@ public class BuddyGPTApplication extends BuddyApplication {
         currentIndexText = 0;
         stopTTSReadSpeaker = false;
         Log.w(TAG, "speakTTS : " + texteToSpeak);
+        Log.i("BBB", "➤ speakTTS() CALLED with type='" + type + "' expression=" + expression);
 
         setToastTtsAndroidIndispo();
 
@@ -2024,9 +2063,13 @@ public class BuddyGPTApplication extends BuddyApplication {
             setTTSAfterDetectingLanguage();
 
             if (shouldUseReadSpeaker()) {
+                Log.i("BBB", "➤ Using ReadSpeaker TTS");
                 handleReadSpeakerTTS(texteToSpeak, expression, type);
+                Log.i("BBB", "← ReadSpeaker TTS returned");
             } else if (shouldUseAndroidTTS()) {
+                Log.i("BBB", "➤ Using Android TTS");
                 handleAndroidTTS(texteToSpeak, type);
+                Log.i("BBB", "← Android TTS returned");
             }
         } catch (Exception e) {
             Log.e(TAG, "Exception pendant la prononciation : " + e);
@@ -2083,8 +2126,11 @@ public class BuddyGPTApplication extends BuddyApplication {
                 texteToSpeakSplitted = texteToSpeakModified.split("[.,]");
                 Log.e("texteToSpeakSplitted", Arrays.toString(texteToSpeakSplitted));
                 Log.d("HOU_DEBUG", "calling startSpeakingSplittedText : " + texteToSpeak);
+                Log.i("BBB", "➤ About to call startSpeakingSplittedText with expression=" + expression);
                 startSpeakingSplittedText(texteToSpeak, expression, type, texteToSpeakSplitted);
+                Log.i("BBB", "← startSpeakingSplittedText returned");
             } else {
+                Log.i("BBB", "➤ About to call BuddySDK.Speech.startSpeaking (timeOutExpired) with expression=" + expression);
                 BuddySDK.Speech.startSpeaking(
                         texteToSpeakModified,
                         expression,
@@ -3158,32 +3204,48 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     public void setAnimation(String emotion) {
         Log.i(TAG, "setAnimation: test " + emotion);
+        Log.i("BBB", "setAnimation requested: " + emotion);
+        // Store the current emotion for later restoration
+        currentActiveEmotion = emotion;
+        Log.i("BBB", "📌 Storing currentActiveEmotion: " + emotion);
         if (emotion.equalsIgnoreCase("BuddyFace_Happy")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.HAPPY, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Happy");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Thinking")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.THINKING, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Thinking");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Sick")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.SICK, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Sick");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Love")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.LOVE, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Love");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Tired")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.TIRED, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Tired");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Listening")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.LISTENING, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Listening");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Surprised")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.SURPRISED, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Surprised");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Grumpy")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.GRUMPY, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Grumpy");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Scared")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.SCARED, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Scared");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Angry")) {
             BuddySDK.UI.setFacialExpression(FacialExpression.ANGRY, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Angry");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Sad")) {
             Log.i(TAG, "setAnimation: sad");
             BuddySDK.UI.setFacialExpression(FacialExpression.SAD, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Sad");
         } else if (emotion.equalsIgnoreCase("BuddyFace_Neutral")) {
             Log.i(TAG, "setAnimation: neutral");
             BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
+            Log.i("BBB", "Applied emotion: BuddyFace_Neutral (now neutral)");
         }
     }
 
