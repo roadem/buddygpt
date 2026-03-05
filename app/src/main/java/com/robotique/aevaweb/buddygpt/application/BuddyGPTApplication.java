@@ -1280,12 +1280,17 @@ public class BuddyGPTApplication extends BuddyApplication {
 
                     if (!sttResultsData.getResults().isEmpty()) {
 
-                        STTResult result = sttResultsData.getResults().get(0);
+                        // log every result in the list, not only the first one
+                        List<STTResult> results = sttResultsData.getResults();
+                        for (int i = 0; i < results.size(); i++) {
+                            STTResult r = results.get(i);
+                            Log.e(TAG, "Listening cerence Free Speech result[" + i + "] : " +
+                                    "\nScore : " + r.getConfidence() +
+                                    "\nUtterance: " + r.getUtterance() +
+                                    "\nRule: " + r.getRule());
+                        }
 
-                        Log.e(TAG, "Listening cerence Free Speech : " +
-                                "\nScore : " + result.getConfidence() + //the recognition score
-                                "\nUtterance: " + result.getUtterance() +  //actual phrase pronounced by the user and recognised by free speech (google/cerence)
-                                "\nRule: " + result.getRule()); //the respective tag of the Uterrance, as described in the grammar
+                        STTResult result = results.get(0);
                         notifyObservers("STTQuestion_success;SPLIT;" + result.getUtterance()+";SPLIT;NONE;");
                         setLed("neutral");
 

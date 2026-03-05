@@ -887,9 +887,9 @@ public class MainFragment extends Fragment implements IDBObserver {
             if (response != null && !response.trim().isEmpty()) {
                 String preview = response.length() > 200 ? response.substring(0, 200) + "…" : response;
                 Log.i("FFF", "Response received (stream) -> visage NEUTRAL, len=" + response.length() + " title=" + responseTitle + " text=\"" + preview + "\"");
-                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                Log.i("🔍_NEUTRAL_HUNT", "🔍 setFacialExpression(NEUTRAL) called from: MainFragment.showStream() - STREAMING");
-                Log.i("🔍_NEUTRAL_HUNT", "🔍 Current active emotion: " + BuddyGPTApplication.currentActiveEmotion);
+                Log.i("_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                Log.i("_NEUTRAL_HUNT", " setFacialExpression(NEUTRAL) called from: MainFragment.showStream() - STREAMING");
+                Log.i("_NEUTRAL_HUNT", " Current active emotion: " + BuddyGPTApplication.currentActiveEmotion);
                 StackTraceElement[] st = Thread.currentThread().getStackTrace();
                 for (int i = 1; i < Math.min(6, st.length); i++) {
                     Log.i("🔍_NEUTRAL_HUNT", "   └─ [" + i + "] " + st[i].getClassName() + "." + st[i].getMethodName() + ":" + st[i].getLineNumber());
@@ -1542,7 +1542,7 @@ public class MainFragment extends Fragment implements IDBObserver {
                         Log.i("FFF", "Response received (speak) -> visage NEUTRAL, len=" + texte.length() + " text=\"" + preview + "\"");
                         // Preserve the current facial emotion during TTS when emotion switching is enabled in settings.
                         if (settingClass == null || !"true".equals(settingClass.getSwitchEmotion())) {
-                            Log.i("BBB", "⚠️ speak() is resetting face to NEUTRAL (SwitchEmotion=" + (settingClass == null ? "null" : settingClass.getSwitchEmotion()) + ")");
+                            Log.i("BBB", " speak() is resetting face to NEUTRAL (SwitchEmotion=" + (settingClass == null ? "null" : settingClass.getSwitchEmotion()) + ")");
                             BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                             Log.i("BBB", "✓ Face reset to NEUTRAL in speak()");
                         } else {
@@ -2097,10 +2097,10 @@ public class MainFragment extends Fragment implements IDBObserver {
                     // If a neutral emotion was deferred while speaking, apply it now
                     if (pendingNeutralEmotion) {
                         Log.i("BBB", "TTS_success: applying deferred neutral emotion now");
-                        Log.i("🔍_NEUTRAL_HUNT", "═══ CALLING setAnimation(BuddyFace_Neutral) from Emotion_Change handler ═══");
+                        Log.i("_NEUTRAL_HUNT", "═══ CALLING setAnimation(BuddyFace_Neutral) from Emotion_Change handler ═══");
                         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
                         for (int i = 1; i < Math.min(5, stackTrace.length); i++) {
-                            Log.i("🔍_NEUTRAL_HUNT", "  [" + i + "] " + stackTrace[i].getClassName() + "." + stackTrace[i].getMethodName() + ":" + stackTrace[i].getLineNumber());
+                            Log.i("_NEUTRAL_HUNT", "  [" + i + "] " + stackTrace[i].getClassName() + "." + stackTrace[i].getMethodName() + ":" + stackTrace[i].getLineNumber());
                         }
                         buddyGPTApplication.setAnimation("BuddyFace_Neutral");
                         pendingNeutralEmotion = false;
@@ -2260,14 +2260,14 @@ public class MainFragment extends Fragment implements IDBObserver {
             }
             if (message.contains("end of cycle")) {
                 getActivity().runOnUiThread(() -> {
-                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                    Log.i("🔍_NEUTRAL_HUNT", "🔍 setFacialExpression(NEUTRAL) called from: MainFragment.update() - 'end of cycle' message");
-                    Log.i("🔍_NEUTRAL_HUNT", "🔍 Current active emotion: " + BuddyGPTApplication.currentActiveEmotion);
+                    Log.i("_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    Log.i("_NEUTRAL_HUNT", " setFacialExpression(NEUTRAL) called from: MainFragment.update() - 'end of cycle' message");
+                    Log.i("_NEUTRAL_HUNT", " Current active emotion: " + BuddyGPTApplication.currentActiveEmotion);
                     StackTraceElement[] st = Thread.currentThread().getStackTrace();
                     for (int i = 1; i < Math.min(6, st.length); i++) {
-                        Log.i("🔍_NEUTRAL_HUNT", "   └─ [" + i + "] " + st[i].getClassName() + "." + st[i].getMethodName() + ":" + st[i].getLineNumber());
+                        Log.i("_NEUTRAL_HUNT", "   └─ [" + i + "] " + st[i].getClassName() + "." + st[i].getMethodName() + ":" + st[i].getLineNumber());
                     }
-                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    Log.i("_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
                     BuddySDK.UI.setFacialExpression(FacialExpression.NEUTRAL, 1);
                     BuddySDK.UI.stopListenAnimation();
                     buddyGPTApplication.setLed("neutral");
