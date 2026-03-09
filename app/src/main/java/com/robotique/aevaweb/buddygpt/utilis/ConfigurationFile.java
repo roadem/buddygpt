@@ -194,7 +194,8 @@ public class ConfigurationFile {
             props.addPropertyComment("Silence_time","Manage end of speech detection");
             props.addPropertyComment("Silence_time","Silence time in seconds for STT ApiGoogle and Whisper");
             setProperty("Silence_time","2");
-
+            props.addPropertyComment("Processing_the_audio_sequence","Activate processing of the audio sequence for click on the mouth and volume reduction");
+            setProperty("Processing_the_audio_sequence","Yes");
             props.addPropertyComment("Volume_reduction","");
             props.addPropertyComment("Volume_reduction","Percentage of volume reduction");
             setProperty("Volume_reduction","3");
