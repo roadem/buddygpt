@@ -388,7 +388,10 @@ public class ResponseFromTeamGPT {
 
     public void sendPutRequestStream(String question, String audioData) {
         Log.i("TAG", "sendPutRequestStream: start ");
+        // clear neutral flag and reset response timing for the new request
         isEmotionNeutral = false;
+        buddyGPTApplication.setResponseTime(0);
+        Log.i("MMM", "sendPutRequestStream: responseTime reset to 0");
 
         String baseUrl = buddyGPTApplication.getparam("TeamGPT_Base_url");
         String endpoint = buddyGPTApplication.getparam("Environnement")
@@ -946,9 +949,20 @@ private void handleTextInput(JSONObject jsonObject) throws JSONException {
                 Log.i(TAG_STREAM, "handleStreamingResponse: emo null");
             }
         } else {
-            if (!isEmotionNeutral) {
-                isEmotionNeutral = true;
-                buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;BuddyFace_Neutral");
+            // switch_emotion disabled: we only want to clear THINKING once a response
+            // has actually started (responseTime>0). before that we keep THINKING.
+            Log.i(TAG_STREAM, "switch_emotion=false, responseTime=" + buddyGPTApplication.getResponseTime() + " isEmotionNeutral="+isEmotionNeutral);
+            if (buddyGPTApplication.getResponseTime() == 0) {
+                Log.i("MMM", "handleEmotion: response not started yet, keep THINKING");
+            } else {
+                // only send the neutral command the first time after response begins
+                if (!isEmotionNeutral) {
+                    Log.i("MMM", "handleEmotion: response started -> forcing neutral (first time)");
+                    isEmotionNeutral = true;
+                    buddyGPTApplication.notifyObservers("Emotion_Change;SPLIT;BuddyFace_Neutral");
+                } else {
+                    Log.i("MMM", "handleEmotion: already neutral, ignoring additional notifications");
+                }
             }
         }
     }
@@ -2145,12 +2159,25 @@ private void playNextChunkForCurrentItem() {
         }).start();
     }
 
+    public void resetEmotionNeutral() {
+        // Allows external callers (e.g. settings toggles) to clear the neutral-flag
+        isEmotionNeutral = false;
+        Log.i("MMM", "ResponseFromTeamGPT.resetEmotionNeutral called");
+    }
+
     public void reset() {
     Log.i(TAG_STREAM, "------------------reset-------------------");
     isReset = true;
 
     // 🔧 Réinitialiser le flag TTS_is_finished
     ttsFinishedFlagReceived = false;
+
+    // 🔧 Reset emotion state so a future handleEmotion call will behave correctly
+    isEmotionNeutral = false;
+
+    // 🔧 ensure the global timing flag is cleared when we throw away this stream
+    buddyGPTApplication.setResponseTime(0);
+    Log.i("MMM", "reset(): responseTime cleared");
 
     if (streamPlayer != null) {
         try {

@@ -373,9 +373,28 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         setting.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
         buddyGPTApplication.setSwitchEmotion(buddyGPTApplication.getparam(emotionString));
         switchEmotion.setOnCheckedChangeListener((CompoundButton compoundButton, boolean b) -> {
+            // update persistent state
             buddyGPTApplication.setSwitchEmotion(String.valueOf(b));
             buddyGPTApplication.setparam(emotionString, String.valueOf(b));
             set.setSwitchEmotion(String.valueOf(b));
+
+            // whenever the emotion toggle changes we want to clear any leftover
+            // response-timing or neutralization flags so that future responses
+            // behave correctly (no clignotement when toggling on/off repeatedly).
+            buddyGPTApplication.setResponseTime(0);
+            if (buddyGPTApplication.getResponseFromTeamGPT() != null) {
+                // clear the internal flag without disrupting the stream
+                buddyGPTApplication.getResponseFromTeamGPT().resetEmotionNeutral();
+            }
+
+            // when the switch is turned off we force a neutral expression right away
+            if (!b) {
+                Log.i("MMM", "emotion switch toggled OFF - forcing neutral");
+                BuddyGPTApplication.currentActiveEmotion = null;
+                BuddyGPTApplication.logAndResetLabialExpression("SettingsFragment.switchEmotion listener");
+            } else {
+                Log.i("MMM", "emotion switch toggled ON");
+            }
         });
         /**
          *  Gestion de la detection des langues

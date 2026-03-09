@@ -371,7 +371,16 @@ public class BuddyGPTApplication extends BuddyApplication {
 
 
     public void setSwitchEmotion(String switchEmotion) {
+        Log.i("MMM", "BuddyGPTApplication.setSwitchEmotion(" + switchEmotion + ")");
         this.switchEmotion = switchEmotion;
+        // whenever the global flag is toggled we wipe out any stored response time
+        // and clear the stream object's neutral flag so that behavior stays
+        // consistent even if the change happens mid-response or from another
+        // fragment.
+        setResponseTime(0);
+        if (responseFromTeamGPT != null) {
+            responseFromTeamGPT.resetEmotionNeutral();
+        }
     }
 
 
