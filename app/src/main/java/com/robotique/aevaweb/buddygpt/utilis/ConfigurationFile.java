@@ -162,10 +162,11 @@ public class ConfigurationFile {
             setProperty("Number_listens", "3");
 
             props.addPropertyComment("Language", "");
-            props.addPropertyComment("Language", "Languages available FR/EN/ES/DE/IT/JA/AR/ZH/DA/NL/NO");
-            setProperty("Language", "FR");
-            setProperty("Languages_available", "Français _fr/Anglais _en/Espagnol _es/Allemand _de-DE/Italien _it-IT/Japonais _ja-JP/Arabe _ar-DZ/Chinois _zh-CN/Danois _da-DK/Néerlandais _nl-NL/Norvégien _nb-NO");
+            props.addPropertyComment("Language", "Languages available Français/Anglais/Espagnol/Allemand/Italien/Japonais/Arabe/Chinois/Danois/Néerlandais/Norvégien");
+            setProperty("Language", "Français");
+            setProperty("Languages_available", "Français /Anglais /Espagnol /Allemand /Italien /Japonais /Arabe /Chinois /Danois /Néerlandais /Norvégien");
             setProperty("Language_Code_Used_In_Mlkit", "fr/en/es/de/it/ja/ar/zh/da/nl/no");
+            setProperty("Language_Code_Used_In_STT_Android", "fr-FR/en-US/es-ES/de-DE/it-IT/ja-JP/ar-DZ/cmn-Hans-CN/da-DK/nl-NL/no-NO");
             setProperty("Language_Code_Used_In_TTS_Android", "fr-FR/en-US/es-ES/de-DE/it-IT/ja-JP/ar-DZ/zh-CN/da-DK/nl-NL/nb-NO");
             setProperty("Readspeaker_voices", "roxane/kate/manuel/max/elisa/show/amir/ / /guus/");
             setProperty("BuddyOS_1.3_voices", "fr:roxane/en:kate");

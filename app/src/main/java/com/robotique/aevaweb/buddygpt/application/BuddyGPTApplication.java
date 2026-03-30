@@ -8,6 +8,7 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.graphics.Color;
@@ -675,13 +676,13 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     private void initLanguageSetting() {
         List<String> langueDisponible = getDisponibleLangue();
+        List<String> mlkitCodes = getLanguageCodeForDisponibleLangue("Language_Code_Used_In_Mlkit");
         List<Langue> langues = new ArrayList<>();
-        for (int i = 1; i < langueDisponible.size(); i++) {
-            String langueNom = langueDisponible.get(i - 1);
-            String langueCode = langueDisponible.get(i);
-            Langue langueObj = getOrCreateLangue(langueNom, langueCode, i);
+        for (int i = 0; i < langueDisponible.size(); i++) {
+            String langueNom = langueDisponible.get(i);
+            String langueCode = (i < mlkitCodes.size()) ? mlkitCodes.get(i) : "";
+            Langue langueObj = getOrCreateLangue(langueNom, langueCode, i + 1);
             langues.add(langueObj);
-            i++;
         }
         if (langues.isEmpty()) {
             Langue langueFrancais = createDefaultFrancaisLangue();
@@ -692,33 +693,17 @@ public class BuddyGPTApplication extends BuddyApplication {
 
     private Langue getOrCreateLangue(String langueNom, String langueCode, int id) {
         if (getparam(langueNom).isEmpty()) {
-            String languageCode = resolveLanguageCode(langueCode);
-            Boolean isChosen = languageCode != null && getParamFromFile("Language", configurationFilePseudo).trim().equalsIgnoreCase(languageCode.split("-")[0]);
-            Langue langue = new Langue(id, langueNom, isChosen, languageCode);
+            Boolean isChosen = getParamFromFile("Language", configurationFilePseudo).trim().equalsIgnoreCase(langueNom.trim());
+            Langue langue = new Langue(id, langueNom, isChosen, langueCode);
             setparam(langueNom, new Gson().toJson(langue));
             return langue;
         } else {
             Langue langueTemp = new Gson().fromJson(getparam(langueNom), Langue.class);
             langueTemp.setId(id);
-            String languageCode = resolveLanguageCode(langueCode);
-            langueTemp.setLanguageCode(languageCode);
+            langueTemp.setLanguageCode(langueCode);
             setparam(langueNom, new Gson().toJson(langueTemp));
             return langueTemp;
         }
-    }
-
-    private String resolveLanguageCode(String langueCode) {
-        String languageCode;
-        if (langueCode.contains("-")) {
-            languageCode = langueCode;
-        } else if (langueCode.equalsIgnoreCase("fr")) {
-            languageCode = "fr-FR";
-        } else if (langueCode.equalsIgnoreCase("en")) languageCode = "en-US";
-        else {
-            languageCode = getFirstFullLanguageCode(langueCode);
-        }
-        if (languageCode == null) languageCode = getFullLanguageCodeFromCountryCode(langueCode);
-        return languageCode;
     }
 
     private Langue createDefaultFrancaisLangue() {
@@ -737,23 +722,11 @@ public class BuddyGPTApplication extends BuddyApplication {
                 setLangue(language);
                 break;
             }
-            if (iterationCount == langueDisponibleSize / 2) {
+            if (iterationCount == langueDisponibleSize) {
                 this.langue = language;
                 setLangue(language);
             }
         }
-    }
-
-    private String getFullLanguageCodeFromCountryCode(String shortLanguageCode) {
-        Locale[] locales = Locale.getAvailableLocales();
-
-        for (Locale locale : locales) {
-            if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())) {
-                Log.e(TAG, "getFirstFullLanguageCode " + locale.getLanguage() + "-" + locale.getCountry());
-                return locale.getLanguage() + "-" + locale.getCountry();
-            }
-        }
-        return null;
     }
 
     public List<String> getDisponibleLangue() {
@@ -761,11 +734,9 @@ public class BuddyGPTApplication extends BuddyApplication {
         List<String> list = new ArrayList<>();
         while (st.hasMoreTokens()) {
             String result = st.nextToken();
-            list.add(result.split("_")[0].trim());
-            list.add(result.split("_")[1].trim());
+            list.add(result.trim());
         }
         return list;
-
     }
 
     public void downloadModel(IMLKitDownloadCallback imlKitDownloadCallback, String langue) {
@@ -2465,31 +2436,6 @@ public class BuddyGPTApplication extends BuddyApplication {
         return valeurFloat;
 
 
-    }
-
-    private String getFirstFullLanguageCode(String shortLanguageCode) {
-        Locale[] locales = Locale.getAvailableLocales();
-        Boolean hasThesame = false;
-        boolean firstLanguageCode = true;
-        String fullLanguageCode = "";
-        for (Locale locale : locales) {
-            if (shortLanguageCode.equalsIgnoreCase(locale.getLanguage()) && !locale.getCountry().isEmpty()) {
-                if (firstLanguageCode) {
-                    firstLanguageCode = false;
-                    fullLanguageCode = locale.getLanguage() + "-" + locale.getCountry();
-                }
-                if (shortLanguageCode.equalsIgnoreCase(locale.getCountry())) {
-                    hasThesame = true;
-                    break;
-                }
-                Log.e("MMMM", "getFirstFullLanguageCode if " + locale.getLanguage() + "-" + locale.getCountry());
-
-            }
-        }
-        if (Boolean.TRUE.equals(hasThesame)) {
-            fullLanguageCode = shortLanguageCode.toLowerCase() + "-" + shortLanguageCode.toUpperCase();
-        }
-        return fullLanguageCode;
     }
 
     /**
