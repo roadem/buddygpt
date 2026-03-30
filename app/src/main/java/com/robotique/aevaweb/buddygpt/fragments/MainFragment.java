@@ -2129,12 +2129,16 @@ public class MainFragment extends Fragment implements IDBObserver {
             }
             if (message.contains("Emotion_Change")) {
                 String emo = message.split(";SPLIT;")[1];
-                Log.i("BBB", "Emotion_Change received: " + emo + " | isSpeaking=" + isSpeaking);
-                // If server asks to set neutral while we're speaking, defer it until
-                // TTS finishes so the emotion stays visible during playback.
-                if ("BuddyFace_Neutral".equalsIgnoreCase(emo) && isSpeaking) {
+                Log.i("BBB", "Emotion_Change received: " + emo + " | isSpeaking=" + isSpeaking + " | currentActiveEmotion=" + BuddyGPTApplication.currentActiveEmotion);
+                // If server asks to set neutral while we're speaking, only defer it
+                // if a real emotion (happy, sad…) is currently active — to keep it
+                // visible during playback. If we're still on THINKING (currentActiveEmotion==null),
+                // there's nothing to preserve: apply neutral immediately.
+                String currentEmo = BuddyGPTApplication.currentActiveEmotion;
+                boolean hasRealEmotion = currentEmo != null && !currentEmo.equalsIgnoreCase("BuddyFace_Neutral");
+                if ("BuddyFace_Neutral".equalsIgnoreCase(emo) && isSpeaking && hasRealEmotion) {
                     pendingNeutralEmotion = true;
-                    Log.i("BBB", "Deferred BuddyFace_Neutral until end of speech");
+                    Log.i("BBB", "Deferred BuddyFace_Neutral until end of speech (preserving: " + currentEmo + ")");
                 } else {
                     if (pendingNeutralEmotion) {
                         Log.i("BBB", "Clearing pending neutral (received non-neutral while pending): " + emo);
