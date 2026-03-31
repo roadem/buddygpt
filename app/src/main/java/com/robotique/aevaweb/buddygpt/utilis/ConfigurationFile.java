@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 9; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 10; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -162,9 +162,14 @@ public class ConfigurationFile {
             setProperty("Number_listens", "3");
 
             props.addPropertyComment("Language", "");
-            props.addPropertyComment("Language", "Languages available FR/EN/ES/DE");
+            props.addPropertyComment("Language", "Languages available FR/EN/ES/DE/IT/JA/AR/ZH/DA/NL/NO");
             setProperty("Language", "FR");
-            setProperty("Languages_available", "Français _fr/Anglais _en/Espagnol _es/Allemand _de-DE/Italien _it-IT");
+            setProperty("Languages_available", "Français _fr/Anglais _en/Espagnol _es/Allemand _de-DE/Italien _it-IT/Japonais _ja-JP/Arabe _ar-DZ/Chinois _zh-CN/Danois _da-DK/Néerlandais _nl-NL/Norvégien _nb-NO");
+            setProperty("Language_Code_Used_In_Mlkit", "fr/en/es/de/it/ja/ar/zh/da/nl/no");
+            setProperty("Language_Code_Used_In_TTS_Android", "fr-FR/en-US/es-ES/de-DE/it-IT/ja-JP/ar-DZ/zh-CN/da-DK/nl-NL/nb-NO");
+            setProperty("Readspeaker_voices", "roxane/kate/manuel/max/elisa/show/amir/ / /guus/");
+            setProperty("BuddyOS_1.3_voices", "fr:roxane/en:kate");
+            setProperty("BuddyOS_1.4_voices", "fr:roxane/en:kate,mark,alice/ar:amir,yasmin/de:lena,max/es:lola,manuel/it:elisa/ja:show/nl:alex,guus");
 
             props.addPropertyComment("Speech_volume", "");
             props.addPropertyComment("Speech_volume", "Speech volume (between 0 and 100)");
