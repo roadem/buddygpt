@@ -115,6 +115,7 @@ public class ResponseFromTeamGPT {
     private final Queue<StreamItem> streamQueue = new LinkedList<>();
     private StreamItem currentPlayingItem = null;
     private boolean isPlayingAudio = false; // Vrai si un item est en lecture
+    private boolean isWaitingBetweenItems = false; // Vrai pendant le silence entre deux items
     private StreamItem lastCreatedItem = null;
     private ByteArrayOutputStream pcmAccumulator = new ByteArrayOutputStream(); // Accumulateur pour les chunks audio serveur PCM
     private boolean currentItemIsWav = false; // Vrai si le dernier chunk est un fichier WAV
@@ -1260,24 +1261,7 @@ private void playNextChunkForCurrentItem() {
                                 Log.i("KKK", "  [MP] File deleted");
                             }
                             
-                            // 🔧 SI C'EST LE DERNIER CHUNK
-                            if (isLastChunkFinal) {
-                                Log.i("KKK", "🎯🎯🎯 LAST CHUNK completed - resetting mouth NOW 🎯🎯🎯");
-                                new Handler(Looper.getMainLooper()).post(() -> {
-                                    Log.i("KKK", "  [RESET MOUTH] Posted to main handler...");
-                                    try {
-                                        Log.i("KKK", "  [RESET MOUTH] Calling setLabialExpression(NO_EXPRESSION)...");
-                                        BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.playNextChunkForCurrentItem() - last chunk");
-                                        Log.i("KKK", "✓✓✓ MOUTH RESET SUCCESS (NO_EXPRESSION) ✓✓✓");
-                                    } catch (Exception e) {
-                                        Log.e("KKK", "❌ Exception resetting mouth: " + e.getMessage(), e);
-                                    }
-                                });
-                            } else {
-                                Log.i("KKK", "  [MP] Not last chunk, continuing playback...");
-                            }
-                            
-                            Log.i("KKK", "  [MP] Calling playNextChunkForCurrentItem() recursively");
+                            Log.i("KKK", "  [MP] Calling playNextChunkForCurrentItem() recursively (isLastChunk=" + isLastChunkFinal + ")");
                             playNextChunkForCurrentItem();
                         });
                         
@@ -1516,6 +1500,11 @@ private void playNextChunkForCurrentItem() {
         Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem
                 + ", isPlayingAudio=" + isPlayingAudio);
 
+        if (isWaitingBetweenItems) {
+            Log.i("BBB", "➤ startNextReadyItemIfAny() BLOCKED - waiting between items (silence)");
+            return;
+        }
+
         //  MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
         // on peut quand même essayer de lancer le prochain item
         if (currentPlayingItem != null && isPlayingAudio) {
@@ -1634,32 +1623,50 @@ private void playNextChunkForCurrentItem() {
         
         // 2. Notifier l'UI/autres systèmes si nécessaire
         buddyGPTApplication.notifyObservers("AUDIO_PLAYBACK_FINISHED;SPLIT;");
-        // Reschedule la vérification du prochain item
-        // (même si pas prêt maintenant, il peut l'être bientôt)
+
+        // Annuler tous les callbacks en attente (phrasesRunnable toutes les 50ms) avant de set le flag
+        phrasesHandler.removeCallbacks(phrasesRunnable);
+        // Fermer la bouche + bloquer tout démarrage pendant le silence
+        isWaitingBetweenItems = true;
+        try {
+            Log.i("BBB", "onPlaybackFinished: setting NO_EXPRESSION between items");
+            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            Log.i("BBB", "onPlaybackFinished: NO_EXPRESSION set");
+        } catch (Exception e) {
+            Log.e(TAG_STREAM, "Exception resetting labial in onPlaybackFinished: " + e);
+        }
+
+        // Reschedule la vérification du prochain item après un délai pour que NO_EXPRESSION soit visible
         if (!isFullResponseReceived) {
-            Log.i(TAG_STREAM, "onPlaybackFinished: Scheduling next item check (response not complete yet)");
+            Log.i("BBB", "onPlaybackFinished: response not complete, scheduling processPhrasesWithDelay in 100ms");
             phrasesRunnable = this::processPhrasesWithDelay;
             phrasesHandler.postDelayed(phrasesRunnable, 100);
+            // Le flag isWaitingBetweenItems sera levé dans processPhrasesWithDelay
             return;
         }
-        // 3. Tenter de démarrer l'item suivant (si l'audio est déjà prêt)
-        startNextReadyItemIfAny();
-        // 4. Vérifier si TOUT est fini (incluant TTS local)
-        if (isCompletelyFinished()) {
-            Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
-            // 🔴 ONLY NOW reset emotion at the very end
-            try {
-                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                Log.i("🔍_NEUTRAL_HUNT", "🔍 Resetting labial expression ONLY at final completion (onPlaybackFinished)");
-                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.onPlaybackFinished() - FINAL COMPLETION");
-            } catch (Exception e) {
-                Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished final reset: " + e);
+        // Délai de 250ms pour que la bouche fermée soit visible avant l'item suivant
+        Log.i("BBB", "onPlaybackFinished: scheduling next item in 500ms (mouth closed visible)");
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Log.i("BBB", "onPlaybackFinished: 500ms elapsed, releasing wait flag and calling startNextReadyItemIfAny()");
+            isWaitingBetweenItems = false;
+            startNextReadyItemIfAny();
+            // Vérifier si TOUT est fini (incluant TTS local)
+            if (isCompletelyFinished()) {
+                Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
+                // 🔴 ONLY NOW reset emotion at the very end
+                try {
+                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    Log.i("🔍_NEUTRAL_HUNT", "🔍 Resetting labial expression ONLY at final completion (onPlaybackFinished)");
+                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.onPlaybackFinished() - FINAL COMPLETION");
+                } catch (Exception e) {
+                    Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished final reset: " + e);
+                }
+                onFinishStreaming();
+                buddyGPTApplication.notifyObservers("TTS_success");
+                reset();
             }
-            onFinishStreaming();
-            buddyGPTApplication.notifyObservers("TTS_success");
-            reset();
-        }
+        }, 500);
     }
 
     // Méthode pour vérifier si TOUT est terminé
@@ -1733,6 +1740,8 @@ private void playNextChunkForCurrentItem() {
     private void processPhrasesWithDelay() {
         Log.i(TAG_STREAM, "processPhrasesWithDelay: phrasesQueue.isEmpty()=" + phrasesQueue.isEmpty());
         Log.i(TAG_STREAM, "processPhrasesWithDelay: isDisplayFinished= " + isDisplayFinished);
+        // Lever le flag de silence entre items
+        isWaitingBetweenItems = false;
         ///  NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item
         /// audio prêt
         if (currentPlayingItem == null && !isPlayingAudio) {
