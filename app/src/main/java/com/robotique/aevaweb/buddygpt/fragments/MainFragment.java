@@ -2133,25 +2133,27 @@ public class MainFragment extends Fragment implements IDBObserver {
             }
             if (message.contains("Emotion_Change")) {
                 String emo = message.split(";SPLIT;")[1];
-                Log.i("BBB", "Emotion_Change received: " + emo + " | isSpeaking=" + isSpeaking + " | currentActiveEmotion=" + BuddyGPTApplication.currentActiveEmotion);
-                // If server asks to set neutral while we're speaking, only defer it
-                // if a real emotion (happy, sad…) is currently active — to keep it
-                // visible during playback. If we're still on THINKING (currentActiveEmotion==null),
-                // there's nothing to preserve: apply neutral immediately.
-                String currentEmo = BuddyGPTApplication.currentActiveEmotion;
-                boolean hasRealEmotion = currentEmo != null && !currentEmo.equalsIgnoreCase("BuddyFace_Neutral");
-                if ("BuddyFace_Neutral".equalsIgnoreCase(emo) && isSpeaking && hasRealEmotion) {
-                    pendingNeutralEmotion = true;
-                    Log.i("BBB", "Deferred BuddyFace_Neutral until end of speech (preserving: " + currentEmo + ")");
-                } else {
-                    if (pendingNeutralEmotion) {
-                        Log.i("BBB", "Clearing pending neutral (received non-neutral while pending): " + emo);
+                getActivity().runOnUiThread(() -> {
+                    Log.i("BBB", "Emotion_Change received: " + emo + " | isSpeaking=" + isSpeaking + " | currentActiveEmotion=" + BuddyGPTApplication.currentActiveEmotion);
+                    // If server asks to set neutral while we're speaking, only defer it
+                    // if a real emotion (happy, sad…) is currently active — to keep it
+                    // visible during playback. If we're still on THINKING (currentActiveEmotion==null),
+                    // there's nothing to preserve: apply neutral immediately.
+                    String currentEmo = BuddyGPTApplication.currentActiveEmotion;
+                    boolean hasRealEmotion = currentEmo != null && !currentEmo.equalsIgnoreCase("BuddyFace_Neutral");
+                    if ("BuddyFace_Neutral".equalsIgnoreCase(emo) && isSpeaking && hasRealEmotion) {
+                        pendingNeutralEmotion = true;
+                        Log.i("BBB", "Deferred BuddyFace_Neutral until end of speech (preserving: " + currentEmo + ")");
+                    } else {
+                        if (pendingNeutralEmotion) {
+                            Log.i("BBB", "Clearing pending neutral (received non-neutral while pending): " + emo);
+                        }
+                        pendingNeutralEmotion = false;
+                        Log.i("BBB", "Applying emotion immediately: " + emo);
+                        buddyGPTApplication.setAnimation(emo);
+                        Log.i("BBB", "Animation request sent for: " + emo);
                     }
-                    pendingNeutralEmotion = false;
-                    Log.i("BBB", "Applying emotion immediately: " + emo);
-                    buddyGPTApplication.setAnimation(emo);
-                    Log.i("BBB", "Animation request sent for: " + emo);
-                }
+                });
             }
             if (message.contains("TTS_error") || message.contains("TTS_exception")) {
                 getActivity().runOnUiThread(() -> {
