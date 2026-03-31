@@ -514,8 +514,8 @@ public class SettingsFragment extends Fragment implements IDBObserver {
         langues = new ArrayList<>();
         List<String> langueDisponible = buddyGPTApplication.getDisponibleLangue();
 
-        for (int i = 1; i < langueDisponible.size(); i += 2) {
-            String param = buddyGPTApplication.getparam(langueDisponible.get(i - 1));
+        for (int i = 0; i < langueDisponible.size(); i++) {
+            String param = buddyGPTApplication.getparam(langueDisponible.get(i));
             langues.add(new Gson().fromJson(param, Langue.class));
         }
 

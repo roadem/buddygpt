@@ -76,6 +76,7 @@ import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1674,7 +1675,10 @@ public class MainFragment extends Fragment implements IDBObserver {
     }
 
     private void refreshSTTLangue() {
-        buddyGPTApplication.refresh(new Gson().fromJson(buddyGPTApplication.getparam(settingClass.getLangue()), Langue.class).getLanguageCode(), getActivity());
+        List<String> sttAndroidCodes = buddyGPTApplication.getLanguageCodeForDisponibleLangue("Language_Code_Used_In_STT_Android");
+        int langId = (int) buddyGPTApplication.getLangue().getId() - 1;
+        String sttLocale = (langId >= 0 && langId < sttAndroidCodes.size()) ? sttAndroidCodes.get(langId) : "fr-FR";
+        buddyGPTApplication.refresh(sttLocale, getActivity());
     }
 
     /**
