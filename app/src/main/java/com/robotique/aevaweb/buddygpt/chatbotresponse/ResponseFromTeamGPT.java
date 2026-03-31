@@ -1260,24 +1260,7 @@ private void playNextChunkForCurrentItem() {
                                 Log.i("KKK", "  [MP] File deleted");
                             }
                             
-                            // 🔧 SI C'EST LE DERNIER CHUNK
-                            if (isLastChunkFinal) {
-                                Log.i("KKK", "🎯🎯🎯 LAST CHUNK completed - resetting mouth NOW 🎯🎯🎯");
-                                new Handler(Looper.getMainLooper()).post(() -> {
-                                    Log.i("KKK", "  [RESET MOUTH] Posted to main handler...");
-                                    try {
-                                        Log.i("KKK", "  [RESET MOUTH] Calling setLabialExpression(NO_EXPRESSION)...");
-                                        BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.playNextChunkForCurrentItem() - last chunk");
-                                        Log.i("KKK", "✓✓✓ MOUTH RESET SUCCESS (NO_EXPRESSION) ✓✓✓");
-                                    } catch (Exception e) {
-                                        Log.e("KKK", "❌ Exception resetting mouth: " + e.getMessage(), e);
-                                    }
-                                });
-                            } else {
-                                Log.i("KKK", "  [MP] Not last chunk, continuing playback...");
-                            }
-                            
-                            Log.i("KKK", "  [MP] Calling playNextChunkForCurrentItem() recursively");
+                            Log.i("KKK", "  [MP] Calling playNextChunkForCurrentItem() recursively (isLastChunk=" + isLastChunkFinal + ")");
                             playNextChunkForCurrentItem();
                         });
                         
@@ -1634,6 +1617,16 @@ private void playNextChunkForCurrentItem() {
         
         // 2. Notifier l'UI/autres systèmes si nécessaire
         buddyGPTApplication.notifyObservers("AUDIO_PLAYBACK_FINISHED;SPLIT;");
+
+        // Fermer la bouche entre les items (sera ré-ouvert par startPlaybackForItem si item suivant prêt)
+        try {
+            Log.i("BBB", "onPlaybackFinished: setting NO_EXPRESSION between items");
+            BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
+            Log.i("BBB", "onPlaybackFinished: NO_EXPRESSION set");
+        } catch (Exception e) {
+            Log.e(TAG_STREAM, "Exception resetting labial in onPlaybackFinished: " + e);
+        }
+
         // Reschedule la vérification du prochain item
         // (même si pas prêt maintenant, il peut l'être bientôt)
         if (!isFullResponseReceived) {
