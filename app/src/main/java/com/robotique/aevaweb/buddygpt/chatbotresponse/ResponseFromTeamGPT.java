@@ -115,6 +115,7 @@ public class ResponseFromTeamGPT {
     private final Queue<StreamItem> streamQueue = new LinkedList<>();
     private StreamItem currentPlayingItem = null;
     private boolean isPlayingAudio = false; // Vrai si un item est en lecture
+    private boolean isWaitingBetweenItems = false; // Vrai pendant le silence entre deux items
     private StreamItem lastCreatedItem = null;
     private ByteArrayOutputStream pcmAccumulator = new ByteArrayOutputStream(); // Accumulateur pour les chunks audio serveur PCM
     private boolean currentItemIsWav = false; // Vrai si le dernier chunk est un fichier WAV
@@ -1499,6 +1500,11 @@ private void playNextChunkForCurrentItem() {
         Log.i(TAG_STREAM, "startNextReadyItemIfAny: start. Current state: currentPlayingItem=" + currentPlayingItem
                 + ", isPlayingAudio=" + isPlayingAudio);
 
+        if (isWaitingBetweenItems) {
+            Log.i("BBB", "➤ startNextReadyItemIfAny() BLOCKED - waiting between items (silence)");
+            return;
+        }
+
         //  MODIFICATION : Si on est en attente de chunks WAV (audioEnd=false),
         // on peut quand même essayer de lancer le prochain item
         if (currentPlayingItem != null && isPlayingAudio) {
@@ -1618,7 +1624,10 @@ private void playNextChunkForCurrentItem() {
         // 2. Notifier l'UI/autres systèmes si nécessaire
         buddyGPTApplication.notifyObservers("AUDIO_PLAYBACK_FINISHED;SPLIT;");
 
-        // Fermer la bouche entre les items (sera ré-ouvert par startPlaybackForItem si item suivant prêt)
+        // Annuler tous les callbacks en attente (phrasesRunnable toutes les 50ms) avant de set le flag
+        phrasesHandler.removeCallbacks(phrasesRunnable);
+        // Fermer la bouche + bloquer tout démarrage pendant le silence
+        isWaitingBetweenItems = true;
         try {
             Log.i("BBB", "onPlaybackFinished: setting NO_EXPRESSION between items");
             BuddySDK.UI.setLabialExpression(LabialExpression.NO_EXPRESSION);
@@ -1632,12 +1641,14 @@ private void playNextChunkForCurrentItem() {
             Log.i("BBB", "onPlaybackFinished: response not complete, scheduling processPhrasesWithDelay in 100ms");
             phrasesRunnable = this::processPhrasesWithDelay;
             phrasesHandler.postDelayed(phrasesRunnable, 100);
+            // Le flag isWaitingBetweenItems sera levé dans processPhrasesWithDelay
             return;
         }
         // Délai de 250ms pour que la bouche fermée soit visible avant l'item suivant
-        Log.i("BBB", "onPlaybackFinished: scheduling next item in 250ms (mouth closed visible)");
+        Log.i("BBB", "onPlaybackFinished: scheduling next item in 500ms (mouth closed visible)");
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            Log.i("BBB", "onPlaybackFinished: 250ms elapsed, calling startNextReadyItemIfAny()");
+            Log.i("BBB", "onPlaybackFinished: 500ms elapsed, releasing wait flag and calling startNextReadyItemIfAny()");
+            isWaitingBetweenItems = false;
             startNextReadyItemIfAny();
             // Vérifier si TOUT est fini (incluant TTS local)
             if (isCompletelyFinished()) {
@@ -1655,7 +1666,7 @@ private void playNextChunkForCurrentItem() {
                 buddyGPTApplication.notifyObservers("TTS_success");
                 reset();
             }
-        }, 250);
+        }, 500);
     }
 
     // Méthode pour vérifier si TOUT est terminé
@@ -1729,6 +1740,8 @@ private void playNextChunkForCurrentItem() {
     private void processPhrasesWithDelay() {
         Log.i(TAG_STREAM, "processPhrasesWithDelay: phrasesQueue.isEmpty()=" + phrasesQueue.isEmpty());
         Log.i(TAG_STREAM, "processPhrasesWithDelay: isDisplayFinished= " + isDisplayFinished);
+        // Lever le flag de silence entre items
+        isWaitingBetweenItems = false;
         ///  NOUVEAU : Avant de chercher des phrases TTS, essayer de lancer un item
         /// audio prêt
         if (currentPlayingItem == null && !isPlayingAudio) {
