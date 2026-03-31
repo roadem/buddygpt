@@ -1627,32 +1627,35 @@ private void playNextChunkForCurrentItem() {
             Log.e(TAG_STREAM, "Exception resetting labial in onPlaybackFinished: " + e);
         }
 
-        // Reschedule la vérification du prochain item
-        // (même si pas prêt maintenant, il peut l'être bientôt)
+        // Reschedule la vérification du prochain item après un délai pour que NO_EXPRESSION soit visible
         if (!isFullResponseReceived) {
-            Log.i(TAG_STREAM, "onPlaybackFinished: Scheduling next item check (response not complete yet)");
+            Log.i("BBB", "onPlaybackFinished: response not complete, scheduling processPhrasesWithDelay in 100ms");
             phrasesRunnable = this::processPhrasesWithDelay;
             phrasesHandler.postDelayed(phrasesRunnable, 100);
             return;
         }
-        // 3. Tenter de démarrer l'item suivant (si l'audio est déjà prêt)
-        startNextReadyItemIfAny();
-        // 4. Vérifier si TOUT est fini (incluant TTS local)
-        if (isCompletelyFinished()) {
-            Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
-            // 🔴 ONLY NOW reset emotion at the very end
-            try {
-                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                Log.i("🔍_NEUTRAL_HUNT", "🔍 Resetting labial expression ONLY at final completion (onPlaybackFinished)");
-                Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
-                BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.onPlaybackFinished() - FINAL COMPLETION");
-            } catch (Exception e) {
-                Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished final reset: " + e);
+        // Délai de 250ms pour que la bouche fermée soit visible avant l'item suivant
+        Log.i("BBB", "onPlaybackFinished: scheduling next item in 250ms (mouth closed visible)");
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Log.i("BBB", "onPlaybackFinished: 250ms elapsed, calling startNextReadyItemIfAny()");
+            startNextReadyItemIfAny();
+            // Vérifier si TOUT est fini (incluant TTS local)
+            if (isCompletelyFinished()) {
+                Log.i(TAG_STREAM, " TOUT EST TERMINÉ - Envoi TTS_success");
+                // 🔴 ONLY NOW reset emotion at the very end
+                try {
+                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    Log.i("🔍_NEUTRAL_HUNT", "🔍 Resetting labial expression ONLY at final completion (onPlaybackFinished)");
+                    Log.i("🔍_NEUTRAL_HUNT", "════════════════════════════════════════════════════════");
+                    BuddyGPTApplication.logAndResetLabialExpression("ResponseFromTeamGPT.onPlaybackFinished() - FINAL COMPLETION");
+                } catch (Exception e) {
+                    Log.e(TAG_STREAM, "BuddySDK Exception in onPlaybackFinished final reset: " + e);
+                }
+                onFinishStreaming();
+                buddyGPTApplication.notifyObservers("TTS_success");
+                reset();
             }
-            onFinishStreaming();
-            buddyGPTApplication.notifyObservers("TTS_success");
-            reset();
-        }
+        }, 250);
     }
 
     // Méthode pour vérifier si TOUT est terminé
