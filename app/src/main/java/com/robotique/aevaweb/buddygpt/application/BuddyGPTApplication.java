@@ -2049,7 +2049,13 @@ public class BuddyGPTApplication extends BuddyApplication {
         try {
             setTTSAfterDetectingLanguage();
             lastTTSExpression = expression;
-            tryTTSFromListIndex(getTTSStartIndex(), texteToSpeak, expression, type);
+            if (Boolean.TRUE.equals(usingReadSpeaker)) {
+                Log.i("TEST_voix", "speakTTS: usingReadSpeaker=true → tryTTSFromListIndex");
+                tryTTSFromListIndex(getTTSStartIndex(), texteToSpeak, expression, type);
+            } else {
+                Log.i("TEST_voix", "speakTTS: usingReadSpeaker=false → Android TTS direct");
+                handleAndroidTTS(texteToSpeak, type);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Exception pendant la prononciation : " + e);
             notifyObservers("TTS_exception;" + texteToSpeak);
@@ -2133,6 +2139,7 @@ public class BuddyGPTApplication extends BuddyApplication {
     }
 
     private void handleAndroidTTS(final String texteToSpeak, String type) {
+        Log.i("TEST_voix", "handleAndroidTTS: démarrage synthèse Android TTS → \"" + texteToSpeak + "\"");
         int result = ttsAndroid.speak(texteToSpeak, TextToSpeech.QUEUE_FLUSH, null, "TTS_UTTERANCE_ID");
         if (!isAppInstalled(getApplicationContext(), "com.google.android.tts")) {
             showToast(toastTtsAndroidIndispo);
