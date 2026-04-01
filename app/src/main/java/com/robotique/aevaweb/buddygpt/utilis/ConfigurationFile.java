@@ -15,7 +15,7 @@ public class ConfigurationFile {
 
 
     private static final String TAG = "BuddyGPT_ConfigurationFile";
-    private static final int FILE_VERSION = 10; // upgrade this whenever you want to overwrite the file
+    private static final int FILE_VERSION = 11; // upgrade this whenever you want to overwrite the file
     public static CustomProperties props = new CustomProperties();
     public static InputStream is = null;
 
@@ -119,6 +119,19 @@ public class ConfigurationFile {
             props.addPropertyComment("Cerence_Grammar_Name","Grammar file to use by the Cerence ASR engine (my_grammar_en.fcf / my_grammar_fr.fcf)");
             setProperty("Cerence_Grammar_Name_fr","companion_commands_fr.fcf");
             setProperty("Cerence_Grammar_Name_en","companion_commands_en.fcf");
+
+            props.addPropertyComment("Cerence_Speech_confidence", "Minimum confidence score required to accept a Cerence grammar recognition result.");
+            props.addPropertyComment("Cerence_Speech_confidence", "If the recognition score is below this threshold, the result is considered unreliable");
+            props.addPropertyComment("Cerence_Speech_confidence", "and a fallback response is triggered.");
+            props.addPropertyComment("Cerence_Speech_confidence", "Default value is set based on empirical testing (calm environment 5614, noisy environment 4950).");
+            setProperty("Cerence_Speech_confidence", "4950");
+
+            props.addPropertyComment("Cerence_Speech_failed", "Fallback responses used when the confidence threshold is not reached.");
+            props.addPropertyComment("Cerence_Speech_failed", "Separate multiple responses with a slash \"/\".");
+            props.addPropertyComment("Cerence_Speech_failed", "For any other language than French or English, the selected response will be");
+            props.addPropertyComment("Cerence_Speech_failed", "automatically translated from English into the detected language.");
+            setProperty("Cerence_Speech_failed", "Je n'ai pas compris/Peux-tu répéter/Désolé mais mon vocabulaire est limité");
+            setProperty("Cerence_Speech_failed_en", "I didn't understand/Could you repeat that/Sorry but my vocabulary is limited");
 
             props.addPropertyComment("Change_STT","");
             props.addPropertyComment("Change_STT","Possibility of changing the STT (Yes/No)");

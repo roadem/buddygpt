@@ -1273,8 +1273,44 @@ public class BuddyGPTApplication extends BuddyApplication {
                         }
 
                         STTResult result = results.get(0);
-                        notifyObservers("STTQuestion_success;SPLIT;" + result.getUtterance()+";SPLIT;NONE;");
-                        setLed("neutral");
+                        int confidence = result.getConfidence();
+                        int threshold = Integer.parseInt(getParamFromFile("Cerence_Speech_confidence", configurationFilePseudo).trim());
+                        Log.i(TAG, "Cerence confidence: " + confidence + " / threshold: " + threshold);
+
+                        if (confidence >= threshold) {
+                            notifyObservers("STTQuestion_success;SPLIT;" + result.getUtterance() + ";SPLIT;NONE;");
+                            setLed("neutral");
+                        } else {
+                            Log.w(TAG, "Confidence below threshold (" + confidence + " < " + threshold + ") → fallback response");
+                            setLed("neutral");
+                            String lang = getCurrentLanguage();
+                            String rawFr = getParamFromFile("Cerence_Speech_failed", configurationFilePseudo);
+                            String rawEn = getParamFromFile("Cerence_Speech_failed_en", configurationFilePseudo);
+                            if (rawFr == null || rawFr.isEmpty()) rawFr = "Je n'ai pas compris/Peux-tu répéter/Désolé mais mon vocabulaire est limité";
+                            if (rawEn == null || rawEn.isEmpty()) rawEn = "I didn't understand/Could you repeat that/Sorry but my vocabulary is limited";
+                            if (lang.equals("fr")) {
+                                String[] phrases = rawFr.split("/");
+                                String phrase = phrases[new java.util.Random().nextInt(phrases.length)];
+                                activity.runOnUiThread(() -> { stopListening(activity); speakTTS(phrase, LabialExpression.SPEAK_NEUTRAL, "cerenceConfidenceFailed"); });
+                            } else if (lang.equals("en")) {
+                                String[] phrases = rawEn.split("/");
+                                String phrase = phrases[new java.util.Random().nextInt(phrases.length)];
+                                activity.runOnUiThread(() -> { stopListening(activity); speakTTS(phrase, LabialExpression.SPEAK_NEUTRAL, "cerenceConfidenceFailed"); });
+                            } else {
+                                String[] phrases = rawEn.split("/");
+                                String phrase = phrases[new java.util.Random().nextInt(phrases.length)];
+                                if (getEnglishLanguageSelectedTranslator() != null) {
+                                    getEnglishLanguageSelectedTranslator().translate(phrase)
+                                            .addOnSuccessListener(translatedText -> activity.runOnUiThread(() -> { stopListening(activity); speakTTS(translatedText, LabialExpression.SPEAK_NEUTRAL, "timeOutExpired"); }))
+                                            .addOnFailureListener(e -> {
+                                                Log.e(TAG, "Translation failed, speaking in English: " + e);
+                                                activity.runOnUiThread(() -> { stopListening(activity); speakTTS(phrase, LabialExpression.SPEAK_NEUTRAL, "cerenceConfidenceFailed"); });
+                                            });
+                                } else {
+                                    activity.runOnUiThread(() -> { stopListening(activity); speakTTS(phrase, LabialExpression.SPEAK_NEUTRAL, "cerenceConfidenceFailed"); });
+                                }
+                            }
+                        }
 
                     }
                 }
